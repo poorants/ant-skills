@@ -1,0 +1,19 @@
+{
+  "name": "ant-skills",
+  "owner": {
+    "name": "Donghun Kim"
+  },
+  "metadata": {
+    "description": "Custom Claude skills collection by poorants",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "my-skills",
+      "description": "General-purpose skills collection",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/para-docs"]
+    }
+  ]
+}
