@@ -1,7 +1,8 @@
 {
-  "name": "ant-skills",
+  "name": "ant-agent-skills",
   "owner": {
-    "name": "Donghun Kim"
+    "name": "Donghun Kim",
+    "email": "donghun.kim.w@gmail.com"
   },
   "metadata": {
     "description": "Custom Claude skills collection by poorants",
@@ -9,8 +10,8 @@
   },
   "plugins": [
     {
-      "name": "my-skills",
-      "description": "General-purpose skills collection",
+      "name": "docs-tools",
+      "description": "Document management skills collection",
       "source": "./",
       "strict": false,
       "skills": ["./skills/para-docs"]

@@ -26,3 +26,6 @@ Desktop.ini
 
 # Windows NUL artifact
 nul
+
+# Documentation (local)
+docs/
