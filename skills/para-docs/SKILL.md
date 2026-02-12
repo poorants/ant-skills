@@ -61,21 +61,21 @@ If uncertain, load `references/para-categories.md` for the detailed classificati
 
 ### Step 2: Determine Structure
 
-**Simple item** (single topic, no sub-documents):
+**Simple item** (single topic, standalone):
 → Create a single `.md` file directly in the category directory.
 
-**Complex item** (multiple sub-documents, attachments, or needs a landing page):
-→ Create a directory with `README.md` as the entry point.
+**Complex item** (multiple deliverables, ongoing outputs):
+→ Create a directory containing multiple `.md` files as needed.
 
 ### Step 3: Choose Filename
 
 Naming convention: `kebab-case.md`
 - Use descriptive, lowercase names with hyphens
 - Include date prefix for time-sensitive items: `YYYY-MM-DD-topic-name.md`
-- For directories: `kebab-case/README.md`
+- For directories: `kebab-case/<document-name>.md`
 
 Examples:
-- `para/projects/website-redesign/README.md`
+- `para/projects/website-redesign/requirements.md`
 - `para/areas/team-onboarding.md`
 - `para/resources/api-reference.md`
 - `para/projects/website-redesign/2024-03-15-kickoff-notes.md`
@@ -91,17 +91,13 @@ Use plain markdown. No frontmatter required. Start with an H1 title.
 [Content starts here]
 ```
 
-**Complex item README template:**
-```markdown
-# [Item Title]
-
-## Overview
-
-[Brief description of this item]
-
-## Contents
-
-- [Link to sub-documents as they are created]
+**Directory with multiple files:**
+```
+para/projects/website-redesign/
+├── requirements.md
+├── design-spec.md
+├── 2024-03-15-kickoff-notes.md
+└── 2024-03-20-review-notes.md
 ```
 
 **Meeting notes template:**
@@ -220,7 +216,7 @@ Review report format:
 
 2. **Never delete**: Documents are never deleted. Inactive items are moved to `archives/`. If the user explicitly asks to delete, warn them and suggest archiving instead. Only proceed with deletion after the user confirms twice.
 
-3. **Hybrid structure**: Items can be either a single file (`topic.md`) or a directory with entry point (`topic/README.md`). Choose based on complexity.
+3. **Hybrid structure**: Items can be either a single file (`topic.md`) or a directory with multiple files (`topic/*.md`). Choose based on expected deliverables.
 
 4. **Naming convention**: All files and directories use `kebab-case`. Date prefixes (`YYYY-MM-DD-`) for time-sensitive documents. No spaces, no uppercase in filenames.
 
