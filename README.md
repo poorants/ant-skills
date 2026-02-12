@@ -52,27 +52,33 @@ para init
 
 | Skill | Description | Triggers |
 |-------|-------------|----------|
-| **para-docs** | PARA-based document manager | `para init`, `manage documents`, `문서 관리해줘` |
+| **para-docs** | PARA-based document manager | `para init`, `문서 관리해줘` |
+| **ant-profile** | Ant's Claude Code profile | `ant profile`, `앤트 프로필` |
 
 ## Skill Examples
 
 ### para-docs
 
-Organize project documents using the PARA method (Projects, Areas, Resources, Archives).
+Organize project documents using the PARA method.
 
 ```
-# Initialize PARA structure
-para init
-
-# Create a document
-회의록 저장해줘
-
-# Review documents
-para review
-
-# Archive completed project
-archive project website-redesign
+para init              # Initialize PARA structure
+회의록 저장해줘          # Create a document
+para review            # Review documents
 ```
+
+### ant-profile
+
+Apply ant's preferred settings for comfortable development.
+
+```
+ant profile            # Apply permissions + keybindings
+앤트 프로필로 설정해줘    # Same in Korean
+```
+
+Includes:
+- **Permissions**: All tools allowed in project
+- **Keybindings**: Enter=newline, Ctrl+Enter=submit
 
 ## For Contributors
 

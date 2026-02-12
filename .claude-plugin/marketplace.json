@@ -14,7 +14,10 @@
       "description": "Document management skills collection",
       "source": "./",
       "strict": false,
-      "skills": ["./skills/para-docs"]
+      "skills": [
+        "./skills/para-docs",
+        "./skills/ant-profile"
+      ]
     }
   ]
 }
