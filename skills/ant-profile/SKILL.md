@@ -20,7 +20,7 @@ Apply ant's preferred Claude Code settings for comfortable development.
 
 ### Step 1: Grant Permissions (Project-level)
 
-Create `.claude/settings.json`:
+Create `.claude/settings.local.json`:
 
 ```json
 {
@@ -64,7 +64,7 @@ This makes:
    - "키바인딩만" / "Keybindings only"
 
 2. For permissions:
-   - Check if `.claude/settings.json` exists
+   - Check if `.claude/settings.local.json` exists
    - If exists, ask to overwrite or merge
    - Create `.claude/` directory if needed
    - Write permissions file
@@ -76,7 +76,7 @@ This makes:
 
 4. Report results:
    ```
-   ✓ 권한 설정 완료 (.claude/settings.json)
+   ✓ 권한 설정 완료 (.claude/settings.local.json)
    ✓ 키바인딩 설정 완료 (~/.claude/keybindings.json)
 
    키바인딩 적용을 위해 Claude Code를 재시작하세요.
