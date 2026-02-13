@@ -1,0 +1,27 @@
+import { useEffect, useState } from 'react'
+
+function App() {
+  const [health, setHealth] = useState<string>('')
+
+  useEffect(() => {
+    fetch('/api/health')
+      .then(r => r.json())
+      .then(data => setHealth(data.status))
+      .catch(() => setHealth('error'))
+  }, [])
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          {{PROJECT_NAME}}
+        </h1>
+        <p className="text-gray-500">
+          API: <span className={health === 'ok' ? 'text-green-600' : 'text-red-500'}>{health || '...'}</span>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default App

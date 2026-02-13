@@ -1,0 +1,89 @@
+# {{PROJECT_NAME}}
+
+## Project Structure
+
+```
+{{PROJECT_SLUG}}/
+├── cmd/
+│   └── server/             # Main web server entry point
+│       └── main.go
+│
+├── web/                    # Frontend (React + Vite + Tailwind CSS)
+│   ├── embed.go            # go:embed all:dist
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── utils/
+│   │   ├── App.tsx
+│   │   ├── main.tsx
+│   │   └── index.css
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tsconfig.json
+│   ├── tailwind.config.js
+│   └── postcss.config.js
+│
+├── internal/               # Go backend (private packages)
+│   ├── config/             # YAML config loader
+│   └── server/             # HTTP server + routes
+│
+├── configs/                # Deploy config files
+│   ├── app.config.yaml     # Example config
+│   ├── {{PROJECT_SLUG}}.service  # systemd service
+│   └── INSTALL.md          # Linux installation guide
+│
+├── scripts/                # Build/Dev/Deploy scripts
+│   ├── build.ps1           # Frontend build + Go cross-compile
+│   ├── dev.ps1             # Frontend HMR + Go backend
+│   └── deploy.ps1          # Build + SSH deploy
+│
+├── .local/                 # Local dev config (gitignored)
+│   └── app.config.yaml
+│
+├── deploy/                 # Build artifacts (gitignored)
+│   ├── linux/
+│   └── windows/
+│
+├── go.mod
+├── .gitignore
+└── CLAUDE.md
+```
+
+## Quick Start
+
+```bash
+# Frontend setup
+cd web && npm install && npm run build && cd ..
+go mod tidy
+
+# Dev mode (frontend HMR + Go backend)
+.\scripts\dev.ps1
+
+# Build (outputs to deploy/linux, deploy/windows)
+.\scripts\build.ps1
+```
+
+## Architecture
+
+- **Frontend**: React + Vite + Tailwind CSS (SPA)
+- **Backend**: Go HTTP server with `go:embed` (single binary)
+- **Deploy**: Single executable serves both API and frontend
+- **cmd/**: Each subdirectory is a separate binary (server, tools, etc.)
+
+## API
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /api/health | Health check |
+
+## Config (`app.config.yaml`)
+
+```yaml
+server:
+  host: "0.0.0.0"
+  port: {{PORT}}
+```
+
+- **Dev**: `.local/app.config.yaml` (gitignored)
+- **Deploy**: `configs/app.config.yaml` (committed)

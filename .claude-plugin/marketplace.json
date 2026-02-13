@@ -18,6 +18,15 @@
         "./skills/para-docs",
         "./skills/ant-profile"
       ]
+    },
+    {
+      "name": "ant-dev-tools",
+      "description": "Development project initialization and tooling skills",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/init-go-webapp"
+      ]
     }
   ]
 }

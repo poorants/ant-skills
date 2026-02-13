@@ -1,0 +1,57 @@
+# {{PROJECT_NAME}} Build Script (PowerShell)
+# Builds frontend + backend (Windows/Linux) into deploy/ directories
+
+$ErrorActionPreference = "Stop"
+$ROOT = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$WEB = "$ROOT\web"
+$DEPLOY_LINUX = "$ROOT\deploy\linux"
+$DEPLOY_WINDOWS = "$ROOT\deploy\windows"
+
+Write-Host "`n=== {{PROJECT_NAME}} Build ===" -ForegroundColor Cyan
+
+# 1. Build Frontend
+Write-Host "`n[1/3] Building frontend..." -ForegroundColor Yellow
+Set-Location $WEB
+npm run build
+if ($LASTEXITCODE -ne 0) { throw "Frontend build failed" }
+
+# 2. Build Backend (cross-compile)
+Write-Host "`n[2/3] Building backend..." -ForegroundColor Yellow
+Set-Location $ROOT
+
+if (-not (Test-Path $DEPLOY_LINUX)) { New-Item -ItemType Directory -Path $DEPLOY_LINUX | Out-Null }
+if (-not (Test-Path $DEPLOY_WINDOWS)) { New-Item -ItemType Directory -Path $DEPLOY_WINDOWS | Out-Null }
+
+# Windows
+Write-Host "  - Windows (amd64)..." -ForegroundColor Gray
+$env:GOOS = "windows"; $env:GOARCH = "amd64"
+go build -o "$DEPLOY_WINDOWS\{{PROJECT_SLUG}}.exe" ./cmd/server
+if ($LASTEXITCODE -ne 0) { throw "Windows build failed" }
+
+# Linux
+Write-Host "  - Linux (amd64)..." -ForegroundColor Gray
+$env:GOOS = "linux"; $env:GOARCH = "amd64"
+go build -o "$DEPLOY_LINUX\{{PROJECT_SLUG}}" ./cmd/server
+if ($LASTEXITCODE -ne 0) { throw "Linux build failed" }
+
+Remove-Item Env:GOOS; Remove-Item Env:GOARCH
+
+# 3. Copy config files to deploy
+Write-Host "`n[3/3] Copying config files..." -ForegroundColor Yellow
+Copy-Item "$ROOT\configs\app.config.yaml" "$DEPLOY_LINUX\"
+Copy-Item "$ROOT\configs\{{PROJECT_SLUG}}.service" "$DEPLOY_LINUX\"
+Copy-Item "$ROOT\configs\INSTALL.md" "$DEPLOY_LINUX\"
+Copy-Item "$ROOT\configs\app.config.yaml" "$DEPLOY_WINDOWS\"
+
+Set-Location $ROOT
+
+Write-Host "`n=== Build Complete ===" -ForegroundColor Green
+Write-Host "Output:"
+Write-Host "  deploy/linux/"
+Write-Host "    - {{PROJECT_SLUG}}"
+Write-Host "    - app.config.yaml"
+Write-Host "    - {{PROJECT_SLUG}}.service"
+Write-Host "    - INSTALL.md"
+Write-Host "  deploy/windows/"
+Write-Host "    - {{PROJECT_SLUG}}.exe"
+Write-Host "    - app.config.yaml"

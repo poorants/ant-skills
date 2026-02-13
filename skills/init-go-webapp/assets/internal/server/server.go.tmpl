@@ -1,0 +1,61 @@
+package server
+
+import (
+	"encoding/json"
+	"io/fs"
+	"net/http"
+)
+
+func New(frontend fs.FS) http.Handler {
+	mux := http.NewServeMux()
+
+	// API routes
+	mux.HandleFunc("GET /api/health", handleHealth)
+
+	// Frontend (SPA fallback)
+	mux.Handle("/", spaHandler(frontend))
+
+	return corsMiddleware(mux)
+}
+
+// spaHandler serves static files from the embedded filesystem.
+// For paths that don't match a file, it falls back to index.html
+// so that client-side routing (React Router, etc.) works correctly.
+func spaHandler(frontend fs.FS) http.Handler {
+	fileServer := http.FileServer(http.FS(frontend))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if path != "/" {
+			// Try to open the requested file
+			f, err := frontend.Open(path[1:]) // strip leading /
+			if err != nil {
+				// File not found — serve index.html for SPA routing
+				r.URL.Path = "/"
+				fileServer.ServeHTTP(w, r)
+				return
+			}
+			f.Close()
+		}
+		fileServer.ServeHTTP(w, r)
+	})
+}
+
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "ok",
+	})
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}

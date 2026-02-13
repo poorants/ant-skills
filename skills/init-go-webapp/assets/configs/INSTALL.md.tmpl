@@ -1,0 +1,139 @@
+# {{PROJECT_NAME}} Linux 설치 가이드
+
+## 사전 요구사항
+
+- Linux (RHEL/CentOS/Rocky 8+ 또는 Ubuntu 20.04+)
+- systemd
+
+## 1. 배포 파일 준비
+
+`scripts/build.ps1` 실행 후 `deploy/linux/` 디렉토리에 다음 파일이 생성됩니다:
+
+```
+deploy/linux/
+├── {{PROJECT_SLUG}}            # 실행 바이너리
+├── app.config.yaml             # 설정 파일
+├── {{PROJECT_SLUG}}.service    # systemd 서비스 파일
+└── INSTALL.md                  # 이 문서
+```
+
+## 2. 디렉토리 생성 및 파일 배포
+
+```bash
+# 설치 디렉토리 생성
+sudo mkdir -p /opt/{{PROJECT_SLUG}}
+
+# 파일 복사
+sudo cp {{PROJECT_SLUG}}    /opt/{{PROJECT_SLUG}}/
+sudo cp app.config.yaml     /opt/{{PROJECT_SLUG}}/
+
+# 실행 권한
+sudo chmod +x /opt/{{PROJECT_SLUG}}/{{PROJECT_SLUG}}
+```
+
+## 3. 설정 파일 수정
+
+```bash
+sudo vi /opt/{{PROJECT_SLUG}}/app.config.yaml
+```
+
+환경에 맞게 수정:
+
+```yaml
+server:
+  host: "0.0.0.0"
+  port: {{PORT}}
+```
+
+## 4. systemd 서비스 등록
+
+```bash
+sudo cp {{PROJECT_SLUG}}.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable {{PROJECT_SLUG}}
+```
+
+## 5. 서비스 시작
+
+```bash
+sudo systemctl start {{PROJECT_SLUG}}
+```
+
+## 6. 상태 확인
+
+```bash
+# 서비스 상태
+sudo systemctl status {{PROJECT_SLUG}}
+
+# 로그 확인
+sudo journalctl -u {{PROJECT_SLUG}} -f
+
+# 포트 리스닝 확인
+ss -tlnp | grep {{PORT}}
+```
+
+정상 시 출력 예시:
+
+```
+● {{PROJECT_SLUG}}.service - {{PROJECT_NAME}}
+     Active: active (running) since ...
+```
+
+## 7. 방화벽 설정 (필요 시)
+
+```bash
+# firewalld (RHEL/CentOS/Rocky)
+sudo firewall-cmd --permanent --add-port={{PORT}}/tcp
+sudo firewall-cmd --reload
+
+# ufw (Ubuntu)
+sudo ufw allow {{PORT}}/tcp
+```
+
+## 8. 동작 확인
+
+```bash
+curl http://localhost:{{PORT}}/api/health
+```
+
+응답: `{"status":"ok"}`
+
+## 서비스 관리 명령어
+
+| 명령어 | 설명 |
+|--------|------|
+| `sudo systemctl start {{PROJECT_SLUG}}` | 시작 |
+| `sudo systemctl stop {{PROJECT_SLUG}}` | 정지 |
+| `sudo systemctl restart {{PROJECT_SLUG}}` | 재시작 |
+| `sudo systemctl status {{PROJECT_SLUG}}` | 상태 확인 |
+| `sudo journalctl -u {{PROJECT_SLUG}} -f` | 실시간 로그 |
+| `sudo journalctl -u {{PROJECT_SLUG}} --no-pager` | 전체 로그 |
+| `sudo journalctl -u {{PROJECT_SLUG}} --since today` | 오늘 로그 |
+
+## 업데이트 (바이너리 교체)
+
+```bash
+sudo systemctl stop {{PROJECT_SLUG}}
+sudo cp {{PROJECT_SLUG}} /opt/{{PROJECT_SLUG}}/{{PROJECT_SLUG}}
+sudo chmod +x /opt/{{PROJECT_SLUG}}/{{PROJECT_SLUG}}
+sudo systemctl start {{PROJECT_SLUG}}
+```
+
+## 트러블슈팅
+
+### 서비스 시작 실패
+
+```bash
+sudo journalctl -u {{PROJECT_SLUG}} --no-pager -n 50
+```
+
+흔한 원인:
+- 포트 충돌 : `ss -tlnp | grep {{PORT}}`으로 확인
+- 설정 오류 : `app.config.yaml` 문법 확인
+- 권한 문제 : 파일 소유권/권한 확인
+
+### 권한 오류 (Permission denied)
+
+```bash
+sudo chmod +x /opt/{{PROJECT_SLUG}}/{{PROJECT_SLUG}}
+```

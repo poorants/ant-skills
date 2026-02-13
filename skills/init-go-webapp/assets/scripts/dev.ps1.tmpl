@@ -1,0 +1,33 @@
+# {{PROJECT_NAME}} Development Mode (PowerShell)
+# Runs Go backend + opens new window for frontend dev server
+
+$ErrorActionPreference = "Stop"
+$ROOT = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$WEB = "$ROOT\web"
+
+Write-Host "`n=== {{PROJECT_NAME}} Dev Mode ===" -ForegroundColor Cyan
+
+# Check if web/dist exists (needed for go:embed)
+if (-not (Test-Path "$ROOT\web\dist")) {
+    Write-Host "[!] web/dist not found. Building frontend first..." -ForegroundColor Yellow
+    Set-Location $WEB
+    npm run build
+}
+
+# Start frontend dev server in new window
+Write-Host "[1] Starting frontend dev server (port 5173)..." -ForegroundColor Yellow
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$WEB'; npm run dev"
+
+Start-Sleep -Seconds 2
+
+# Run Go backend
+Write-Host "[2] Starting Go backend (port {{PORT}})..." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "============================================" -ForegroundColor Green
+Write-Host "  Frontend: http://localhost:5173 (hot reload)"
+Write-Host "  Backend:  http://localhost:{{PORT}} (API only)"
+Write-Host "============================================" -ForegroundColor Green
+Write-Host ""
+
+Set-Location $ROOT
+go run ./cmd/server -config .local/app.config.yaml

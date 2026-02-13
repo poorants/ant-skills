@@ -1,0 +1,15 @@
+[Unit]
+Description={{PROJECT_NAME}}
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/{{PROJECT_SLUG}}/{{PROJECT_SLUG}} -config /opt/{{PROJECT_SLUG}}/app.config.yaml
+WorkingDirectory=/opt/{{PROJECT_SLUG}}
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

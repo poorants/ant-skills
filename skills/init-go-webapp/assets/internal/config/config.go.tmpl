@@ -1,0 +1,44 @@
+package config
+
+import (
+	"log"
+	"os"
+	"strconv"
+
+	"gopkg.in/yaml.v3"
+)
+
+type Config struct {
+	Server ServerConfig `yaml:"server"`
+}
+
+type ServerConfig struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
+}
+
+func Load(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var cfg Config
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return nil, err
+	}
+
+	if cfg.Server.Host == "" {
+		cfg.Server.Host = "0.0.0.0"
+	}
+	if cfg.Server.Port == 0 {
+		cfg.Server.Port = {{PORT}}
+	}
+
+	log.Printf("Config loaded: %s", path)
+	return &cfg, nil
+}
+
+func (c *Config) Address() string {
+	return c.Server.Host + ":" + strconv.Itoa(c.Server.Port)
+}

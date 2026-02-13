@@ -1,0 +1,42 @@
+# {{PROJECT_NAME}} Linux Deploy Script (PowerShell)
+# Builds linux binary and deploys to remote server via SSH
+#
+# Usage: .\scripts\deploy.ps1 [-Host "192.168.1.100"] [-User "root"]
+
+param(
+    [string]$RemoteHost = "YOUR_SERVER_IP",
+    [string]$User = "root"
+)
+
+$ErrorActionPreference = "Stop"
+$ROOT = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+
+$REMOTE_PATH = "/opt/{{PROJECT_SLUG}}/{{PROJECT_SLUG}}"
+$SERVICE_NAME = "{{PROJECT_SLUG}}"
+$LOCAL_BINARY = "$ROOT\deploy\linux\{{PROJECT_SLUG}}"
+$SSH_TARGET = "${User}@${RemoteHost}"
+
+Write-Host "`n=== {{PROJECT_NAME}} Linux Deploy ===" -ForegroundColor Cyan
+
+# 1. Build
+Write-Host "`n[1/4] Building..." -ForegroundColor Yellow
+& "$ROOT\scripts\build.ps1"
+
+# 2. Stop service
+Write-Host "`n[2/4] Stopping service..." -ForegroundColor Yellow
+ssh $SSH_TARGET "systemctl stop ${SERVICE_NAME}"
+
+# 3. Upload binary
+Write-Host "`n[3/4] Uploading..." -ForegroundColor Yellow
+scp "$LOCAL_BINARY" "${SSH_TARGET}:${REMOTE_PATH}"
+if ($LASTEXITCODE -ne 0) { throw "Upload failed" }
+
+# 4. Start service
+Write-Host "`n[4/4] Starting service..." -ForegroundColor Yellow
+ssh $SSH_TARGET "systemctl start ${SERVICE_NAME}"
+if ($LASTEXITCODE -ne 0) { throw "Service start failed" }
+
+Write-Host "`n[OK] Verifying..." -ForegroundColor Green
+ssh $SSH_TARGET "systemctl status ${SERVICE_NAME} --no-pager -l"
+
+Write-Host "`n=== Deploy Complete ===" -ForegroundColor Green

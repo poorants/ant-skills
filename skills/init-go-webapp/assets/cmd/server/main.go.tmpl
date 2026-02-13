@@ -1,0 +1,39 @@
+package main
+
+import (
+	"flag"
+	"io/fs"
+	"log"
+	"net/http"
+
+	"{{MODULE_NAME}}/internal/config"
+	"{{MODULE_NAME}}/internal/server"
+	"{{MODULE_NAME}}/web"
+)
+
+func main() {
+	configPath := flag.String("config", ".local/app.config.yaml", "config file path")
+	flag.Parse()
+
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	log.Printf("{{PROJECT_NAME}} starting")
+
+	frontendDist, err := fs.Sub(web.DistFS, "dist")
+	if err != nil {
+		log.Fatalf("Failed to init frontend: %v", err)
+	}
+
+	srv := server.New(frontendDist)
+
+	addr := cfg.Address()
+	log.Printf("  - Listen: %s", addr)
+	log.Printf("Ready!")
+
+	if err := http.ListenAndServe(addr, srv); err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
+}
