@@ -1,0 +1,64 @@
+#!/bin/bash
+# {{PROJECT_NAME}} - Production Build
+# Builds native desktop app and copies to deploy/mac or deploy/linux
+
+set -e
+
+# Load cargo environment if exists
+if [ -f "$HOME/.cargo/env" ]; then
+    source "$HOME/.cargo/env"
+fi
+
+cd "$(dirname "$0")/../.."
+
+echo "Building {{PROJECT_NAME}}..."
+
+# Check if node_modules exists
+if [ ! -d "web/node_modules" ]; then
+    echo "Installing dependencies..."
+    cd web && npm install && cd ..
+fi
+
+# Build frontend and Tauri app from project root
+./web/node_modules/.bin/tauri build
+
+# Detect OS and set deploy directory
+BUNDLE_DIR="src-tauri/target/release/bundle"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    DEPLOY_DIR="deploy/mac"
+
+    # Clean and create deploy directory
+    rm -rf "$DEPLOY_DIR"
+    mkdir -p "$DEPLOY_DIR"
+
+    # Copy .app bundle
+    if [ -d "$BUNDLE_DIR/macos" ]; then
+        cp -r "$BUNDLE_DIR/macos/"*.app "$DEPLOY_DIR/"
+    fi
+
+    # Copy .dmg if exists
+    if [ -d "$BUNDLE_DIR/dmg" ]; then
+        cp "$BUNDLE_DIR/dmg/"*.dmg "$DEPLOY_DIR/"
+    fi
+else
+    DEPLOY_DIR="deploy/linux"
+
+    # Clean and create deploy directory
+    rm -rf "$DEPLOY_DIR"
+    mkdir -p "$DEPLOY_DIR"
+
+    # Copy AppImage if exists
+    if [ -d "$BUNDLE_DIR/appimage" ]; then
+        cp "$BUNDLE_DIR/appimage/"*.AppImage "$DEPLOY_DIR/"
+    fi
+
+    # Copy .deb if exists
+    if [ -d "$BUNDLE_DIR/deb" ]; then
+        cp "$BUNDLE_DIR/deb/"*.deb "$DEPLOY_DIR/"
+    fi
+fi
+
+echo ""
+echo "Build complete!"
+echo "Output: $DEPLOY_DIR/"
+ls -la "$DEPLOY_DIR"

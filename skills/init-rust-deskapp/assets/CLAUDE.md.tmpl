@@ -1,0 +1,125 @@
+# {{PROJECT_NAME}}
+
+Rust + React (Tauri) Desktop Application
+
+## Project Structure
+
+```
+{{PROJECT_SLUG}}/
+├── src-tauri/              # Rust backend (Tauri)
+│   ├── Cargo.toml
+│   ├── tauri.conf.json
+│   ├── src/
+│   │   ├── main.rs         # Entry point
+│   │   ├── lib.rs          # Commands registration
+│   │   └── commands/       # IPC command handlers
+│   │       └── mod.rs
+│   └── icons/
+│
+├── web/                    # React + Vite + Tailwind CSS
+│   ├── src/
+│   │   ├── App.tsx
+│   │   ├── components/
+│   │   └── lib/
+│   │       └── tauri.ts    # Tauri invoke wrapper
+│   ├── package.json
+│   └── ...
+│
+├── scripts/
+│   ├── windows/
+│   │   ├── dev.ps1
+│   │   └── build.ps1
+│   └── unix/
+│       ├── dev.sh
+│       └── build.sh
+│
+└── CLAUDE.md
+```
+
+## Quick Start
+
+```bash
+# Windows:
+.\scripts\windows\dev.ps1
+
+# macOS/Linux:
+./scripts/unix/dev.sh
+```
+
+Scripts automatically install npm dependencies if needed.
+
+## Development Rules
+
+### 1. Always Use React + Tailwind
+
+**NEVER create HTML single-file pages.** All UI must be built with:
+- React components in `web/src/`
+- Tailwind CSS for styling
+- TypeScript for type safety
+
+### 2. Frontend-Backend Communication (IPC)
+
+All communication between React and Rust uses **Tauri Commands**:
+
+**Rust side** (`src-tauri/src/commands/mod.rs`):
+```rust
+#[tauri::command]
+pub fn my_command(arg: &str) -> Result<String, String> {
+    Ok(format!("Result: {}", arg))
+}
+```
+
+**Register in** `src-tauri/src/lib.rs`:
+```rust
+.invoke_handler(tauri::generate_handler![
+    greet,
+    my_command,  // Add here
+])
+```
+
+**TypeScript side** (`web/src/lib/tauri.ts`):
+```typescript
+const result = await invoke<string>('my_command', { arg: 'value' })
+```
+
+### 3. Type Safety
+
+Define matching types on both sides:
+
+**Rust:**
+```rust
+#[derive(Serialize, Deserialize)]
+pub struct User {
+    pub id: u32,
+    pub name: String,
+}
+```
+
+**TypeScript:**
+```typescript
+interface User {
+  id: number
+  name: string
+}
+```
+
+## Build
+
+```bash
+# Development (hot reload)
+# Windows:
+.\scripts\windows\dev.ps1
+# macOS/Linux:
+./scripts/unix/dev.sh
+
+# Production build
+# Windows:
+.\scripts\windows\build.ps1
+# macOS/Linux:
+./scripts/unix/build.sh
+```
+
+Output:
+- Windows: `deploy/windows/` (.msi, .exe)
+- macOS: `deploy/mac/` (.app, .dmg)
+- Linux: `deploy/linux/` (.AppImage, .deb)

@@ -1,0 +1,48 @@
+import { useState } from 'react'
+import { invoke } from './lib/tauri'
+
+function App() {
+  const [name, setName] = useState('')
+  const [greeting, setGreeting] = useState('')
+
+  async function handleGreet() {
+    // Call Rust command via IPC
+    const result = await invoke<string>('greet', { name })
+    setGreeting(result)
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">
+          {{WINDOW_TITLE}}
+        </h1>
+
+        <div className="space-y-4">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter your name"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+
+          <button
+            onClick={handleGreet}
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+          >
+            Greet
+          </button>
+
+          {greeting && (
+            <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
+              {greeting}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default App

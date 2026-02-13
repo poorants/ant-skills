@@ -1,0 +1,42 @@
+# {{PROJECT_NAME}} - Production Build
+# Builds native desktop app and copies to deploy/windows
+
+$ErrorActionPreference = "Stop"
+
+Push-Location $PSScriptRoot/../..
+
+try {
+    Write-Host "Building {{PROJECT_NAME}}..." -ForegroundColor Cyan
+
+    # Build frontend and Tauri app
+    Push-Location web
+    npm run tauri build
+    Pop-Location
+
+    # Copy to deploy/windows
+    $bundleDir = "src-tauri/target/release/bundle"
+    $deployDir = "deploy/windows"
+
+    if (Test-Path $deployDir) {
+        Remove-Item -Recurse -Force $deployDir
+    }
+    New-Item -ItemType Directory -Force -Path $deployDir | Out-Null
+
+    # Copy MSI installer if exists
+    if (Test-Path "$bundleDir/msi") {
+        Copy-Item "$bundleDir/msi/*.msi" $deployDir -Force
+    }
+
+    # Copy NSIS installer if exists
+    if (Test-Path "$bundleDir/nsis") {
+        Copy-Item "$bundleDir/nsis/*.exe" $deployDir -Force
+    }
+
+    Write-Host ""
+    Write-Host "Build complete!" -ForegroundColor Green
+    Write-Host "Output: deploy/windows/" -ForegroundColor Gray
+    Get-ChildItem $deployDir
+}
+finally {
+    Pop-Location
+}

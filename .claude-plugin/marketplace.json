@@ -25,7 +25,8 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/init-go-webapp"
+        "./skills/init-go-webapp",
+        "./skills/init-rust-deskapp"
       ]
     }
   ]

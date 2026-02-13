@@ -1,0 +1,23 @@
+#!/bin/bash
+# {{PROJECT_NAME}} - Development Mode
+# Runs Tauri dev server with hot reload
+
+set -e
+
+# Load cargo environment if exists
+if [ -f "$HOME/.cargo/env" ]; then
+    source "$HOME/.cargo/env"
+fi
+
+cd "$(dirname "$0")/../.."
+
+echo "Starting {{PROJECT_NAME}} in dev mode..."
+
+# Check if node_modules exists
+if [ ! -d "web/node_modules" ]; then
+    echo "Installing dependencies..."
+    cd web && npm install && cd ..
+fi
+
+# Run tauri dev from project root (uses web/node_modules/.bin/tauri)
+./web/node_modules/.bin/tauri dev
