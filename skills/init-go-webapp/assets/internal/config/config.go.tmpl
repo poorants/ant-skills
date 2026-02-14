@@ -9,12 +9,17 @@ import (
 )
 
 type Config struct {
-	Server ServerConfig `yaml:"server"`
+	Server   ServerConfig   `yaml:"server"`
+	Database DatabaseConfig `yaml:"database"`
 }
 
 type ServerConfig struct {
 	Host string `yaml:"host"`
 	Port int    `yaml:"port"`
+}
+
+type DatabaseConfig struct {
+	Path string `yaml:"path"`
 }
 
 func Load(path string) (*Config, error) {
@@ -33,6 +38,9 @@ func Load(path string) (*Config, error) {
 	}
 	if cfg.Server.Port == 0 {
 		cfg.Server.Port = {{PORT}}
+	}
+	if cfg.Database.Path == "" {
+		cfg.Database.Path = "data/app.db"
 	}
 
 	log.Printf("Config loaded: %s", path)

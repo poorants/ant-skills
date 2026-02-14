@@ -1,13 +1,24 @@
 ---
 name: init-go-webapp
-description: Initialize a Go + React single-binary web application project. Creates a complete project scaffold with React (Vite + Tailwind CSS) frontend embedded into a Go binary via go:embed for single-file deployment. Use when the user wants to create a new Go web app, start a new fullstack project with Go backend, scaffold a single-binary web service, or initialize a project with "init go webapp", "new go project", "Go 웹앱 초기화", "새 프로젝트 만들어줘", "Go+React 프로젝트".
+description: Initialize a Go + React single-binary web application project. Creates a complete project scaffold with React (Vite + Tailwind CSS + shadcn/ui) frontend and Go backend with SQLite, embedded into a single binary via go:embed. Use when the user wants to create a new Go web app, start a new fullstack project with Go backend, scaffold a single-binary web service, or initialize a project with "init go webapp", "new go project", "Go 웹앱 초기화", "새 프로젝트 만들어줘", "Go+React 프로젝트".
 ---
 
 # init-go-webapp
 
-Initialize a Go + React (Vite + Tailwind CSS) single-binary web application.
+Initialize a Go + React (Vite + Tailwind CSS + shadcn/ui) single-binary web application with SQLite.
 
 Frontend is embedded into the Go binary via `go:embed`, producing a single executable that serves both API and SPA.
+
+## Default Stack
+
+| Layer | Technology | Notes |
+|-------|-----------|-------|
+| Frontend | React + TypeScript | Vite build |
+| Styling | Tailwind CSS | Utility-first |
+| UI Components | shadcn/ui | Radix-based components |
+| Backend | Go (Golang) | Router + API server |
+| Database | SQLite (modernc.org/sqlite) | Dev stage, extensible to Supabase or Litestream |
+| Deploy | Go single binary | React build → go:embed → single executable |
 
 ## Init Workflow
 
@@ -47,23 +58,32 @@ go mod tidy
 ```
 {project}/
 ├── cmd/
-│   └── server/main.go      # Web server entry point
+│   └── server/main.go      # Web server entry point (-dev flag for dev mode)
 │
-├── web/                    # React + Vite + Tailwind CSS
-│   ├── embed.go            # go:embed all:dist
+├── web/                    # React + Vite + Tailwind CSS + shadcn/ui
+│   ├── embed.go            # go:embed all:dist (production)
+│   ├── embed_dev.go        # empty FS (dev build tag)
 │   ├── src/
-│   │   ├── App.tsx         # Hello world with health check
+│   │   ├── components/
+│   │   │   └── ui/         # shadcn/ui components (Button included)
+│   │   ├── lib/
+│   │   │   └── utils.ts    # cn() utility for class merging
+│   │   ├── hooks/
+│   │   ├── pages/
+│   │   ├── App.tsx         # Demo with health check + Button
 │   │   ├── main.tsx
-│   │   └── index.css       # Tailwind directives
+│   │   └── index.css       # Tailwind + shadcn/ui CSS variables
 │   ├── index.html
 │   ├── package.json
+│   ├── components.json     # shadcn/ui configuration
 │   ├── vite.config.ts      # Proxy /api to Go backend
 │   ├── tsconfig.json
 │   ├── tailwind.config.js
 │   └── postcss.config.js
 │
 ├── internal/               # Go private packages
-│   ├── config/config.go    # YAML config loader
+│   ├── config/config.go    # YAML config loader (server + database)
+│   ├── database/database.go # SQLite (modernc.org/sqlite, WAL mode)
 │   └── server/server.go    # HTTP server + CORS + health endpoint
 │
 ├── configs/                # Deploy configuration
@@ -73,11 +93,13 @@ go mod tidy
 │
 ├── scripts/                # PowerShell scripts
 │   ├── build.ps1           # npm build + go build (linux/windows)
-│   ├── dev.ps1             # Vite HMR + Go backend concurrent
+│   ├── dev.ps1             # npm build + go run -tags dev (single process)
 │   └── deploy.ps1          # Build + SSH deploy (parameterized)
 │
 ├── .local/                 # Dev config (gitignored)
 │   └── app.config.yaml
+│
+├── data/                   # SQLite database (gitignored)
 │
 ├── deploy/                 # Build output (gitignored)
 │   ├── linux/
@@ -103,7 +125,11 @@ go mod tidy
 - **`internal/`** not `backend/`: Go standard layout, enforces package privacy
 - **`cmd/`**: standard Go multi-binary layout, easy to add tools (gen-cert, migrate, etc.)
 - **`web/embed.go`**: `go:embed` at `web/` level so path is `all:dist`, avoids `..` limitation
+- **`embed_dev.go`**: `//go:build dev` tag provides empty FS, avoids needing `web/dist` for compilation
 - **Root `go.mod`**: single module, no `go.work` needed
 - **`.local/`** not `dev/`: dotfile convention for local-only files
 - **`configs/`**: deploy-ready files with INSTALL.md included in build output
 - **`scripts/`**: PowerShell for Windows-first dev, cross-compiles to Linux
+- **shadcn/ui**: copy-paste component model, no runtime dependency, full customization
+- **SQLite (modernc.org/sqlite)**: CGo-free pure Go, WAL mode, single file DB in `data/`
+- **Dev mode**: `npm run build` → `go run -tags dev` (single process, no Vite dev server)

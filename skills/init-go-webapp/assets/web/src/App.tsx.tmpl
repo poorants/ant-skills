@@ -1,24 +1,39 @@
 import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
 
 function App() {
-  const [health, setHealth] = useState<string>('')
+  const [health, setHealth] = useState<{ status: string; database: string } | null>(null)
 
   useEffect(() => {
     fetch('/api/health')
       .then(r => r.json())
-      .then(data => setHealth(data.status))
-      .catch(() => setHealth('error'))
+      .then(setHealth)
+      .catch(() => setHealth({ status: 'error', database: 'error' }))
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center space-y-6">
+        <h1 className="text-4xl font-bold tracking-tight">
           {{PROJECT_NAME}}
         </h1>
-        <p className="text-gray-500">
-          API: <span className={health === 'ok' ? 'text-green-600' : 'text-red-500'}>{health || '...'}</span>
-        </p>
+        <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+          <span>
+            API:{' '}
+            <span className={health?.status === 'ok' ? 'text-green-600 font-medium' : 'text-destructive'}>
+              {health?.status || '...'}
+            </span>
+          </span>
+          <span>
+            DB:{' '}
+            <span className={health?.database === 'ok' ? 'text-green-600 font-medium' : 'text-destructive'}>
+              {health?.database || '...'}
+            </span>
+          </span>
+        </div>
+        <Button onClick={() => window.location.reload()}>
+          Refresh
+        </Button>
       </div>
     </div>
   )

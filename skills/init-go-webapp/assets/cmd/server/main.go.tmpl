@@ -5,14 +5,17 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 
 	"{{MODULE_NAME}}/internal/config"
+	"{{MODULE_NAME}}/internal/database"
 	"{{MODULE_NAME}}/internal/server"
 	"{{MODULE_NAME}}/web"
 )
 
 func main() {
 	configPath := flag.String("config", ".local/app.config.yaml", "config file path")
+	dev := flag.Bool("dev", false, "dev mode: serve frontend from web/dist on disk")
 	flag.Parse()
 
 	cfg, err := config.Load(*configPath)
@@ -22,12 +25,26 @@ func main() {
 
 	log.Printf("{{PROJECT_NAME}} starting")
 
-	frontendDist, err := fs.Sub(web.DistFS, "dist")
+	// Database
+	db, err := database.Open(cfg.Database.Path)
 	if err != nil {
-		log.Fatalf("Failed to init frontend: %v", err)
+		log.Fatalf("Failed to open database: %v", err)
+	}
+	defer db.Close()
+
+	// Frontend
+	var frontendDist fs.FS
+	if *dev {
+		frontendDist = os.DirFS("web/dist")
+		log.Printf("  - Frontend: web/dist (dev mode)")
+	} else {
+		frontendDist, err = fs.Sub(web.DistFS, "dist")
+		if err != nil {
+			log.Fatalf("Failed to init frontend: %v", err)
+		}
 	}
 
-	srv := server.New(frontendDist)
+	srv := server.New(frontendDist, db)
 
 	addr := cfg.Address()
 	log.Printf("  - Listen: %s", addr)

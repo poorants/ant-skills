@@ -8,17 +8,22 @@
 │   └── server/             # Main web server entry point
 │       └── main.go
 │
-├── web/                    # Frontend (React + Vite + Tailwind CSS)
-│   ├── embed.go            # go:embed all:dist
+├── web/                    # Frontend (React + Vite + Tailwind CSS + shadcn/ui)
+│   ├── embed.go            # go:embed all:dist (production)
+│   ├── embed_dev.go        # empty FS (dev build tag)
 │   ├── src/
 │   │   ├── components/
+│   │   │   └── ui/         # shadcn/ui components
+│   │   ├── lib/
+│   │   │   └── utils.ts    # cn() utility
+│   │   ├── hooks/
 │   │   ├── pages/
-│   │   ├── utils/
 │   │   ├── App.tsx
 │   │   ├── main.tsx
-│   │   └── index.css
+│   │   └── index.css       # Tailwind + CSS variables
 │   ├── index.html
 │   ├── package.json
+│   ├── components.json     # shadcn/ui config
 │   ├── vite.config.ts
 │   ├── tsconfig.json
 │   ├── tailwind.config.js
@@ -26,6 +31,7 @@
 │
 ├── internal/               # Go backend (private packages)
 │   ├── config/             # YAML config loader
+│   ├── database/           # SQLite (modernc.org/sqlite)
 │   └── server/             # HTTP server + routes
 │
 ├── configs/                # Deploy config files
@@ -35,11 +41,13 @@
 │
 ├── scripts/                # Build/Dev/Deploy scripts
 │   ├── build.ps1           # Frontend build + Go cross-compile
-│   ├── dev.ps1             # Frontend HMR + Go backend
+│   ├── dev.ps1             # Frontend build + Go dev server
 │   └── deploy.ps1          # Build + SSH deploy
 │
 ├── .local/                 # Local dev config (gitignored)
 │   └── app.config.yaml
+│
+├── data/                   # SQLite database (gitignored)
 │
 ├── deploy/                 # Build artifacts (gitignored)
 │   ├── linux/
@@ -57,7 +65,7 @@
 cd web && npm install && npm run build && cd ..
 go mod tidy
 
-# Dev mode (frontend HMR + Go backend)
+# Dev mode (frontend build + Go server)
 .\scripts\dev.ps1
 
 # Build (outputs to deploy/linux, deploy/windows)
@@ -66,16 +74,31 @@ go mod tidy
 
 ## Architecture
 
-- **Frontend**: React + Vite + Tailwind CSS (SPA)
-- **Backend**: Go HTTP server with `go:embed` (single binary)
-- **Deploy**: Single executable serves both API and frontend
-- **cmd/**: Each subdirectory is a separate binary (server, tools, etc.)
+| Layer | Technology | Notes |
+|-------|-----------|-------|
+| Frontend | React + TypeScript | Vite build |
+| Styling | Tailwind CSS | Utility-first |
+| UI Components | shadcn/ui | Radix-based, `npx shadcn@latest add <component>` |
+| Backend | Go (Golang) | net/http router + API server |
+| Database | SQLite (modernc.org/sqlite) | CGo-free, WAL mode, `data/app.db` |
+| Deploy | Go single binary | React build → go:embed → single executable |
+
+## Adding shadcn/ui Components
+
+```bash
+cd web
+npx shadcn@latest add card
+npx shadcn@latest add dialog
+npx shadcn@latest add input
+```
+
+Components are added to `web/src/components/ui/`.
 
 ## API
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | /api/health | Health check |
+| GET | /api/health | Health check (server + database) |
 
 ## Config (`app.config.yaml`)
 
@@ -83,6 +106,9 @@ go mod tidy
 server:
   host: "0.0.0.0"
   port: {{PORT}}
+
+database:
+  path: "data/app.db"
 ```
 
 - **Dev**: `.local/app.config.yaml` (gitignored)

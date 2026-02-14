@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"io/fs"
 	"net/http"
+
+	"{{MODULE_NAME}}/internal/database"
 )
 
-func New(frontend fs.FS) http.Handler {
+func New(frontend fs.FS, db *database.DB) http.Handler {
 	mux := http.NewServeMux()
 
 	// API routes
-	mux.HandleFunc("GET /api/health", handleHealth)
+	mux.HandleFunc("GET /api/health", handleHealth(db))
 
 	// Frontend (SPA fallback)
 	mux.Handle("/", spaHandler(frontend))
@@ -40,11 +42,18 @@ func spaHandler(frontend fs.FS) http.Handler {
 	})
 }
 
-func handleHealth(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"status": "ok",
-	})
+func handleHealth(db *database.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		dbStatus := "ok"
+		if err := db.Ping(); err != nil {
+			dbStatus = "error"
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"status":   "ok",
+			"database": dbStatus,
+		})
+	}
 }
 
 func corsMiddleware(next http.Handler) http.Handler {

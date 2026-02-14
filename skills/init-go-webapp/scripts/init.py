@@ -141,7 +141,8 @@ def main():
 
     # Create empty directories
     for d in ['.local', 'deploy/linux', 'deploy/windows', 'data',
-              'web/src/components', 'web/src/pages', 'web/src/utils', 'web/public',
+              'web/src/components/ui', 'web/src/pages', 'web/src/lib',
+              'web/src/hooks', 'web/public',
               'cmd']:
         os.makedirs(os.path.join(output_dir, d), exist_ok=True)
 

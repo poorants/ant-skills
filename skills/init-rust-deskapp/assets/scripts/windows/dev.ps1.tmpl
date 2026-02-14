@@ -1,12 +1,12 @@
 # {{PROJECT_NAME}} - Development Mode
-# Runs Tauri dev server with hot reload
+# Builds frontend then runs Tauri desktop app
 
 $ErrorActionPreference = "Stop"
 
-Push-Location $PSScriptRoot/..
+Push-Location $PSScriptRoot/../..
 
 try {
-    Write-Host "Starting {{PROJECT_NAME}} in dev mode..." -ForegroundColor Cyan
+    Write-Host "=== {{PROJECT_NAME}} Dev Mode ===" -ForegroundColor Cyan
 
     # Check if node_modules exists
     if (-not (Test-Path "web/node_modules")) {
@@ -16,9 +16,16 @@ try {
         Pop-Location
     }
 
-    # Run tauri dev
+    # [1] Build frontend
+    Write-Host "[1] Building frontend..." -ForegroundColor Yellow
     Push-Location web
-    npm run tauri dev
+    npm run build
+    Pop-Location
+
+    # [2] Run Tauri app (loads from web/dist)
+    Write-Host "[2] Starting Tauri app..." -ForegroundColor Yellow
+    Push-Location src-tauri
+    cargo run
     Pop-Location
 }
 finally {

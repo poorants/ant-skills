@@ -1,20 +1,20 @@
 import { useState } from 'react'
-import { invoke } from './lib/tauri'
+import { invoke } from '@/lib/tauri'
+import { Button } from '@/components/ui/button'
 
 function App() {
   const [name, setName] = useState('')
   const [greeting, setGreeting] = useState('')
 
   async function handleGreet() {
-    // Call Rust command via IPC
     const result = await invoke<string>('greet', { name })
     setGreeting(result)
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="bg-card p-8 rounded-lg border shadow-sm w-96">
+        <h1 className="text-2xl font-bold tracking-tight mb-6">
           {{WINDOW_TITLE}}
         </h1>
 
@@ -24,18 +24,15 @@ function App() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter your name"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
 
-          <button
-            onClick={handleGreet}
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
-          >
+          <Button onClick={handleGreet} className="w-full">
             Greet
-          </button>
+          </Button>
 
           {greeting && (
-            <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
+            <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
               {greeting}
             </p>
           )}

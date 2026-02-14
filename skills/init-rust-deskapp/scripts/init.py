@@ -245,7 +245,8 @@ def main():
             os.rename(gitignore_src, gitignore_dst)
 
     # Create empty directories
-    for d in ['web/src/components', 'web/src/pages', 'web/public',
+    for d in ['web/src/components/ui', 'web/src/pages', 'web/src/lib',
+              'web/src/hooks', 'web/public',
               'src-tauri/icons']:
         os.makedirs(os.path.join(output_dir, d), exist_ok=True)
 

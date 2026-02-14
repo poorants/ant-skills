@@ -1,13 +1,21 @@
 ---
 name: init-rust-deskapp
-description: Initialize a Rust + React desktop application with Tauri. Creates a complete project scaffold with React (Vite + Tailwind CSS) frontend and Rust backend using Tauri's Command-based IPC. Use when the user wants to create a desktop app, start a Tauri project, initialize with "init rust deskapp", "러스트 데스크탑 앱", "타우리 프로젝트", "Tauri setup", "desktop app with Rust".
+description: Initialize a Rust + React desktop application with Tauri. Creates a complete project scaffold with React (Vite + Tailwind CSS + shadcn/ui) frontend and Rust backend using Tauri's Command-based IPC. Use when the user wants to create a desktop app, start a Tauri project, initialize with "init rust deskapp", "러스트 데스크탑 앱", "타우리 프로젝트", "Tauri setup", "desktop app with Rust".
 ---
 
 # init-rust-deskapp
 
-Initialize a Rust + React (Tauri) desktop application.
+Initialize a Rust + React (Tauri) desktop application with shadcn/ui.
 
 Frontend communicates with Rust backend via Tauri Commands (IPC). Produces native desktop apps for Windows, macOS, and Linux.
+
+## Default Frontend Stack
+
+| Layer | Technology | Notes |
+|-------|-----------|-------|
+| Frontend | React + TypeScript | Vite build |
+| Styling | Tailwind CSS | Utility-first |
+| UI Components | shadcn/ui | Radix-based components |
 
 ## Init Workflow
 
@@ -61,16 +69,20 @@ Scripts automatically install npm dependencies if needed.
 │       └── commands/       # IPC command handlers
 │           └── mod.rs
 │
-├── web/                    # React + Vite + Tailwind CSS
+├── web/                    # React + Vite + Tailwind CSS + shadcn/ui
 │   ├── src/
 │   │   ├── App.tsx         # Main component with example IPC
 │   │   ├── main.tsx
-│   │   ├── index.css       # Tailwind directives
+│   │   ├── index.css       # Tailwind + shadcn/ui CSS variables
 │   │   ├── components/
-│   │   └── lib/
-│   │       └── tauri.ts    # Tauri invoke wrapper
+│   │   │   └── ui/         # shadcn/ui components (Button included)
+│   │   ├── lib/
+│   │   │   ├── utils.ts    # cn() utility for class merging
+│   │   │   └── tauri.ts    # Tauri invoke wrapper
+│   │   └── hooks/
 │   ├── index.html
-│   ├── package.json        # Includes @tauri-apps/cli
+│   ├── package.json        # Includes @tauri-apps/cli + shadcn/ui deps
+│   ├── components.json     # shadcn/ui configuration
 │   ├── vite.config.ts
 │   ├── tailwind.config.js
 │   ├── postcss.config.js
@@ -78,11 +90,11 @@ Scripts automatically install npm dependencies if needed.
 │
 ├── scripts/
 │   ├── windows/
-│   │   ├── dev.ps1         # npm run tauri dev
-│   │   └── build.ps1       # npm run tauri build
+│   │   ├── dev.ps1         # npm build + cargo run
+│   │   └── build.ps1       # npm build + cargo build
 │   └── unix/
-│       ├── dev.sh          # npm run tauri dev
-│       └── build.sh        # npm run tauri build
+│       ├── dev.sh          # npm build + cargo run
+│       └── build.sh        # npm build + cargo build
 │
 ├── deploy/                 # Build output (gitignored)
 │   ├── windows/            # .msi, .exe
@@ -108,11 +120,14 @@ Scripts automatically install npm dependencies if needed.
 - **`src-tauri/src/commands/`**: organized IPC handlers
 - **Command-based IPC**: type-safe communication via `invoke()`
 - **No HTML single files**: Always use React + Tailwind for UI
+- **shadcn/ui**: copy-paste component model, no runtime dependency, full customization
+- **Dev mode**: `npm run build` → `cargo run` (single process, no Vite dev server)
 
 ## Development Guidelines (CLAUDE.md)
 
 The generated CLAUDE.md enforces:
 
-1. **Always React + Tailwind**: Never create HTML single-file pages
+1. **Always React + Tailwind + shadcn/ui**: Never create HTML single-file pages
 2. **Command IPC**: Frontend calls Rust via `invoke("command_name", { args })`
 3. **Type safety**: Define types for both Rust and TypeScript
+4. **Add components**: `cd web && npx shadcn@latest add <component>`

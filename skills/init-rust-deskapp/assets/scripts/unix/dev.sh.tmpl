@@ -1,6 +1,6 @@
 #!/bin/bash
 # {{PROJECT_NAME}} - Development Mode
-# Runs Tauri dev server with hot reload
+# Builds frontend then runs Tauri desktop app
 
 set -e
 
@@ -11,7 +11,7 @@ fi
 
 cd "$(dirname "$0")/../.."
 
-echo "Starting {{PROJECT_NAME}} in dev mode..."
+echo "=== {{PROJECT_NAME}} Dev Mode ==="
 
 # Check if node_modules exists
 if [ ! -d "web/node_modules" ]; then
@@ -19,5 +19,10 @@ if [ ! -d "web/node_modules" ]; then
     cd web && npm install && cd ..
 fi
 
-# Run tauri dev from project root (uses web/node_modules/.bin/tauri)
-./web/node_modules/.bin/tauri dev
+# [1] Build frontend
+echo "[1] Building frontend..."
+cd web && npm run build && cd ..
+
+# [2] Run Tauri app (loads from web/dist)
+echo "[2] Starting Tauri app..."
+cd src-tauri && cargo run

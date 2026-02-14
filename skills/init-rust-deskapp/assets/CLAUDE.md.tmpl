@@ -16,13 +16,17 @@ Rust + React (Tauri) Desktop Application
 │   │       └── mod.rs
 │   └── icons/
 │
-├── web/                    # React + Vite + Tailwind CSS
+├── web/                    # React + Vite + Tailwind CSS + shadcn/ui
 │   ├── src/
 │   │   ├── App.tsx
 │   │   ├── components/
-│   │   └── lib/
-│   │       └── tauri.ts    # Tauri invoke wrapper
+│   │   │   └── ui/         # shadcn/ui components
+│   │   ├── lib/
+│   │   │   ├── utils.ts    # cn() utility
+│   │   │   └── tauri.ts    # Tauri invoke wrapper
+│   │   └── hooks/
 │   ├── package.json
+│   ├── components.json     # shadcn/ui config
 │   └── ...
 │
 ├── scripts/
@@ -50,11 +54,12 @@ Scripts automatically install npm dependencies if needed.
 
 ## Development Rules
 
-### 1. Always Use React + Tailwind
+### 1. Always Use React + Tailwind + shadcn/ui
 
 **NEVER create HTML single-file pages.** All UI must be built with:
 - React components in `web/src/`
 - Tailwind CSS for styling
+- shadcn/ui for UI components (`cd web && npx shadcn@latest add <component>`)
 - TypeScript for type safety
 
 ### 2. Frontend-Backend Communication (IPC)
