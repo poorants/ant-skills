@@ -21,7 +21,10 @@
         "./skills/init-rust-deskapp",
         "./skills/skill-doctor",
         "./skills/project-kickstart",
-        "./skills/naver-maps"
+        "./skills/naver-maps",
+        "./skills/fe-component-rules",
+        "./skills/fe-design-tokens",
+        "./skills/fe-style-guide"
       ]
     }
   ]
