@@ -10,23 +10,16 @@
   },
   "plugins": [
     {
-      "name": "docs-tools",
-      "description": "Document management skills collection",
-      "source": "./",
-      "strict": false,
-      "skills": [
-        "./skills/para-docs",
-        "./skills/ant-profile"
-      ]
-    },
-    {
       "name": "ant-dev-tools",
       "description": "Development project initialization and tooling skills",
       "source": "./",
       "strict": false,
       "skills": [
+        "./skills/para-docs",
+        "./skills/ant-profile",
         "./skills/init-go-webapp",
-        "./skills/init-rust-deskapp"
+        "./skills/init-rust-deskapp",
+        "./skills/skill-doctor"
       ]
     }
   ]
