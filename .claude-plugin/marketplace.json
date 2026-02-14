@@ -20,7 +20,8 @@
         "./skills/init-go-webapp",
         "./skills/init-rust-deskapp",
         "./skills/skill-doctor",
-        "./skills/project-kickstart"
+        "./skills/project-kickstart",
+        "./skills/naver-maps"
       ]
     }
   ]
