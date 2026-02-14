@@ -19,7 +19,8 @@
         "./skills/ant-profile",
         "./skills/init-go-webapp",
         "./skills/init-rust-deskapp",
-        "./skills/skill-doctor"
+        "./skills/skill-doctor",
+        "./skills/project-kickstart"
       ]
     }
   ]

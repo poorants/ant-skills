@@ -31,21 +31,13 @@ Manage project documentation using the PARA method. All documents live under `pa
 **When**: First `para/` interaction OR `para/` directory missing.
 **Auto-execute without confirmation** — this operation is idempotent.
 
-Create the directory structure:
+Run a single Bash command to create the full structure:
 
-```
-para/
-├── projects/
-├── areas/
-├── resources/
-└── archives/
+```bash
+mkdir -p para/projects para/areas para/resources para/archives && touch para/projects/.gitkeep para/areas/.gitkeep para/resources/.gitkeep para/archives/.gitkeep
 ```
 
-Steps:
-1. Check if `para/` exists using Glob
-2. Create missing directories using Bash `mkdir -p`
-3. Add `.gitkeep` to each empty directory using Write
-4. Report what was created
+Report what was created.
 
 ## Create Workflow
 
