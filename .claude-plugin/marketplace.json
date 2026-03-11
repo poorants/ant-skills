@@ -24,7 +24,9 @@
         "./skills/naver-maps",
         "./skills/fe-component-rules",
         "./skills/fe-design-tokens",
-        "./skills/fe-style-guide"
+        "./skills/fe-style-guide",
+        "./skills/project-retrospective",
+        "./skills/work-report"
       ]
     }
   ]
