@@ -31,10 +31,10 @@ Manage project documentation using the PARA method. All documents live under `pa
 **When**: First `para/` interaction OR `para/` directory missing.
 **Auto-execute without confirmation** — this operation is idempotent.
 
-Run a single Bash command to create the full structure:
+Run [scripts/init.py](scripts/init.py):
 
 ```bash
-mkdir -p para/projects para/areas para/resources para/archives && touch para/projects/.gitkeep para/areas/.gitkeep para/resources/.gitkeep para/archives/.gitkeep
+python scripts/init.py --output .
 ```
 
 Report what was created.
