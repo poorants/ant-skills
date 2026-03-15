@@ -62,14 +62,25 @@ Create initial project documents through a guided interview.
    - **Scope** — what is included and excluded
    - **Tech stack** (optional)
 2. Save config to `.project-plan.json`
-3. Generate `{output-dir}/PROJECT-OVERVIEW.md` using [references/project-overview-template.md](references/project-overview-template.md)
-4. Ask the user to define initial phases:
+3. Ensure `.project-plan.json` is in `.gitignore`:
+   - If `.gitignore` exists: check if `.project-plan.json` is already listed; if not, append with a comment:
+     ```
+     # Added by project-plan skill
+     .project-plan.json
+     ```
+   - If `.gitignore` does not exist: create it with:
+     ```
+     # Added by project-plan skill
+     .project-plan.json
+     ```
+4. Generate `{output-dir}/PROJECT-OVERVIEW.md` using [references/project-overview-template.md](references/project-overview-template.md)
+5. Ask the user to define initial phases:
    - Phase number (auto-assign sequentially from 0)
    - Name and description
    - Features (map to PDCA feature names)
    - Dependencies (which phases must complete first)
-5. Generate `{output-dir}/ROADMAP.md` using [references/roadmap-template.md](references/roadmap-template.md)
-6. If `CONCEPT.md` exists in the project root, reference it for context during the interview
+6. Generate `{output-dir}/ROADMAP.md` using [references/roadmap-template.md](references/roadmap-template.md)
+7. If `CONCEPT.md` exists in the project root, reference it for context during the interview
 
 ### `status` (default)
 
