@@ -26,7 +26,8 @@
         "./skills/fe-design-tokens",
         "./skills/fe-style-guide",
         "./skills/project-retrospective",
-        "./skills/work-report"
+        "./skills/work-report",
+        "./skills/project-plan"
       ]
     }
   ]
