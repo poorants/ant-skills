@@ -19,6 +19,9 @@ Desktop.ini
 # Claude Code local settings
 .claude/
 
+# bkit local state
+.bkit/
+
 # Environment
 .env
 .env.local
