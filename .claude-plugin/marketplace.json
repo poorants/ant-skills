@@ -10,24 +10,32 @@
   },
   "plugins": [
     {
-      "name": "ant-dev-tools",
-      "description": "Development project initialization and tooling skills",
+      "name": "ant-project-kit",
+      "description": "Project lifecycle management — kickstart, planning, tracking, and retrospective",
       "source": "./",
       "strict": false,
       "skills": [
+        "./skills/project-kickstart",
+        "./skills/project-plan",
+        "./skills/project-retrospective",
+        "./skills/work-report",
         "./skills/para-docs",
-        "./skills/ant-profile",
+        "./skills/init-permissions",
+        "./skills/skill-doctor"
+      ]
+    },
+    {
+      "name": "ant-app-kit",
+      "description": "App scaffolding, frontend tooling, and external service integrations",
+      "source": "./",
+      "strict": false,
+      "skills": [
         "./skills/init-go-webapp",
         "./skills/init-rust-deskapp",
-        "./skills/skill-doctor",
-        "./skills/project-kickstart",
-        "./skills/naver-maps",
         "./skills/fe-component-rules",
         "./skills/fe-design-tokens",
         "./skills/fe-style-guide",
-        "./skills/project-retrospective",
-        "./skills/work-report",
-        "./skills/project-plan"
+        "./skills/naver-maps"
       ]
     }
   ]
