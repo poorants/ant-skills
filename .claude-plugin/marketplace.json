@@ -21,7 +21,8 @@
         "./skills/work-report",
         "./skills/para-docs",
         "./skills/init-permissions",
-        "./skills/skill-doctor"
+        "./skills/skill-doctor",
+        "./skills/doc-review"
       ]
     },
     {
