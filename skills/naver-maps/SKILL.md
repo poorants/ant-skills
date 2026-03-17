@@ -1,6 +1,6 @@
 ---
 name: naver-maps
-description: Naver Cloud Platform Maps API integration helper for React + Vite projects. Covers NCP console setup, SDK loading, map component patterns, marker/overlay APIs, and common pitfalls. Use when adding or modifying Naver Maps features, debugging map rendering issues, or setting up NCP credentials. Triggers include naver map, naver maps, NCP maps, map marker, map overlay, ncpKeyId, map tiles, map component, marker.
+description: Naver Cloud Platform Maps API integration helper for React + Vite projects. Covers NCP console setup, SDK loading, map component patterns, marker/overlay APIs, and common pitfalls. Use when adding or modifying Naver Maps features, debugging map rendering issues, or setting up NCP credentials. Triggers include naver map, naver maps, NCP maps, map marker, map overlay, ncpKeyId, map tiles, map component, marker, 네이버 지도, 지도 API, 지도 마커, 지도 오버레이, NCP 지도, 지도 컴포넌트, 지도 타일, 지도 초기화.
 ---
 
 # Naver Cloud Platform Maps API - Helper Skill

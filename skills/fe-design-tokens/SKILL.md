@@ -1,6 +1,6 @@
 ---
 name: fe-design-tokens
-description: Manage design tokens (CSS variables) for Tailwind CSS + shadcn/ui theming. Single source of truth for all design values in web/src/index.css. Use when adding colors, changing themes, creating new design values, or when hardcoded CSS values are detected. Triggers include design tokens, color, theme, radius, shadow, dark mode, CSS variables, 디자인 토큰, 테마, 다크모드.
+description: Manage design tokens (CSS variables) for Tailwind CSS + shadcn/ui theming. Single source of truth for all design values in web/src/index.css. Use when adding colors, changing themes, creating new design values, or when hardcoded CSS values are detected. Triggers include design tokens, color, theme, radius, shadow, dark mode, CSS variables, 디자인 토큰, 테마, 다크모드, 색상, CSS 변수, 테마 변경, 토큰 추가, 디자인 값.
 ---
 
 # Design Tokens

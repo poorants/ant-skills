@@ -1,6 +1,6 @@
 ---
 name: fe-style-guide
-description: Tailwind CSS styling conventions and patterns for consistent UI development. Covers class ordering, responsive design, dark mode, animation, and layout patterns. Use when writing JSX/TSX with Tailwind classes, reviewing styling consistency, implementing responsive layouts, or adding dark mode support. Triggers include style, styling, CSS, Tailwind, responsive, dark mode, layout, animation, 스타일, 반응형, 다크모드.
+description: Tailwind CSS styling conventions and patterns for consistent UI development. Covers class ordering, responsive design, dark mode, animation, and layout patterns. Use when writing JSX/TSX with Tailwind classes, reviewing styling consistency, implementing responsive layouts, or adding dark mode support. Triggers include style, styling, CSS, Tailwind, responsive, dark mode, layout, animation, 스타일, 반응형, 다크모드, 스타일 가이드, 레이아웃, 애니메이션, CSS 규칙, 스타일링.
 ---
 
 # Style Guide

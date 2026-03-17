@@ -1,6 +1,6 @@
 ---
 name: init-rust-deskapp
-description: Initialize a Rust + React desktop application with Tauri. Creates a complete project scaffold with React (Vite + Tailwind CSS + shadcn/ui) frontend and Rust backend using Tauri's Command-based IPC. Use when the user wants to create a desktop app, start a Tauri project, initialize with "init rust deskapp", "러스트 데스크탑 앱", "타우리 프로젝트", "Tauri setup", "desktop app with Rust".
+description: Initialize a Rust + React desktop application with Tauri. Creates a complete project scaffold with React (Vite + Tailwind CSS + shadcn/ui) frontend and Rust backend using Tauri's Command-based IPC. Use when the user wants to create a desktop app, start a Tauri project, initialize with "init rust deskapp", "러스트 데스크탑 앱", "타우리 프로젝트", "Tauri setup", "desktop app with Rust", "데스크탑 앱 만들기", "Rust 앱 초기화", "데스크탑 애플리케이션".
 ---
 
 # init-rust-deskapp

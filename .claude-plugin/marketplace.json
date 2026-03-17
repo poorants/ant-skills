@@ -22,7 +22,8 @@
         "./skills/para-docs",
         "./skills/init-permissions",
         "./skills/skill-doctor",
-        "./skills/doc-review"
+        "./skills/doc-review",
+        "./skills/code-convention"
       ]
     },
     {

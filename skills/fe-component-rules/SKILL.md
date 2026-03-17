@@ -1,6 +1,6 @@
 ---
 name: fe-component-rules
-description: Component architecture rules for React + TypeScript + shadcn/ui projects. Enforces reusable component structure, naming conventions, props design, and directory organization under web/src/components/. Use when creating new components, refactoring UI, detecting repeated patterns, or reviewing component structure. Triggers include component, 컴포넌트, refactor UI, extract component, reusable, props design.
+description: Component architecture rules for React + TypeScript + shadcn/ui projects. Enforces reusable component structure, naming conventions, props design, and directory organization under web/src/components/. Use when creating new components, refactoring UI, detecting repeated patterns, or reviewing component structure. Triggers include component, 컴포넌트, refactor UI, extract component, reusable, props design, 컴포넌트 규칙, 컴포넌트 구조, 컴포넌트 추출, 재사용 컴포넌트, UI 패턴, 컴포넌트 설계.
 ---
 
 # Component Rules

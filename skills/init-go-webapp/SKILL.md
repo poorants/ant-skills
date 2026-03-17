@@ -1,6 +1,6 @@
 ---
 name: init-go-webapp
-description: Initialize a Go + React single-binary web application project. Creates a complete project scaffold with React (Vite + Tailwind CSS + shadcn/ui) frontend and Go backend with SQLite, embedded into a single binary via go:embed. Use when the user wants to create a new Go web app, start a new fullstack project with Go backend, scaffold a single-binary web service, or initialize a project with "init go webapp", "new go project", "Go 웹앱 초기화", "새 프로젝트 만들어줘", "Go+React 프로젝트".
+description: Initialize a Go + React single-binary web application project. Creates a complete project scaffold with React (Vite + Tailwind CSS + shadcn/ui) frontend and Go backend with SQLite, embedded into a single binary via go:embed. Use when the user wants to create a new Go web app, start a new fullstack project with Go backend, scaffold a single-binary web service, or initialize a project with "init go webapp", "new go project", "Go 웹앱 초기화", "새 프로젝트 만들어줘", "Go+React 프로젝트", "Go 웹 애플리케이션", "싱글 바이너리", "Go 백엔드 프로젝트".
 ---
 
 # init-go-webapp
