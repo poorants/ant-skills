@@ -61,6 +61,10 @@ Create initial project documents through a guided interview.
    - **Core goals** — 2-5 measurable objectives
    - **Scope** — what is included and excluded
    - **Tech stack** (optional)
+   - **Tracking rules** — how to determine project progress:
+     - Development status: tracked path (e.g., `src/`), completion criteria
+     - Documentation status: tracked path (e.g., `docs/`), completion criteria
+     - Additional tracking (optional): e.g., CHANGELOG.md, version in package.json
 2. Save config to `.project-plan.json`
 3. Ensure `.project-plan.json` is in `.gitignore`:
    - If `.gitignore` exists: check if `.project-plan.json` is already listed; if not, append with a comment:
@@ -87,25 +91,27 @@ Create initial project documents through a guided interview.
 Display a progress dashboard.
 
 1. Read `.project-plan.json` for output path
-2. Read `{output-dir}/ROADMAP.md`
-3. Read `.pdca-status.json` if it exists
-4. Calculate progress per phase and overall
-5. Present the dashboard:
+2. Read `{output-dir}/PROJECT-OVERVIEW.md` — especially the **Tracking Rules** section
+3. Read `{output-dir}/ROADMAP.md`
+4. Read `.pdca-status.json` if it exists
+5. **Apply tracking rules**: check each tracked path/criteria defined in Tracking Rules to assess actual dev/doc status per feature
+6. Calculate progress per phase and overall
+7. Present the dashboard:
 
 ```
 Project Roadmap
 ================
 
-Phase  Description          Features  Done  Progress  Status
------  -------------------  --------  ----  --------  -----------
-  0    Foundation           3         2     67%       In Progress
-  1    Core features        4         0     0%        Planned
-  2    Extensions           3         0     0%        Blocked
-─────────────────────────────────────────────────────────────────
-       Total                10        2     20%
+Phase  Description          Features  Dev   Doc   Progress  Status
+-----  -------------------  --------  ----  ----  --------  -----------
+  0    Foundation           3         2/3   1/3   50%       In Progress
+  1    Core features        4         0/4   0/4   0%        Planned
+  2    Extensions           3         0/3   0/3   0%        Blocked
+─────────────────────────────────────────────────────────────────────────
+       Total                10        2/10  1/10  15%
 
 Status: 1/3 phases done, 1 in progress
-Next recommended: Phase 0 — finish db-schema
+Next recommended: Phase 0 — finish db-schema (doc missing for: auth, config)
 ```
 
 ### `add`
@@ -150,36 +156,48 @@ Recommend what to work on next.
 
 ### `sync`
 
-Synchronize ROADMAP.md progress from PDCA state.
+Synchronize ROADMAP.md progress from tracking rules and PDCA state.
 
-1. Read `.pdca-status.json`
-2. For each feature listed, update its status in `{output-dir}/ROADMAP.md`:
-   - matchRate >= 90% → mark `[x]` with "(Done, {rate}%)"
-   - PDCA phase exists → mark `[ ]` with "(In Progress, {phase})"
-3. Recalculate phase progress percentages
-4. Update the Progress summary table
-5. Add a Changelog entry noting what changed
+1. Read `{output-dir}/PROJECT-OVERVIEW.md` — extract **Tracking Rules**
+2. Read `.pdca-status.json` if it exists
+3. **Check development status**: for each feature, verify against the dev tracking path and criteria
+4. **Check documentation status**: for each feature, verify against the doc tracking path and criteria
+5. **Check additional tracking**: verify any extra rules (e.g., CHANGELOG updated, version bumped)
+6. For each feature, update its status in `{output-dir}/ROADMAP.md`:
+   - Dev done + Doc done → mark `[x]` with "(Done)"
+   - Dev done, Doc missing → mark `[ ]` with "(Dev done, doc pending)"
+   - Dev in progress → mark `[ ]` with "(In Progress)"
+   - PDCA matchRate >= 90% can also mark as Done (backwards compatible)
+7. Recalculate phase progress percentages
+8. Update the Progress summary table
+9. Add a Changelog entry noting what changed
 
 ## Status Definitions
 
 | Status | Condition |
 |--------|-----------|
-| **Done** | All features have matchRate >= 90% in `.pdca-status.json` |
-| **In Progress** | At least one feature has a PDCA entry (phase < completed) |
+| **Done** | All features satisfy tracking rules (dev + doc criteria met), OR matchRate >= 90% in `.pdca-status.json` |
+| **In Progress** | At least one feature has dev or doc work started |
 | **Planned** | In roadmap, no features started |
 | **Blocked** | Dependencies not yet satisfied (prerequisite phase not Done) |
 
 ## Progress Calculation
 
+Progress is determined by the **Tracking Rules** in `PROJECT-OVERVIEW.md`. Each feature is assessed on two axes:
+
 ```
-Feature status:
-  Done        = .pdca-status.json matchRate >= 90%
-  InProgress  = PDCA phase exists (plan, design, do, check)
-  Planned     = registered in ROADMAP.md, no PDCA entry
+Feature status (per tracking rules):
+  Dev Done    = satisfies development tracking criteria
+  Doc Done    = satisfies documentation tracking criteria
+  Done        = Dev Done AND Doc Done (or matchRate >= 90% via PDCA)
+  InProgress  = dev or doc work exists but criteria not fully met
+  Planned     = registered in ROADMAP.md, no work started
 
 Phase progress  = count(Done features) / count(total features) × 100%
 Overall progress = count(all Done features) / count(all features) × 100%
 ```
+
+If no Tracking Rules are defined in `PROJECT-OVERVIEW.md`, fall back to `.pdca-status.json` only.
 
 ## Rules
 
@@ -187,7 +205,9 @@ Overall progress = count(all Done features) / count(all features) × 100%
 - A phase can contain multiple PDCA features
 - A PDCA feature belongs to exactly one phase
 - The `sync` command is the bridge between PDCA state and the roadmap
-- `PROJECT-OVERVIEW.md` is user-maintained; the skill reads but does not overwrite it
+- `PROJECT-OVERVIEW.md` is user-maintained; the skill reads but does not overwrite it (except Tracking Rules section during `init`)
+- Tracking Rules in `PROJECT-OVERVIEW.md` are the source of truth for how progress is assessed
+- If Tracking Rules are absent, the skill falls back to PDCA-only tracking for backwards compatibility
 - `ROADMAP.md` is skill-managed; manual edits are preserved during sync
 - All generated documents are written in English
 - When `CONCEPT.md` exists, use it as context for `init` but do not modify it

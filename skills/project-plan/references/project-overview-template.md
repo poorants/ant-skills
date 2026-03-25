@@ -39,6 +39,20 @@
 | Database | {e.g., PostgreSQL, SQLite} |
 | Deployment | {e.g., Vercel, Docker, K8s} |
 
+## Tracking Rules
+
+### Development Status
+- **Path**: {e.g., src/, lib/}
+- **Completion criteria**: {e.g., feature code exists and builds, tests pass}
+
+### Documentation Status
+- **Path**: {e.g., docs/, wiki/}
+- **Completion criteria**: {e.g., feature doc exists and reflects latest code}
+
+### Additional Tracking (Optional)
+- {e.g., CHANGELOG.md — release notes updated per phase}
+- {e.g., package.json version — matches current phase}
+
 ## Related Documents
 
 - [ROADMAP.md](ROADMAP.md) — Phase plan and progress tracking
@@ -57,4 +71,5 @@
 | Scope — Included | Yes | What the project delivers |
 | Scope — Excluded | Recommended | Prevents scope creep |
 | Tech Stack | Optional | Fill in what is decided; skip unknowns |
+| Tracking Rules | Yes | Define paths and criteria for dev/doc status tracking |
 | Related Documents | Auto | Skill adds links automatically |
