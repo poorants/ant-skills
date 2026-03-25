@@ -1,6 +1,6 @@
 ---
 name: project-plan
-description: "Manage project roadmap with phase-based planning and PDCA integration. Use when user says /project-plan, 'roadmap', 'project status', 'what phases remain', 'add phase', 'update roadmap', 'project progress', 'what should I work on next', or asks about overall project progress. Triggers include 프로젝트 계획, 로드맵, 프로젝트 현황, 단계 추가, 로드맵 업데이트, 프로젝트 진행, 다음 작업, 프로젝트 상태."
+description: "Manage project roadmap with phase-based planning and PDCA integration. Use when user says /project-plan, 'roadmap', 'project status', 'what phases remain', 'add phase', 'update roadmap', 'project progress', 'what should I work on next', or asks about overall project progress. Triggers include 프로젝트 계획, 프로젝트 플랜, 프로젝트 plan, 로드맵, 프로젝트 현황, 단계 추가, 로드맵 업데이트, 플랜 업데이트, 프로젝트 진행, 다음 작업, 프로젝트 상태, 프로젝트 최신화, 로드맵 최신화, 플랜 최신화, 로드맵 갱신, 플랜 갱신, 진행 상황, 남은 작업, 뭐부터 하면 돼, 다음에 뭐 해."
 ---
 
 # project-plan: Project Roadmap Manager
