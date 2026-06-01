@@ -11,33 +11,12 @@
   "plugins": [
     {
       "name": "ant-project-kit",
-      "description": "Project lifecycle management — kickstart, planning, tracking, and retrospective",
+      "description": "Code convention enforcement and PARA-based document management",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/project-kickstart",
-        "./skills/project-plan",
-        "./skills/project-retrospective",
-        "./skills/work-report",
-        "./skills/para-docs",
-        "./skills/init-permissions",
-        "./skills/skill-doctor",
-        "./skills/doc-review",
-        "./skills/code-convention"
-      ]
-    },
-    {
-      "name": "ant-app-kit",
-      "description": "App scaffolding, frontend tooling, and external service integrations",
-      "source": "./",
-      "strict": false,
-      "skills": [
-        "./skills/init-go-webapp",
-        "./skills/init-rust-deskapp",
-        "./skills/fe-component-rules",
-        "./skills/fe-design-tokens",
-        "./skills/fe-style-guide",
-        "./skills/naver-maps"
+        "./skills/code-convention",
+        "./skills/para-docs"
       ]
     }
   ]
