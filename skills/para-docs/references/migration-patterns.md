@@ -8,7 +8,7 @@ These directories are never scanned during migration:
 
 | Pattern | Reason |
 |---------|--------|
-| `para/` | Already in PARA structure |
+| `para/` (nested), or root `projects/`·`areas/`·`resources/`·`archives/` (flat) | Already in PARA structure |
 | `.git/` | Version control |
 | `node_modules/` | Dependencies |
 | `dist/`, `build/`, `out/` | Build output |
@@ -83,7 +83,7 @@ When filenames are not conclusive, scan the first ~50 lines of content:
 When a directory contains only one document file (`.md` or `.txt`), flatten it:
 
 ```
-docs/api/overview.md → para/resources/api-overview.md
+docs/api/overview.md → <base>/resources/api-overview.md
 ```
 
 ### Related File Groups
@@ -96,7 +96,7 @@ docs/project-alpha/
 ├── design.md
 └── timeline.md
 
-→ para/projects/project-alpha/
+→ <base>/projects/project-alpha/
   ├── requirements.md
   ├── design.md
   └── timeline.md
@@ -108,9 +108,9 @@ When a directory contains files that belong to different PARA categories, split 
 
 ```
 docs/
-├── api-reference.md    → para/resources/api-reference.md
-├── sprint-plan.md      → para/projects/sprint-plan.md
-└── coding-standards.md → para/areas/coding-standards.md
+├── api-reference.md    → <base>/resources/api-reference.md
+├── sprint-plan.md      → <base>/projects/sprint-plan.md
+└── coding-standards.md → <base>/areas/coding-standards.md
 ```
 
 ## Name Conflict Resolution
@@ -121,8 +121,8 @@ When the destination path already exists:
 2. **Different content**: Append a numeric suffix to the filename
 
 ```
-para/resources/api-reference.md       (existing)
-para/resources/api-reference-2.md     (new file with conflict)
+<base>/resources/api-reference.md       (existing)
+<base>/resources/api-reference-2.md     (new file with conflict)
 ```
 
 Always report conflicts in the migration plan so the user can decide.

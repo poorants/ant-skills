@@ -4,7 +4,7 @@
 
 ### 1. Projects Review
 
-For each item in `para/projects/`:
+For each item in `<base>/projects/`:
 
 - [ ] Is this project still active? (Last modified within 30 days)
 - [ ] Does it have a clear goal or deadline?
@@ -15,7 +15,7 @@ For each item in `para/projects/`:
 
 ### 2. Areas Review
 
-For each item in `para/areas/`:
+For each item in `<base>/areas/`:
 
 - [ ] Is this still an ongoing responsibility?
 - [ ] Is the documentation current and accurate?
@@ -26,7 +26,7 @@ For each item in `para/areas/`:
 
 ### 3. Resources Review
 
-For each item in `para/resources/`:
+For each item in `<base>/resources/`:
 
 - [ ] Is the information still accurate and relevant?
 - [ ] Has this been superseded by newer material?

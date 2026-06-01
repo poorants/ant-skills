@@ -68,7 +68,7 @@ Is this item actively being worked on?
 | Putting meeting notes in Resources | Meeting notes are project-specific | Put under the relevant project directory |
 | Keeping completed projects in Projects | Clutters active workspace | Move to Archives when done |
 | Putting style guides in Areas | Style guides are reference material | Use Resources for knowledge base items |
-| Creating top-level docs outside para/ | Breaks the PARA structure | All managed docs go under para/ |
+| Creating top-level docs outside the PARA base | Breaks the PARA structure | All managed docs go under the PARA base (`para/`, or the root category folders in flat mode) |
 
 ## Movement Patterns
 

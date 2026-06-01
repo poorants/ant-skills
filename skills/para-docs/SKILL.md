@@ -2,9 +2,10 @@
 name: para-docs
 description: >
   PARA-based project documentation manager. Organizes documents into
-  Projects, Areas, Resources, and Archives under a para/ directory.
-  Use when the user wants to manage documents, organize docs, create
-  meeting notes, archive projects, or review documentation status.
+  Projects, Areas, Resources, and Archives — directly at the project root
+  when those category folders already exist there, otherwise under a para/
+  directory. Use when the user wants to manage documents, organize docs,
+  create meeting notes, archive projects, or review documentation status.
   Triggers: "문서 관리해줘", "프로젝트 문서화해줘", "회의록 저장해줘",
   "para 정리해줘", "문서 아카이브해줘", "문서 리뷰해줘", "문서 검색해줘",
   "문서 마이그레이션", "기존 문서 정리",
@@ -15,25 +16,49 @@ description: >
 
 # PARA Document Manager
 
-Manage project documentation using the PARA method. All documents live under `para/` in the project root.
+Manage project documentation using the PARA method.
+
+## Path Resolution (do this first)
+
+Before any operation, resolve the **PARA base** — the location where the four
+category folders live. This is the first step of every workflow.
+
+1. If the project root already contains any of `projects/`, `areas/`,
+   `resources/`, or `archives/` → **flat mode**. The base is the project root
+   itself; categories are `projects/`, `areas/`, `resources/`, `archives/`
+   (no `para/` prefix).
+2. Otherwise → **nested mode**. The base is `para/`; categories are
+   `para/projects/`, `para/areas/`, and so on.
+3. If the project's `CLAUDE.md` states a documentation-layout convention
+   explicitly, that convention wins over the heuristic above.
+4. Once the mode is determined, stay consistent within that project.
+
+Throughout this document, `<base>/` denotes the resolved base — an empty prefix
+in flat mode, or `para/` in nested mode. Every path below is written relative to
+it.
 
 ## Quick Reference
 
 | Category | Path | Purpose | Lifespan |
 |----------|------|---------|----------|
-| **Projects** | `para/projects/` | Active work with deadlines and goals | Temporary — archive on completion |
-| **Areas** | `para/areas/` | Ongoing responsibilities without end date | Persistent — review periodically |
-| **Resources** | `para/resources/` | Reference material and collected knowledge | Persistent — update as needed |
-| **Archives** | `para/archives/` | Completed or inactive items from above | Permanent — read-only storage |
+| **Projects** | `<base>/projects/` | Active work with deadlines and goals | Temporary — archive on completion |
+| **Areas** | `<base>/areas/` | Ongoing responsibilities without end date | Persistent — review periodically |
+| **Resources** | `<base>/resources/` | Reference material and collected knowledge | Persistent — update as needed |
+| **Archives** | `<base>/archives/` | Completed or inactive items from above | Permanent — read-only storage |
 
 ## Init Workflow
 
-**When**: First `para/` interaction OR `para/` directory missing.
+**When**: First PARA interaction OR the category folders are missing.
 **Auto-execute without confirmation** — this operation is idempotent.
 
-Run [scripts/init.py](scripts/init.py):
+Resolve the base first (see Path Resolution), then run
+[scripts/init.py](scripts/init.py):
 
 ```bash
+# flat mode — categories created at the project root
+python scripts/init.py --output . --flat
+
+# nested mode — categories created under para/
 python scripts/init.py --output .
 ```
 
@@ -68,10 +93,10 @@ Naming convention: `kebab-case.md`
 - For directories: `kebab-case/<document-name>.md`
 
 Examples:
-- `para/projects/website-redesign/requirements.md`
-- `para/areas/team-onboarding.md`
-- `para/resources/api-reference.md`
-- `para/projects/website-redesign/2024-03-15-kickoff-notes.md`
+- `<base>/projects/website-redesign/requirements.md`
+- `<base>/areas/team-onboarding.md`
+- `<base>/resources/api-reference.md`
+- `<base>/projects/website-redesign/2024-03-15-kickoff-notes.md`
 
 ### Step 4: Write Content
 
@@ -86,7 +111,7 @@ Use plain markdown. No frontmatter required. Start with an H1 title.
 
 **Directory with multiple files:**
 ```
-para/projects/website-redesign/
+<base>/projects/website-redesign/
 ├── requirements.md
 ├── design-spec.md
 ├── 2024-03-15-kickoff-notes.md
@@ -149,7 +174,9 @@ Steps:
 Glob으로 프로젝트 전체 문서를 탐색한다.
 
 - 대상: `**/*.md`, `**/*.txt`
-- 제외: `para/`, `.git/`, `node_modules/` 등 비문서 디렉토리
+- 제외: 이미 PARA 카테고리 안에 있는 문서(flat 모드는 루트의
+  `projects/`·`areas/`·`resources/`·`archives/`, nested 모드는 `para/`),
+  그리고 `.git/`, `node_modules/` 등 비문서 디렉토리
 - 루트 메타데이터 파일 제외: `README.md`, `LICENSE`, `CHANGELOG.md` 등
 
 제외 패턴 상세는 `references/migration-patterns.md`를 참조한다.
@@ -166,7 +193,8 @@ Glob으로 프로젝트 전체 문서를 탐색한다.
 
 ### Step 3: Present Migration Plan
 
-분류 결과를 마이그레이션 계획으로 출력한다.
+분류 결과를 마이그레이션 계획으로 출력한다. 목적지 경로는 해결된 base를 따른다
+(flat 모드 예시).
 
 ```
 ## Migration Plan
@@ -174,8 +202,8 @@ Glob으로 프로젝트 전체 문서를 탐색한다.
 ### Classified (12 files)
 | Source | Destination | Reason |
 |--------|-------------|--------|
-| docs/api-spec.md | para/resources/api-spec.md | Reference material |
-| docs/roadmap.md | para/projects/roadmap.md | Active project with deadline |
+| docs/api-spec.md | resources/api-spec.md | Reference material |
+| old/roadmap.md | projects/roadmap.md | Active project with deadline |
 
 ### Manual Classification Needed (2 files)
 | Source | Notes |
@@ -208,7 +236,7 @@ Glob으로 프로젝트 전체 문서를 탐색한다.
 
 승인된 계획에 따라 파일을 이동한다.
 
-1. Init Workflow로 `para/` 구조 보장
+1. Init Workflow로 `<base>/` 구조 보장
 2. Bash `mv`로 파일 이동
 3. 관련 파일 그룹(같은 디렉토리의 연관 파일)은 디렉토리 구조 유지
 4. 디렉토리 처리 상세는 `references/migration-patterns.md` 참조
@@ -221,8 +249,8 @@ Glob으로 프로젝트 전체 문서를 탐색한다.
 ## Migration Report
 
 ### Completed (11 files)
-- docs/api-spec.md → para/resources/api-spec.md
-- docs/roadmap.md → para/projects/roadmap.md
+- docs/api-spec.md → resources/api-spec.md
+- old/roadmap.md → projects/roadmap.md
 
 ### Skipped (1 file)
 - notes/misc.md — user excluded
@@ -260,7 +288,7 @@ Use Glob to discover items and Bash `git log` or file stats for dates.
 
 ### Search
 
-Use Grep to search document content across `para/`.
+Use Grep to search document content across the PARA base.
 Use Glob to search by filename patterns.
 Report results with file paths and matching context.
 
@@ -299,7 +327,7 @@ Review report format:
 
 ## Rules
 
-1. **Auto-init**: If `para/` doesn't exist when any para operation is requested, create it automatically without asking. This is idempotent and safe.
+1. **Auto-init**: If the category folders don't exist when any PARA operation is requested, create them automatically without asking. This is idempotent and safe.
 
 2. **Never delete**: Documents are never deleted. Inactive items are moved to `archives/`. If the user explicitly asks to delete, warn them and suggest archiving instead. Only proceed with deletion after the user confirms twice.
 
@@ -313,6 +341,6 @@ Review report format:
 
 7. **User language**: Respond in the user's language. Document content follows the user's preference. PARA category directory names are always in English.
 
-8. **Relative paths**: When reporting paths to the user, use paths relative to the project root (e.g., `para/projects/my-doc.md`).
+8. **Relative paths**: When reporting paths to the user, use paths relative to the project root (e.g., `projects/my-doc.md` in flat mode, `para/projects/my-doc.md` in nested mode).
 
 9. **Migration safety**: Migrate는 파일을 이동하는 작업이므로 반드시 전체 마이그레이션 계획을 먼저 보여주고 사용자 승인을 받은 뒤 실행한다. 절대 자동 마이그레이션하지 않는다.
