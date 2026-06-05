@@ -4,10 +4,10 @@
 .DESCRIPTION
     1. Windows Terminal keybindings (iTerm2 style)
     --- requires claude CLI below ---
-    2. .claude/settings.local.json (permissions)
+    2. .claude/settings.json (permissions)
     3. Plugin marketplace registration
     4. Plugin installation
-    5. .gitignore (exclude docs/, .bkit/)
+    5. .gitignore (exclude docs/)
     6. PARA document initialization
 .EXAMPLE
     iex (irm https://raw.githubusercontent.com/poorants/ant-skills/main/bootstrap/init-claude-project.ps1)
@@ -107,7 +107,7 @@ if (-not $claudeCmd) {
 
 # 2. .claude/settings.local.json
 $settingsDir = ".claude"
-$settingsPath = Join-Path $settingsDir "settings.local.json"
+$settingsPath = Join-Path $settingsDir "settings.json"
 
 if (-not (Test-Path $settingsDir)) {
     New-Item -ItemType Directory -Path $settingsDir -Force | Out-Null
@@ -135,7 +135,6 @@ Write-Host "[OK] $settingsPath created" -ForegroundColor Green
 
 # 3. Plugin marketplaces
 $marketplaces = @(
-    "popup-studio-ai/bkit-claude-code"
     "anthropics/skills"
     "poorants/ant-skills"
 )
@@ -160,7 +159,6 @@ if ($LASTEXITCODE -eq 0) {
 
 # 4. Plugin installation
 $plugins = @(
-    @{ name = "bkit"; scope = "local" }
     @{ name = "example-skills@anthropic-agent-skills"; scope = "local" }
     @{ name = "ant-project-kit@ant-agent-skills"; scope = "local" }
 )
@@ -182,7 +180,6 @@ if (-not $content) { $content = "" }
 
 $entries = @(
     @{ pattern = '(?m)^docs/?$';   line = "docs/";  comment = "# PARA documents (managed outside repo)" }
-    @{ pattern = '(?m)^\.bkit/?$'; line = ".bkit/"; comment = "# bkit plugin data" }
 )
 
 foreach ($entry in $entries) {

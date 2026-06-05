@@ -2,10 +2,10 @@
 # Initialize Claude Code project environment (macOS/Linux)
 #
 # Steps:
-#   1. .claude/settings.local.json (permissions)
+#   1. .claude/settings.json (permissions)
 #   2. Plugin marketplace registration
 #   3. Plugin installation
-#   4. .gitignore (exclude docs/, .bkit/)
+#   4. .gitignore (exclude docs/)
 #   5. PARA document initialization
 #
 # Usage:
@@ -19,9 +19,9 @@ if ! command -v claude &>/dev/null; then
   exit 1
 fi
 
-# 1. .claude/settings.local.json
+# 1. .claude/settings.json
 mkdir -p .claude
-cat > .claude/settings.local.json <<'JSON'
+cat > .claude/settings.json <<'JSON'
 {
   "permissions": {
     "allow": [
@@ -39,11 +39,10 @@ cat > .claude/settings.local.json <<'JSON'
   }
 }
 JSON
-echo "[OK] .claude/settings.local.json created"
+echo "[OK] .claude/settings.json created"
 
 # 2. Plugin marketplaces
 MARKETPLACES=(
-  "popup-studio-ai/bkit-claude-code"
   "anthropics/skills"
   "poorants/ant-skills"
 )
@@ -66,7 +65,6 @@ fi
 
 # 3. Plugin installation
 PLUGINS=(
-  "bkit"
   "example-skills@anthropic-agent-skills"
   "ant-project-kit@ant-agent-skills"
 )
@@ -88,13 +86,6 @@ if grep -qx 'docs/\?' .gitignore 2>/dev/null; then
 else
   printf '\n# PARA documents (managed outside repo)\ndocs/\n' >> .gitignore
   echo "[OK] Added 'docs/' to .gitignore"
-fi
-
-if grep -qx '\.bkit/\?' .gitignore 2>/dev/null; then
-  echo "[SKIP] '.bkit/' already in .gitignore"
-else
-  printf '\n# bkit plugin data\n.bkit/\n' >> .gitignore
-  echo "[OK] Added '.bkit/' to .gitignore"
 fi
 
 # 5. PARA document initialization
