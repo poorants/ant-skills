@@ -145,16 +145,9 @@ foreach ($mp in $marketplaces) {
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[OK] Marketplace '$mp' registered" -ForegroundColor Green
     } else {
-        Write-Host "[SKIP] Marketplace '$mp' already registered" -ForegroundColor Yellow
+        Write-Host "[SKIP] Marketplace '$mp' already registered, updating..." -ForegroundColor Yellow
+        claude plugin marketplace update $mp
     }
-}
-
-Write-Host "[...] Updating all marketplaces..."
-claude plugin marketplace update
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "[OK] Marketplaces updated" -ForegroundColor Green
-} else {
-    Write-Host "[WARN] Marketplace update failed" -ForegroundColor Red
 }
 
 # 4. Plugin installation

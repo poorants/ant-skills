@@ -52,16 +52,10 @@ for mp in "${MARKETPLACES[@]}"; do
   if claude plugin marketplace add "$mp" 2>&1 | cat; then
     echo "[OK] Marketplace '$mp' registered"
   else
-    echo "[SKIP] Marketplace '$mp' already registered"
+    echo "[SKIP] Marketplace '$mp' already registered, updating..."
+    claude plugin marketplace update "$mp" 2>&1 | cat || true
   fi
 done
-
-echo "[...] Updating all marketplaces..."
-if claude plugin marketplace update 2>&1 | cat; then
-  echo "[OK] Marketplaces updated"
-else
-  echo "[WARN] Marketplace update failed"
-fi
 
 # 3. Plugin installation
 PLUGINS=(
