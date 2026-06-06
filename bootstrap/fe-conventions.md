@@ -69,15 +69,23 @@ detection. Expose a language switcher in settings.
 > `data-testid` is a **stable address** a human (or a test) uses to point at a specific
 > element. Uniqueness and a predictable scheme are mandatory.
 
-### TEST-01: Tag interactive and identifiable elements
+### TEST-01: Tag every meaningful element — controls, containers, and content
 
-**Severity:** warning
-**Rationale:** Anything a human/test might target needs a handle; decorative wrappers add
-only noise.
+**Severity:** error
+**Rationale:** e2e must target every control (a missing testid makes a flow untestable), and
+pick-to-edit / CSS-restyle requests must be able to point at any visible element — controls, the
+cards that group them, and content like headings, labels, brand/logo, and notable text.
 
-Add `data-testid` to: interactive elements (button, input, select, switch, tab, menu item,
-link), each **list-item root**, each **screen root**, and each **dialog root**. Not to
-purely decorative/layout wrappers, icons, or plain text.
+**Mandatory — 100% (error):** every element that triggers an action or changes a value — button,
+input/field, textarea, select, switch, checkbox, radio group, tabs trigger, menu item, link/nav item.
+
+**Required:** the container **card / section** grouping controls; each **list-item root**, **screen
+root**, and **dialog root**; and **content/structure** — page & section titles and descriptions,
+card/dialog titles and descriptions, brand/logo blocks, standalone labels, and notable text.
+
+Skip only zero-identity spacing wrappers and icons inside an already-tagged control (a dev inspector
+can still locate those via a `near data-testid="…"` fallback). A **disabled** control still carries
+its testid in the DOM, so e2e can assert on it.
 
 ### TEST-02: Naming scheme — kebab-case `<area>-<element>[-<id>][-<sub>]`
 
