@@ -198,4 +198,67 @@ foreach ($dir in $paraDirs) {
 }
 Write-Host "[OK] PARA structure initialized" -ForegroundColor Green
 
+# 7. Code conventions (house FE standard) — seed doc + CLAUDE.md pointer
+Write-Host "`n[...] Seeding code conventions..."
+$ccDir = "para\areas\code-convention"
+New-Item -ItemType Directory -Path $ccDir -Force | Out-Null
+
+$convPath = Join-Path $ccDir "CONVENTIONS.md"
+if (-not (Test-Path $convPath)) {
+    try {
+        Invoke-WebRequest -UseBasicParsing `
+            -Uri "https://raw.githubusercontent.com/poorants/ant-skills/main/bootstrap/fe-conventions.md" `
+            -OutFile $convPath
+        Write-Host "[OK] CONVENTIONS.md seeded" -ForegroundColor Green
+    } catch {
+        Write-Host "[WARN] Could not fetch fe-conventions.md (skipping)" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "[SKIP] CONVENTIONS.md already exists" -ForegroundColor Yellow
+}
+
+$changelogPath = Join-Path $ccDir "CHANGELOG.md"
+if (-not (Test-Path $changelogPath)) {
+    Set-Content -Path $changelogPath -Encoding UTF8 -Value @'
+# Code Convention Changelog
+
+## init
+Seeded the house FE standard (i18n + data-testid) via the ant-skills bootstrap.
+Extend with /code-convention add | evolve.
+'@
+}
+
+$ccConfig = ".code-convention.json"
+if (-not (Test-Path $ccConfig)) {
+    Set-Content -Path $ccConfig -Encoding UTF8 -Value '{ "outputDir": "para/areas/code-convention", "ruleCount": 26 }'
+}
+if (Test-Path ".gitignore") {
+    $gi = Get-Content ".gitignore" -Raw
+    if (-not $gi) { $gi = "" }
+    if ($gi -notmatch '\.code-convention\.json') {
+        Add-Content -Path ".gitignore" -Value "`n# code-convention local config`n.code-convention.json" -Encoding UTF8
+    }
+}
+
+# CLAUDE.md pointer (idempotent) — auto-loaded every session, @import pulls the rules in
+$claudeMd = "CLAUDE.md"
+if (-not (Test-Path $claudeMd)) { New-Item -ItemType File -Path $claudeMd -Force | Out-Null }
+$cm = Get-Content $claudeMd -Raw
+if (-not $cm) { $cm = "" }
+if ($cm -notmatch 'para/areas/code-convention') {
+    Add-Content -Path $claudeMd -Encoding UTF8 -Value @'
+
+## Code conventions
+
+Code conventions live in `para/areas/code-convention/` and are the single source of truth
+(naming, style, i18n, data-testid, error handling, security). Read & follow them before
+writing or changing code; manage them with the `code-convention` skill.
+
+@para/areas/code-convention/CONVENTIONS.md
+'@
+    Write-Host "[OK] CLAUDE.md updated with conventions pointer" -ForegroundColor Green
+} else {
+    Write-Host "[SKIP] CLAUDE.md already references conventions" -ForegroundColor Yellow
+}
+
 Write-Host "`n[DONE] Project environment ready!" -ForegroundColor Cyan

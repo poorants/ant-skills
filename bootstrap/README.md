@@ -18,8 +18,9 @@ iex (irm https://raw.githubusercontent.com/poorants/ant-skills/main/bootstrap/in
 | 4 | Plugin installation (example-skills, ant-project-kit) |
 | 5 | `.gitignore` setup (docs/) |
 | 6 | PARA directory initialization |
+| 7 | Code conventions — seed FE standard (`para/areas/code-convention/`) + `CLAUDE.md` pointer |
 
-Requires: [Claude Code CLI](https://claude.ai/code) (steps 2-5 skipped if not installed)
+Requires: [Claude Code CLI](https://claude.ai/code) (steps 2-7 skipped if not installed)
 
 ## macOS / Linux
 
@@ -36,8 +37,18 @@ bash <(curl -sL https://raw.githubusercontent.com/poorants/ant-skills/main/boots
 | 3 | Plugin installation (example-skills, ant-project-kit) |
 | 4 | `.gitignore` setup (docs/) |
 | 5 | PARA directory initialization |
+| 6 | Code conventions — seed FE standard (`para/areas/code-convention/`) + `CLAUDE.md` pointer |
 
 Requires: [Claude Code CLI](https://claude.ai/code)
+
+## Code conventions seed
+
+Steps above drop the house front-end standard (i18n + `data-testid`) at
+`para/areas/code-convention/CONVENTIONS.md` (fetched from `bootstrap/fe-conventions.md`)
+and add a `## Code conventions` section to `CLAUDE.md` that `@import`s it — so every
+session auto-loads the rules before development. Extend per project with the
+`code-convention` skill (`/code-convention add | evolve`). All writes are idempotent
+(existing files are left untouched).
 
 ## Optional Plugins
 
