@@ -12,6 +12,8 @@
 3. [Style](#3-style)
 4. [Error Handling](#4-error-handling)
 5. [Security](#5-security)
+6. [Verification](#6-verification)  <!-- optional, UI projects -->
+7. [Versioning](#7-versioning)      <!-- optional, automated releases -->
 
 ---
 
@@ -101,6 +103,46 @@
 **Rationale:** {why}
 
 {description}
+
+---
+
+## 6. Verification
+
+<!-- OPTIONAL — seed for UI/visual projects. Rules only; keep how-to runbooks out (see note). -->
+
+### VERIFY-01: {title}
+
+**Severity:** {error|warning}
+**Rationale:** {why}
+
+{description}
+
+<!-- Typical rules: (1) verify visual/layout changes by actually RENDERING (e.g. headless-browser
+     before/after screenshots) — never report "done" from reading the source; (2) throwaway artifacts
+     (scripts, screenshots) live in a git-ignored scratch dir (e.g. .scratch/) — add to .gitignore.
+     The detailed tooling/runbook is operational knowledge → put it in troubleshooting/guides docs and
+     link it, don't inline it here. -->
+
+---
+
+## 7. Versioning
+
+<!-- OPTIONAL — seed when releases are automated from commit messages (Conventional Commits →
+     semantic-release / release-please). -->
+
+### VER-01: {title}
+
+**Severity:** {error|warning}
+**Rationale:** {why}
+
+{description}
+
+<!-- Typical rule: commit subjects — and the PR's squash-merge title — follow Conventional Commits,
+     because the release tool derives the next SemVer from them:
+       fix:/perf: → patch    feat: → minor    feat!: or BREAKING CHANGE → major (deliberate, human)
+       docs:/chore:/refactor:/test:/ci:/style: → no release
+     Map the project's intent ("minor per feature MR, patch per fix") onto commit TYPES, not raw
+     merge/commit mechanics. Link the project's versioning policy doc. -->
 
 ---
 

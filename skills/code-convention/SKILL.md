@@ -246,6 +246,8 @@ These are starting categories. `evolve` can suggest new ones based on project ne
 | **Style** | `STYLE-` | Formatting, imports, comments, line length |
 | **Error Handling** | `ERR-` | try/catch, error types, logging |
 | **Security** | `SEC-` | Input validation, secrets, XSS/injection prevention |
+| **Verification** | `VERIFY-` | Verify-before-"done" discipline; scratch-artifact hygiene (detailed runbooks belong in troubleshooting docs, not here) |
+| **Versioning** | `VER-` | Commit-message format (Conventional Commits) + automated version/release policy |
 
 ## Convention Sources (Priority Order)
 
@@ -267,3 +269,5 @@ When extracting conventions during `init`, resolve conflicts in this order:
 - Each rule must have a rationale — "because I said so" is not acceptable
 - All generated documents are written in English
 - When checking, skip files matched by `.gitignore` and common ignores (`node_modules/`, `dist/`, etc.)
+- For UI projects, a **Verification** category is worth seeding: (1) verify visual/layout changes by actually rendering — never report "done" from a guess; (2) throwaway verification artifacts (screenshots, scratch scripts) live in a git-ignored scratch dir (e.g. `.scratch/`). Keep the detailed *how-to* (Playwright/headless setup) out of conventions — that's a troubleshooting runbook, link it
+- When releases are automated (Conventional Commits → `semantic-release`/`release-please`), add a **Versioning** category: the commit/PR-squash-title format becomes a hard rule because it *decides* the next version — `fix:`→patch, `feat:`→minor, `feat!:`/`BREAKING CHANGE`→major (major is only ever a deliberate human marker). Map the project's release intent (e.g. "minor per feature MR, patch per fix") onto commit *types*, not raw merge/commit mechanics
