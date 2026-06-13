@@ -133,24 +133,21 @@ $settings = @{
 Set-Content -Path $settingsPath -Value $settings -Encoding UTF8
 Write-Host "[OK] $settingsPath created" -ForegroundColor Green
 
-# 3. Plugin marketplaces
+# 3. Plugin marketplaces (register if new, ALWAYS update to latest)
 $marketplaces = @(
-    "anthropics/skills"
-    "poorants/ant-skills"
+    @{ repo = "anthropics/skills";   name = "anthropic-agent-skills" }
+    @{ repo = "poorants/ant-skills"; name = "ant-agent-skills" }
 )
 
 foreach ($mp in $marketplaces) {
-    Write-Host "[...] Registering marketplace '$mp'..."
-    $result = claude plugin marketplace add $mp 2>&1 | Out-String
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "[OK] Marketplace '$mp' registered" -ForegroundColor Green
-    } else {
-        Write-Host "[SKIP] Marketplace '$mp' already registered, updating..." -ForegroundColor Yellow
-        claude plugin marketplace update $mp
-    }
+    Write-Host "[...] Registering marketplace '$($mp.repo)'..."
+    claude plugin marketplace add $mp.repo 2>&1 | Out-Null   # 이미 등록돼 있어도 무해
+    Write-Host "[...] Updating marketplace '$($mp.name)'..."
+    claude plugin marketplace update $mp.name 2>&1 | Out-Null
+    Write-Host "[OK] Marketplace '$($mp.name)' up to date" -ForegroundColor Green
 }
 
-# 4. Plugin installation
+# 4. Plugin installation (install if new, ALWAYS update so existing envs refresh)
 $plugins = @(
     @{ name = "example-skills@anthropic-agent-skills"; scope = "local" }
     @{ name = "ant-project-kit@ant-agent-skills"; scope = "local" }
@@ -158,8 +155,10 @@ $plugins = @(
 
 foreach ($p in $plugins) {
     Write-Host "[...] Installing plugin '$($p.name)'..."
-    claude plugin install $p.name --scope $p.scope
-    Write-Host "[OK] Plugin '$($p.name)' installed" -ForegroundColor Green
+    claude plugin install $p.name --scope $p.scope 2>&1 | Out-Null   # 이미 설치돼 있어도 무해
+    Write-Host "[...] Updating plugin '$($p.name)'..."
+    claude plugin update $p.name --scope $p.scope 2>&1 | Out-Null
+    Write-Host "[OK] Plugin '$($p.name)' up to date" -ForegroundColor Green
 }
 
 # 5. .gitignore

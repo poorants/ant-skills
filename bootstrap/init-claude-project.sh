@@ -41,23 +41,24 @@ cat > .claude/settings.json <<'JSON'
 JSON
 echo "[OK] .claude/settings.json created"
 
-# 2. Plugin marketplaces
+# 2. Plugin marketplaces (register if new, ALWAYS update to latest)
+#    "repo|name" 쌍: add 는 repo 로, update 는 marketplace 이름으로 호출
 MARKETPLACES=(
-  "anthropics/skills"
-  "poorants/ant-skills"
+  "anthropics/skills|anthropic-agent-skills"
+  "poorants/ant-skills|ant-agent-skills"
 )
 
-for mp in "${MARKETPLACES[@]}"; do
-  echo "[...] Registering marketplace '$mp'..."
-  if claude plugin marketplace add "$mp" 2>&1 | cat; then
-    echo "[OK] Marketplace '$mp' registered"
-  else
-    echo "[SKIP] Marketplace '$mp' already registered, updating..."
-    claude plugin marketplace update "$mp" 2>&1 | cat || true
-  fi
+for entry in "${MARKETPLACES[@]}"; do
+  repo="${entry%%|*}"
+  name="${entry##*|}"
+  echo "[...] Registering marketplace '$repo'..."
+  claude plugin marketplace add "$repo" 2>&1 | cat || true   # 이미 등록돼 있어도 무해
+  echo "[...] Updating marketplace '$name'..."
+  claude plugin marketplace update "$name" 2>&1 | cat || true
+  echo "[OK] Marketplace '$name' up to date"
 done
 
-# 3. Plugin installation
+# 3. Plugin installation (install if new, ALWAYS update so existing envs refresh)
 PLUGINS=(
   "example-skills@anthropic-agent-skills"
   "ant-project-kit@ant-agent-skills"
@@ -65,8 +66,10 @@ PLUGINS=(
 
 for p in "${PLUGINS[@]}"; do
   echo "[...] Installing plugin '$p'..."
-  claude plugin install "$p" --scope local
-  echo "[OK] Plugin '$p' installed"
+  claude plugin install "$p" --scope local 2>&1 | cat || true   # 이미 설치돼 있어도 무해
+  echo "[...] Updating plugin '$p'..."
+  claude plugin update "$p" --scope local 2>&1 | cat || true
+  echo "[OK] Plugin '$p' up to date"
 done
 
 # 4. .gitignore

@@ -17,7 +17,8 @@
       "skills": [
         "./skills/code-convention",
         "./skills/engram"
-      ]
+      ],
+      "hooks": "./hooks/hooks.json"
     }
   ]
 }
