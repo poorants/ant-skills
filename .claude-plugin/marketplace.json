@@ -11,12 +11,12 @@
   "plugins": [
     {
       "name": "ant-project-kit",
-      "description": "Code convention enforcement and PARA-based document management",
+      "description": "Code convention enforcement and networked PARA document management (engram)",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/code-convention",
-        "./skills/para-docs"
+        "./skills/engram"
       ]
     }
   ]

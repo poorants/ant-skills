@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-para-docs: Initialize PARA directory structure.
+engram: Initialize PARA directory structure.
 
 Usage:
     python init.py [--output DIR] [--flat]

@@ -39,7 +39,7 @@ Project lifecycle management — kickstart, planning, tracking, and retrospectiv
 | **project-plan** | Phase-based roadmap with PDCA integration |
 | **project-retrospective** | Git history → resume/portfolio STAR document |
 | **work-report** | Work report generation |
-| **para-docs** | PARA-based document management |
+| **engram** | Networked PARA document brain — PARA management + knowledge-graph linking & integrity lint |
 | **init-permissions** | Grant all Claude Code permissions to project |
 | **skill-doctor** | Skill validation and debugging |
 
