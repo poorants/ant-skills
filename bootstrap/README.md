@@ -46,9 +46,13 @@ The final step detects the repo type and sets up accordingly:
 
 | Mode | Detected when | Result |
 |------|---------------|--------|
-| **brain** | root already has `projects/`/`areas/`/… | flat (root) PARA; **no** code conventions (pure doc vault) |
 | **project** | code markers present (`package.json`, `Cargo.toml`, `go.mod`, …) | nested `brain/` PARA + stack-detected conventions |
+| **brain** | `brain/` exists, no code | nested `brain/` PARA; **no** code conventions (pure doc vault) |
+| **flat-legacy** | PARA folders at the root, no `brain/` | left as-is for back-compat; hints to unify under `brain/` |
 | **empty** | nothing to detect | prompts you in-place (interactive) for mode + stack; falls back to a `CLAUDE.md` "Project setup (pending)" note when non-interactive |
+
+`brain/` is the default base for new repos (both standalone vaults and code
+projects); the root is reserved for repo meta and exported output.
 
 In **project** mode, conventions are seeded under `brain/areas/code-convention/`
 (reusing a legacy `para/` if one already exists): the curated front-end standard
