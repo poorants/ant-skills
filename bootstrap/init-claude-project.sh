@@ -55,8 +55,12 @@ for f in $(ls -A 2>/dev/null); do
   esac
 done
 
-if [ "$ROOT_HAS_PARA" = true ]; then MODE=brain
-elif [ "$HAS_CODE" = true ]; then MODE=project
+BRAIN_EXISTS=false
+if [ -d brain ]; then BRAIN_EXISTS=true; fi
+
+if [ "$HAS_CODE" = true ]; then MODE=project
+elif [ "$BRAIN_EXISTS" = true ]; then MODE=brain
+elif [ "$ROOT_HAS_PARA" = true ]; then MODE=flat-legacy
 elif [ "$IS_EMPTY" = true ]; then MODE=empty
 else MODE=project
 fi
@@ -133,11 +137,22 @@ fi
 #         (pipe/CI, stdin not a tty), fall back to a CLAUDE.md note.
 
 setup_brain() {
-  echo "[SETUP] Standalone document vault (brain) — flat (root) PARA"
+  # Standalone vault, new unified layout: docs under brain/, root stays for meta/exports.
+  echo "[SETUP] Standalone document vault (brain) — nested brain/ PARA"
+  for cat in projects areas resources archives; do
+    mkdir -p "brain/$cat"
+    touch "brain/$cat/.gitkeep"
+  done
+  echo "[OK] nested brain/ PARA structure ensured. No code conventions seeded (pure doc repo)."
+}
+
+setup_flat_legacy() {
+  # Existing repo with PARA folders at the root. Leave the layout; just ensure folders.
+  echo "[SETUP] Legacy flat vault — PARA folders at root (back-compat)"
   for dir in projects areas resources archives; do
     [ -d "$dir" ] || mkdir -p "$dir"
   done
-  echo "[OK] flat PARA structure ensured (root). No code conventions seeded (pure doc repo)."
+  echo "[OK] flat PARA ensured. NOTE: the engram default is now brain/ — to unify, move these under brain/."
 }
 
 # setup_project <has_react:true|false> [backend ...]
@@ -234,8 +249,12 @@ MD
 # --- dispatch ---
 echo ""
 if [ "$MODE" = "brain" ]; then
-  echo "[MODE] Detected: standalone document vault (brain) -> recommending flat (root)"
+  echo "[MODE] Detected: standalone document vault (brain) -> nested brain/"
   setup_brain
+
+elif [ "$MODE" = "flat-legacy" ]; then
+  echo "[MODE] Detected: legacy flat vault (PARA at root) -> keeping as-is (back-compat)"
+  setup_flat_legacy
 
 elif [ "$MODE" = "project" ]; then
   SD=""

@@ -50,10 +50,12 @@ function Get-IsEmpty {
 
 $script:Stack = Get-ProjectStack
 $script:HasCode = ($script:Stack.HasNode -or $script:Stack.Backends.Count -gt 0)
-if (Get-RootHasPara) { $script:Mode = 'brain' }
-elseif ($script:HasCode) { $script:Mode = 'project' }
+$script:BrainExists = Test-Path "brain"
+if ($script:HasCode) { $script:Mode = 'project' }              # code -> nested brain/ + conventions
+elseif ($script:BrainExists) { $script:Mode = 'brain' }        # existing nested brain vault
+elseif (Get-RootHasPara) { $script:Mode = 'flat-legacy' }      # old root-level PARA vault (back-compat)
 elseif (Get-IsEmpty) { $script:Mode = 'empty' }
-else { $script:Mode = 'project' }   # no code markers but files exist -> generic seed
+else { $script:Mode = 'project' }   # files but no code markers -> generic seed
 
 # 1. Windows Terminal keybindings (iTerm2 style)
 $wtSettingsPath = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
@@ -228,11 +230,24 @@ foreach ($entry in $entries) {
 #         (pipe/CI), input is impossible, so fall back to a CLAUDE.md note.
 
 function Setup-Brain {
-    Write-Host "[SETUP] Standalone document vault (brain) — flat (root) PARA" -ForegroundColor Cyan
+    # Standalone vault, new unified layout: docs under brain/, root stays for meta/exports.
+    Write-Host "[SETUP] Standalone document vault (brain) — nested brain/ PARA" -ForegroundColor Cyan
+    foreach ($cat in @("projects", "areas", "resources", "archives")) {
+        $dir = Join-Path "brain" $cat
+        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+        $gitkeep = Join-Path $dir ".gitkeep"
+        if (-not (Test-Path $gitkeep)) { New-Item -ItemType File -Path $gitkeep -Force | Out-Null }
+    }
+    Write-Host "[OK] nested brain/ PARA structure ensured. No code conventions seeded (pure doc repo)." -ForegroundColor Green
+}
+
+function Setup-FlatLegacy {
+    # Existing repo with PARA folders at the root. Leave the layout; just ensure folders.
+    Write-Host "[SETUP] Legacy flat vault — PARA folders at root (back-compat)" -ForegroundColor Cyan
     foreach ($dir in @("projects", "areas", "resources", "archives")) {
         if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
     }
-    Write-Host "[OK] flat PARA structure ensured (root). No code conventions seeded (pure doc repo)." -ForegroundColor Green
+    Write-Host "[OK] flat PARA ensured. NOTE: the engram default is now brain/ — to unify, move these under brain/." -ForegroundColor Yellow
 }
 
 function Setup-Project {
@@ -356,8 +371,12 @@ Write-Host ""
 $interactive = [Environment]::UserInteractive -and -not [Console]::IsInputRedirected
 
 if ($script:Mode -eq 'brain') {
-    Write-Host "[MODE] Detected: standalone document vault (brain) -> recommending flat (root)" -ForegroundColor Cyan
+    Write-Host "[MODE] Detected: standalone document vault (brain) -> nested brain/" -ForegroundColor Cyan
     Setup-Brain
+}
+elseif ($script:Mode -eq 'flat-legacy') {
+    Write-Host "[MODE] Detected: legacy flat vault (PARA at root) -> keeping as-is (back-compat)" -ForegroundColor Cyan
+    Setup-FlatLegacy
 }
 elseif ($script:Mode -eq 'project') {
     $sd = @()

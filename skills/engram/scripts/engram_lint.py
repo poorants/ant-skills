@@ -17,11 +17,12 @@ parses the result, and repairs the network by reconnecting broken links or
 adding contextual links to orphans.
 
 PARA base auto-detection (the skill runs at the target repo root = cwd):
-  - If the root contains any of projects/ areas/ resources/ archives/ -> flat
-    mode, base = root (a standalone document vault / brain). This is the
-    standalone-doc-repo case.
-  - Else if brain/ exists -> nested mode, base = brain/ (a code project + docs).
+  - brain/ is the default base for BOTH standalone vaults and code projects; the
+    root holds repo meta and any exported/published output.
+  - If brain/ exists -> nested mode, base = brain/.
   - Else if para/ exists -> nested mode, base = para/ (legacy, back-compat).
+  - Else if the root contains projects/ areas/ resources/ archives/ -> flat mode,
+    base = root (a legacy standalone vault).
   - Else -> assume brain/ (silent if missing).
   - Override with `--base PATH`.
 
@@ -73,14 +74,16 @@ def resolve_base() -> tuple[Path, str]:
     arg = parse_base_arg()
     if arg is not None:
         return (REPO / arg).resolve(), arg
-    # flat mode: PARA category folders at the root -> root is the base (standalone vault)
-    if any((REPO / c).is_dir() for c in PARA_CATEGORIES):
-        return REPO, "."
-    # nested mode: prefer brain/, fall back to legacy para/ (code project + docs)
+    # nested mode (default): brain/ is the base for standalone vaults AND code
+    # projects; the root holds repo meta and any exported output.
     if (REPO / "brain").is_dir():
         return (REPO / "brain").resolve(), "brain"
     if (REPO / "para").is_dir():
         return (REPO / "para").resolve(), "para"
+    # legacy flat: PARA category folders directly at the root (old standalone vault)
+    if any((REPO / c).is_dir() for c in PARA_CATEGORIES):
+        return REPO, "."
+    # fresh repo -> default to brain/ (silent if it does not exist yet)
     return (REPO / "brain").resolve(), "brain"
 
 

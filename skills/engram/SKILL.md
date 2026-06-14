@@ -41,31 +41,38 @@ It works as two layers:
 Before any operation, resolve the **PARA base** — the location where the four
 category folders live. This is the first step of every workflow.
 
-1. If the project root already contains any of `projects/`, `areas/`,
-   `resources/`, or `archives/` → **flat mode**. The base is the project root
-   itself; categories are `projects/`, `areas/`, `resources/`, `archives/`
-   (no nested prefix).
-2. Otherwise → **nested mode**. The base is `brain/` (or a legacy `para/` if one
-   already exists); categories are `brain/projects/`, `brain/areas/`, and so on.
-3. If the project's `CLAUDE.md` states a documentation-layout convention
-   explicitly, that convention wins over the heuristic above.
-4. Once the mode is determined, stay consistent within that project.
+**`brain/` is the default base for every repo** — both standalone document vaults
+(brains) and code projects. The source brain lives under `brain/`; the repo root
+holds meta files and any exported/published output, kept separate from the source.
 
-Throughout this document, `<base>/` denotes the resolved base — an empty prefix
-in flat mode, or `brain/` in nested mode. Every path below is written relative to
-it.
+1. If `brain/` exists → **nested mode**, base = `brain/`. (Default / recommended.)
+2. Else if a legacy `para/` exists → nested mode, base = `para/` (back-compat).
+3. Else if the root already contains `projects/`, `areas/`, `resources/`, or
+   `archives/` → **flat mode** (legacy standalone vault), base = the root.
+   Consider migrating it under `brain/` for the unified layout.
+4. Else (fresh repo) → nested mode, base = `brain/` (create it).
+5. If the project's `CLAUDE.md` states a documentation-layout convention
+   explicitly, that convention wins over the heuristic above.
+6. Once the mode is determined, stay consistent within that project.
+
+Throughout this document, `<base>/` denotes the resolved base — `brain/` in the
+default nested mode, or an empty prefix in legacy flat mode. Every path below is
+written relative to it.
 
 **Scope of the connection layer (links · MOC · lint)**: the integrity linter
 (`engram_lint.py`) auto-detects the base the same way as Path Resolution above —
-**flat mode (standalone vault/brain) scans the whole root**, **nested mode (code
-project + docs) scans under `brain/`** (or a legacy `para/`). You can force it
-with `--base`. Contextual link and MOC rules apply across the resolved `<base>/`.
+**nested mode scans under `brain/`** (or a legacy `para/`); **legacy flat mode
+scans the whole root**. You can force it with `--base`. Contextual link and MOC
+rules apply across the resolved `<base>/`.
 
-Two usage modes:
-- **Standalone document vault (brain)**: flat mode with `projects/`, `areas/`,
-  etc. directly at the root. Lint base is the root.
-- **Another project + document management**: nested mode with docs under `brain/`
-  inside a code repo. Lint base is `brain/`.
+Two usage shapes (both default to `brain/`):
+- **Standalone document vault (brain)**: a doc-only repo. Docs under `brain/`;
+  the root holds meta + exports.
+- **Another project + document management**: docs under `brain/` inside a code
+  repo, alongside the source code.
+
+Legacy flat repos (PARA folders directly at the root) are still detected for
+back-compat, but new repos use `brain/`.
 
 ## Quick Reference
 
