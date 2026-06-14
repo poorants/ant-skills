@@ -77,3 +77,7 @@ Env knobs:
 
 When a reflection (from either hook) decides something is worth keeping, run it
 through the Create Workflow and close with the Integrity Lint Workflow.
+
+To **read back** what a session fed the brain (a wrap-up recap of new/changed
+notes), use the command-triggered Session Update Review Workflow — see
+[session-review.md](session-review.md). Capture writes; that workflow reports.

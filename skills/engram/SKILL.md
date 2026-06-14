@@ -8,16 +8,18 @@ description: >
   interconnected brain rather than isolated folders. Use when the user wants
   to manage/organize docs, create meeting notes, archive projects, review
   documentation status, OR connect notes, check link integrity, find orphan
-  documents, build a knowledge graph, or update MOCs.
+  documents, build a knowledge graph, update MOCs, or review what the brain
+  gained this session.
   Triggers: "manage documents", "organize docs", "document the project",
   "save meeting notes", "tidy para", "archive document", "review docs",
-  "search docs", "migrate docs", "import docs", "organize existing docs",
+  "search docs", "migrate docs", "import docs",
   "archive project", "create meeting notes", "move document", "list documents",
   "para init", "para review", "para migrate",
   "connect notes", "link notes", "tidy the knowledge network", "check links",
-  "lint links", "link integrity", "broken links", "find orphans",
-  "orphan documents", "orphan nodes", "update moc", "knowledge graph",
-  "brain check", "engram lint", "engram link"
+  "link integrity", "broken links", "find orphans", "orphan documents",
+  "update moc", "knowledge graph", "brain check", "engram lint", "engram link",
+  "engram session review", "review brain updates",
+  "이번 세션 브레인 업데이트 리뷰"
 ---
 
 # engram — Networked PARA Document Brain
@@ -509,6 +511,19 @@ Hooks ship with the plugin (`hooks/hooks.json` → `brain_reflect.py`, beside th
 integrity-lint Stop hook); brain-only and non-blocking. Tune
 `ENGRAM_CAPTURE_COOLDOWN_MIN` / `ENGRAM_CAPTURE_PHRASES`, disable with
 `ENGRAM_CAPTURE_DISABLE=1`. Details: [references/capture-loop.md](references/capture-loop.md).
+
+## Session Update Review Workflow
+
+**When**: the user asks to see what the brain gained *this session* — a wrap-up
+recap of new/changed notes. Command-triggered (not a hook); the read-back
+counterpart to the Capture loop. ("이번 세션 브레인 업데이트 리뷰", "엔그램 세션
+리뷰", "브레인 업데이트 알려줘", "review brain updates", "engram session review")
+
+Load [references/session-review.md](references/session-review.md) for the full
+procedure. In short: reconcile your **session memory** (notes/links/MOCs you
+touched) with a **git cross-check** (`git status --short -- <base>/`,
+`git diff --stat -- <base>/`), run the Integrity Lint as the closing check, then
+present the session review report. If nothing landed, say so in one line.
 
 ## Roadmap (planned, not yet implemented)
 
