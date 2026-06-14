@@ -8,7 +8,7 @@ These directories are never scanned during migration:
 
 | Pattern | Reason |
 |---------|--------|
-| `para/` (nested), or root `projects/`·`areas/`·`resources/`·`archives/` (flat) | Already in PARA structure |
+| `brain/` or `para/` (nested), or root `projects/`·`areas/`·`resources/`·`archives/` (flat) | Already in PARA structure |
 | `.git/` | Version control |
 | `node_modules/` | Dependencies |
 | `dist/`, `build/`, `out/` | Build output |

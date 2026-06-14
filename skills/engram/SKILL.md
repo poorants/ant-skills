@@ -44,28 +44,28 @@ category folders live. This is the first step of every workflow.
 1. If the project root already contains any of `projects/`, `areas/`,
    `resources/`, or `archives/` → **flat mode**. The base is the project root
    itself; categories are `projects/`, `areas/`, `resources/`, `archives/`
-   (no `para/` prefix).
-2. Otherwise → **nested mode**. The base is `para/`; categories are
-   `para/projects/`, `para/areas/`, and so on.
+   (no nested prefix).
+2. Otherwise → **nested mode**. The base is `brain/` (or a legacy `para/` if one
+   already exists); categories are `brain/projects/`, `brain/areas/`, and so on.
 3. If the project's `CLAUDE.md` states a documentation-layout convention
    explicitly, that convention wins over the heuristic above.
 4. Once the mode is determined, stay consistent within that project.
 
 Throughout this document, `<base>/` denotes the resolved base — an empty prefix
-in flat mode, or `para/` in nested mode. Every path below is written relative to
+in flat mode, or `brain/` in nested mode. Every path below is written relative to
 it.
 
 **Scope of the connection layer (links · MOC · lint)**: the integrity linter
 (`engram_lint.py`) auto-detects the base the same way as Path Resolution above —
 **flat mode (standalone vault/brain) scans the whole root**, **nested mode (code
-project + docs) scans under `para/`**. You can force it with `--base`. Contextual
-link and MOC rules apply across the resolved `<base>/`.
+project + docs) scans under `brain/`** (or a legacy `para/`). You can force it
+with `--base`. Contextual link and MOC rules apply across the resolved `<base>/`.
 
 Two usage modes:
 - **Standalone document vault (brain)**: flat mode with `projects/`, `areas/`,
   etc. directly at the root. Lint base is the root.
-- **Another project + document management**: nested mode with docs under `para/`
-  inside a code repo. Lint base is `para/`.
+- **Another project + document management**: nested mode with docs under `brain/`
+  inside a code repo. Lint base is `brain/`.
 
 ## Quick Reference
 
@@ -88,7 +88,7 @@ Resolve the base first (see Path Resolution), then run
 # flat mode — categories created at the project root
 python scripts/init.py --output . --flat
 
-# nested mode — categories created under para/
+# nested mode — categories created under brain/ (or a legacy para/ if present)
 python scripts/init.py --output .
 ```
 
@@ -223,7 +223,7 @@ Discover all project documents with Glob.
 
 - Targets: `**/*.md`, `**/*.txt`
 - Exclude: documents already inside a PARA category (in flat mode the root's
-  `projects/`·`areas/`·`resources/`·`archives/`, in nested mode `para/`), and
+  `projects/`·`areas/`·`resources/`·`archives/`, in nested mode `brain/` or `para/`), and
   non-document directories such as `.git/`, `node_modules/`
 - Exclude root metadata files: `README.md`, `LICENSE`, `CHANGELOG.md`, etc.
 
@@ -402,7 +402,7 @@ and tell the user.
 Also call it as the closing check of other workflows (Create, Move, Migrate,
 Review).
 
-Detects broken links and orphan nodes under the PARA base (root if flat, `para/`
+Detects broken links and orphan nodes under the PARA base (root if flat, `brain/`
 if nested). The base is auto-detected. Run
 [scripts/engram_lint.py](scripts/engram_lint.py) from the target repo root.
 
@@ -429,6 +429,15 @@ Handling results:
 
 The exit code is always 0, so it never blocks work — report and fix together.
 
+## Roadmap (planned, not yet implemented)
+
+A **Publish / Export** workflow: extract a curated, portable subset from the brain
+(opt-in by frontmatter/tag/MOC) into a separate artifact (`dist/`, a single file,
+or a static site), resolving wikilinks and stripping private/unpublished notes —
+the source brain stays visible and untouched. Design details in
+[references/roadmap.md](references/roadmap.md). If the user asks to "publish",
+"export the brain", or "build a doc bundle", follow that design.
+
 ## Rules
 
 1. **Auto-init**: If the category folders don't exist when any PARA operation is requested, create them automatically without asking. This is idempotent and safe.
@@ -445,7 +454,7 @@ The exit code is always 0, so it never blocks work — report and fix together.
 
 7. **User language**: Respond in the user's language. Document content follows the user's preference. PARA category directory names are always in English.
 
-8. **Relative paths**: When reporting paths to the user, use paths relative to the project root (e.g., `projects/my-doc.md` in flat mode, `para/projects/my-doc.md` in nested mode).
+8. **Relative paths**: When reporting paths to the user, use paths relative to the project root (e.g., `projects/my-doc.md` in flat mode, `brain/projects/my-doc.md` in nested mode).
 
 9. **Migration safety**: migration moves files, so always show the full migration plan first and execute only after user approval. Never auto-migrate.
 
@@ -455,4 +464,4 @@ The exit code is always 0, so it never blocks work — report and fix together.
 
 12. **MOC as hub**: each folder's `README.md` is the entry point (MOC) for that folder's documents. When you add or move a document, update the relevant MOC too.
 
-13. **Lint scope**: the integrity linter (`engram_lint.py`) auto-detects the base (root if flat, `para/` if nested). It is non-blocking (reports but never blocks work), and unresolved wikilinks are treated as warnings, not errors, since they may be intended future notes.
+13. **Lint scope**: the integrity linter (`engram_lint.py`) auto-detects the base (root if flat, `brain/` — or a legacy `para/` — if nested). It is non-blocking (reports but never blocks work), and unresolved wikilinks are treated as warnings, not errors, since they may be intended future notes.

@@ -20,8 +20,9 @@ PARA base auto-detection (the skill runs at the target repo root = cwd):
   - If the root contains any of projects/ areas/ resources/ archives/ -> flat
     mode, base = root (a standalone document vault / brain). This is the
     standalone-doc-repo case.
-  - Else if para/ exists -> nested mode, base = para/ (a code project + docs).
-  - Else -> assume para/ (silent if missing).
+  - Else if brain/ exists -> nested mode, base = brain/ (a code project + docs).
+  - Else if para/ exists -> nested mode, base = para/ (legacy, back-compat).
+  - Else -> assume brain/ (silent if missing).
   - Override with `--base PATH`.
 
 Usage (from the target repo root):
@@ -75,8 +76,12 @@ def resolve_base() -> tuple[Path, str]:
     # flat mode: PARA category folders at the root -> root is the base (standalone vault)
     if any((REPO / c).is_dir() for c in PARA_CATEGORIES):
         return REPO, "."
-    # nested mode: para/ is the base (code project + docs)
-    return (REPO / "para").resolve(), "para"
+    # nested mode: prefer brain/, fall back to legacy para/ (code project + docs)
+    if (REPO / "brain").is_dir():
+        return (REPO / "brain").resolve(), "brain"
+    if (REPO / "para").is_dir():
+        return (REPO / "para").resolve(), "para"
+    return (REPO / "brain").resolve(), "brain"
 
 
 def strip_code(text: str) -> str:

@@ -7,7 +7,7 @@
 #   3. Plugin installation
 #   4. .gitignore (exclude docs/)
 #   5. Document structure + conventions — mode-aware:
-#      brain (flat root vault) / project (nested para/ + stack conventions) / empty (ask the plan)
+#      brain (flat root vault) / project (nested brain/ + stack conventions) / empty (ask the plan)
 #
 # Usage:
 #   bash <(curl -sL https://raw.githubusercontent.com/poorants/ant-skills/main/bootstrap/init-claude-project.sh)
@@ -22,7 +22,7 @@ fi
 
 # --- Mode & stack detection (run at project root, BEFORE any scaffolding) ---
 #   brain   : standalone doc vault with PARA folders already at root -> flat (root)
-#   project : repo with code -> nested (para/) docs + convention seed
+#   project : repo with code -> nested (brain/, or existing para/) docs + convention seed
 #   empty   : empty repo -> no guessing, leave a note asking the user for the plan
 ROOT_HAS_PARA=false
 for c in projects areas resources archives; do
@@ -150,17 +150,21 @@ setup_project() {
     desc="${desc:+$desc+}$(IFS=+; echo "${backends[*]}")"
   fi
   [ -z "$desc" ] && desc="generic"
-  echo "[SETUP] Code project + document management — nested para/ (stack: $desc)"
 
-  for dir in para/projects para/areas para/resources para/archives; do
-    mkdir -p "$dir"
-    touch "$dir/.gitkeep"
+  # Nested base: prefer brain/ (on-brand). Reuse an existing para/ for back-compat.
+  local base="brain"
+  if [ -d brain ]; then base="brain"; elif [ -d para ]; then base="para"; fi
+  echo "[SETUP] Code project + document management — nested $base/ (stack: $desc)"
+
+  for cat in projects areas resources archives; do
+    mkdir -p "$base/$cat"
+    touch "$base/$cat/.gitkeep"
   done
-  echo "[OK] nested PARA structure initialized (para/)"
+  echo "[OK] nested PARA structure initialized ($base/)"
 
   echo ""
   echo "[...] Seeding code conventions..."
-  local cc_dir="para/areas/code-convention"
+  local cc_dir="$base/areas/code-convention"
   mkdir -p "$cc_dir"
   local seed_file
   if [ "$has_react" = true ]; then seed_file="fe-conventions.md"; else seed_file="generic-conventions.md"; fi
@@ -180,25 +184,25 @@ setup_project() {
   fi
 
   [ -f "$cc_dir/CHANGELOG.md" ] || printf '# Code Convention Changelog\n\n## init\nSeeded a stack-detected starter via the ant-skills bootstrap.\nExtract real, stack-specific rules from code with /code-convention, then evolve.\n' > "$cc_dir/CHANGELOG.md"
-  [ -f ".code-convention.json" ] || printf '{\n  "outputDir": "para/areas/code-convention"\n}\n' > ".code-convention.json"
+  [ -f ".code-convention.json" ] || printf '{\n  "outputDir": "%s/areas/code-convention"\n}\n' "$base" > ".code-convention.json"
 
   if ! grep -qF '.code-convention.json' .gitignore 2>/dev/null; then
     printf '\n# code-convention local config\n.code-convention.json\n' >> .gitignore
   fi
 
   [ -f CLAUDE.md ] || touch CLAUDE.md
-  if ! grep -qF 'para/areas/code-convention' CLAUDE.md 2>/dev/null; then
-    cat >> CLAUDE.md <<'MD'
+  if ! grep -qF 'areas/code-convention' CLAUDE.md 2>/dev/null; then
+    cat >> CLAUDE.md <<MD
 
 ## Code conventions
 
-Code conventions live in `para/areas/code-convention/` and are the single source of truth
+Code conventions live in \`$base/areas/code-convention/\` and are the single source of truth
 (naming, style, error handling, security; FE adds i18n + data-testid). Read & follow them
-before writing or changing code; manage them with the `code-convention` skill.
+before writing or changing code; manage them with the \`code-convention\` skill.
 
-@para/areas/code-convention/CONVENTIONS.md
+@$base/areas/code-convention/CONVENTIONS.md
 MD
-    echo "[OK] CLAUDE.md updated with conventions pointer"
+    echo "[OK] CLAUDE.md updated with conventions pointer ($base/areas/code-convention)"
   else
     echo "[SKIP] CLAUDE.md already references conventions"
   fi
@@ -214,7 +218,7 @@ write_pending_note() {
 This repo was bootstrapped empty (non-interactive run). Before scaffolding docs or writing
 code, ASK the user:
 
-1. Whether this repo should be (a) a code project + document management (nested `para/`),
+1. Whether this repo should be (a) a code project + document management (nested `brain/`),
    or (b) a standalone document vault (brain, flat root).
 2. (If a code project) which stack (e.g. rust+react, go+react, web / macOS desktop).
 
@@ -238,7 +242,7 @@ elif [ "$MODE" = "project" ]; then
   [ "$HAS_REACT" = true ] && SD="react"
   if [ "${#BACKENDS[@]}" -gt 0 ]; then SD="${SD:+$SD+}$(IFS=+; echo "${BACKENDS[*]}")"; fi
   [ -z "$SD" ] && SD="generic"
-  echo "[MODE] Detected: code project -> recommending nested para/ (stack: $SD)"
+  echo "[MODE] Detected: code project -> recommending nested brain/ (stack: $SD)"
   # Expanding an empty "${BACKENDS[@]}" errors under macOS bash 3.2 + set -u -> guard by count
   if [ "${#BACKENDS[@]}" -gt 0 ]; then
     setup_project "$HAS_REACT" "${BACKENDS[@]}"
@@ -254,7 +258,7 @@ else
   else
     echo "[MODE] Empty repo — auto-detection failed. Asking how to use it."
     echo "  [1] Standalone document vault (brain) — flat, projects/areas/... at root"
-    echo "  [2] Code project + document management — nested para/"
+    echo "  [2] Code project + document management — nested brain/"
     read -r -p "Choose [1/2] (default 2): " ans
     if [ "$ans" = "1" ]; then
       setup_brain

@@ -14,13 +14,13 @@ iex (irm https://raw.githubusercontent.com/poorants/ant-skills/main/bootstrap/in
 |------|--------|
 | 1 | Windows Terminal keybindings (iTerm2 style) |
 | 2 | `.claude/settings.json` (all permissions) |
-| 3 | Plugin marketplace registration (anthropic, ant-skills) |
-| 4 | Plugin installation (example-skills, ant-project-kit) |
+| 3 | Plugin marketplace registration + **update** (anthropic, ant-skills) |
+| 4 | Plugin installation + **update** (example-skills, ant-project-kit) |
 | 5 | `.gitignore` setup (docs/) |
-| 6 | PARA directory initialization |
-| 7 | Code conventions — seed FE standard (`para/areas/code-convention/`) + `CLAUDE.md` pointer |
+| 6 | Document structure + conventions — **mode-aware** (see below) |
 
-Requires: [Claude Code CLI](https://claude.ai/code) (steps 2-7 skipped if not installed)
+Re-running refreshes existing environments (marketplaces and plugins are always
+updated). Requires: [Claude Code CLI](https://claude.ai/code) (steps 2-6 skipped if not installed)
 
 ## macOS / Linux
 
@@ -33,22 +33,30 @@ bash <(curl -sL https://raw.githubusercontent.com/poorants/ant-skills/main/boots
 | Step | Action |
 |------|--------|
 | 1 | `.claude/settings.json` (all permissions) |
-| 2 | Plugin marketplace registration (anthropic, ant-skills) |
-| 3 | Plugin installation (example-skills, ant-project-kit) |
+| 2 | Plugin marketplace registration + **update** (anthropic, ant-skills) |
+| 3 | Plugin installation + **update** (example-skills, ant-project-kit) |
 | 4 | `.gitignore` setup (docs/) |
-| 5 | PARA directory initialization |
-| 6 | Code conventions — seed FE standard (`para/areas/code-convention/`) + `CLAUDE.md` pointer |
+| 5 | Document structure + conventions — **mode-aware** (see below) |
 
-Requires: [Claude Code CLI](https://claude.ai/code)
+Re-running refreshes existing environments. Requires: [Claude Code CLI](https://claude.ai/code)
 
-## Code conventions seed
+## Mode-aware document setup
 
-Steps above drop the house front-end standard (i18n + `data-testid`) at
-`para/areas/code-convention/CONVENTIONS.md` (fetched from `bootstrap/fe-conventions.md`)
-and add a `## Code conventions` section to `CLAUDE.md` that `@import`s it — so every
-session auto-loads the rules before development. Extend per project with the
-`code-convention` skill (`/code-convention add | evolve`). All writes are idempotent
-(existing files are left untouched).
+The final step detects the repo type and sets up accordingly:
+
+| Mode | Detected when | Result |
+|------|---------------|--------|
+| **brain** | root already has `projects/`/`areas/`/… | flat (root) PARA; **no** code conventions (pure doc vault) |
+| **project** | code markers present (`package.json`, `Cargo.toml`, `go.mod`, …) | nested `brain/` PARA + stack-detected conventions |
+| **empty** | nothing to detect | prompts you in-place (interactive) for mode + stack; falls back to a `CLAUDE.md` "Project setup (pending)" note when non-interactive |
+
+In **project** mode, conventions are seeded under `brain/areas/code-convention/`
+(reusing a legacy `para/` if one already exists): the curated front-end standard
+(i18n + `data-testid`, `bootstrap/fe-conventions.md`) when React is detected, else
+a thin generic base (`bootstrap/generic-conventions.md`). Backends (rust/go/…) are
+flagged to be extracted from real code with `/code-convention`. A `## Code
+conventions` section is added to `CLAUDE.md` that `@import`s the rules so every
+session auto-loads them. All writes are idempotent (existing files untouched).
 
 ## Optional Plugins
 

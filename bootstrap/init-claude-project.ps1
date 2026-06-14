@@ -9,7 +9,7 @@
     4. Plugin installation
     5. .gitignore (exclude docs/)
     6. Document structure + conventions — mode-aware:
-       brain (flat root vault) / project (nested para/ + stack conventions) / empty (ask the plan)
+       brain (flat root vault) / project (nested brain/ + stack conventions) / empty (ask the plan)
 .EXAMPLE
     iex (irm https://raw.githubusercontent.com/poorants/ant-skills/main/bootstrap/init-claude-project.ps1)
 #>
@@ -20,7 +20,7 @@ $ErrorActionPreference = "Stop"
 # --- Mode & stack detection (run at project root, BEFORE any scaffolding) ---
 # Three modes:
 #   brain   : standalone doc vault with PARA folders already at root -> flat (root)
-#   project : repo with code -> nested (para/) docs + convention seed
+#   project : repo with code -> nested (brain/, or existing para/) docs + convention seed
 #   empty   : empty repo -> no guessing, leave a note asking the user for the plan
 function Get-RootHasPara {
     foreach ($c in @('projects', 'areas', 'resources', 'archives')) {
@@ -242,18 +242,23 @@ function Setup-Project {
     if ($HasReact) { $stackDesc += "react" }
     if ($Backends.Count -gt 0) { $stackDesc += $Backends }
     if ($stackDesc.Count -eq 0) { $stackDesc += "generic" }
-    Write-Host "[SETUP] Code project + document management — nested para/ (stack: $($stackDesc -join '+'))" -ForegroundColor Cyan
 
-    foreach ($dir in @("para\projects", "para\areas", "para\resources", "para\archives")) {
+    # Nested base: prefer brain/ (on-brand). Reuse an existing para/ for back-compat.
+    $base = if (Test-Path "brain") { "brain" } elseif (Test-Path "para") { "para" } else { "brain" }
+    Write-Host "[SETUP] Code project + document management — nested $base/ (stack: $($stackDesc -join '+'))" -ForegroundColor Cyan
+
+    foreach ($cat in @("projects", "areas", "resources", "archives")) {
+        $dir = Join-Path $base $cat
         if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
         $gitkeep = Join-Path $dir ".gitkeep"
         if (-not (Test-Path $gitkeep)) { New-Item -ItemType File -Path $gitkeep -Force | Out-Null }
     }
-    Write-Host "[OK] nested PARA structure initialized (para/)" -ForegroundColor Green
+    Write-Host "[OK] nested PARA structure initialized ($base/)" -ForegroundColor Green
 
     # Convention seed: curated FE standard if React, else a thin generic base (only when absent)
     Write-Host "`n[...] Seeding code conventions..."
-    $ccDir = "para\areas\code-convention"
+    $ccRel = "$base/areas/code-convention"
+    $ccDir = Join-Path (Join-Path $base "areas") "code-convention"
     New-Item -ItemType Directory -Path $ccDir -Force | Out-Null
     $seedFile = if ($HasReact) { "fe-conventions.md" } else { "generic-conventions.md" }
 
@@ -288,7 +293,7 @@ Extract real, stack-specific rules from code with /code-convention, then evolve.
 
     $ccConfig = ".code-convention.json"
     if (-not (Test-Path $ccConfig)) {
-        Set-Content -Path $ccConfig -Encoding UTF8 -Value '{ "outputDir": "para/areas/code-convention" }'
+        Set-Content -Path $ccConfig -Encoding UTF8 -Value ('{ "outputDir": "__BASE__/areas/code-convention" }' -replace '__BASE__', $base)
     }
     if (Test-Path ".gitignore") {
         $gi = Get-Content ".gitignore" -Raw
@@ -302,18 +307,19 @@ Extract real, stack-specific rules from code with /code-convention, then evolve.
     if (-not (Test-Path $claudeMd)) { New-Item -ItemType File -Path $claudeMd -Force | Out-Null }
     $cm = Get-Content $claudeMd -Raw
     if (-not $cm) { $cm = "" }
-    if ($cm -notmatch 'para/areas/code-convention') {
-        Add-Content -Path $claudeMd -Encoding UTF8 -Value @'
+    if ($cm -notmatch 'areas/code-convention') {
+        $pointer = @'
 
 ## Code conventions
 
-Code conventions live in `para/areas/code-convention/` and are the single source of truth
+Code conventions live in `__BASE__/areas/code-convention/` and are the single source of truth
 (naming, style, error handling, security; FE adds i18n + data-testid). Read & follow them
 before writing or changing code; manage them with the `code-convention` skill.
 
-@para/areas/code-convention/CONVENTIONS.md
-'@
-        Write-Host "[OK] CLAUDE.md updated with conventions pointer" -ForegroundColor Green
+@__BASE__/areas/code-convention/CONVENTIONS.md
+'@ -replace '__BASE__', $base
+        Add-Content -Path $claudeMd -Encoding UTF8 -Value $pointer
+        Write-Host "[OK] CLAUDE.md updated with conventions pointer ($ccRel)" -ForegroundColor Green
     } else {
         Write-Host "[SKIP] CLAUDE.md already references conventions" -ForegroundColor Yellow
     }
@@ -332,7 +338,7 @@ function Write-PendingNote {
 This repo was bootstrapped empty (non-interactive run). Before scaffolding docs or writing
 code, ASK the user:
 
-1. Whether this repo should be (a) a code project + document management (nested `para/`),
+1. Whether this repo should be (a) a code project + document management (nested `brain/`),
    or (b) a standalone document vault (brain, flat root).
 2. (If a code project) which stack (e.g. rust+react, go+react, web / macOS desktop).
 
@@ -358,7 +364,7 @@ elseif ($script:Mode -eq 'project') {
     if ($script:Stack.HasReact) { $sd += "react" }
     if ($script:Stack.Backends.Count -gt 0) { $sd += $script:Stack.Backends }
     if ($sd.Count -eq 0) { $sd += "generic" }
-    Write-Host "[MODE] Detected: code project -> recommending nested para/ (stack: $($sd -join '+'))" -ForegroundColor Cyan
+    Write-Host "[MODE] Detected: code project -> recommending nested brain/ (stack: $($sd -join '+'))" -ForegroundColor Cyan
     Setup-Project -HasReact $script:Stack.HasReact -Backends $script:Stack.Backends
 }
 else {
@@ -369,7 +375,7 @@ else {
     } else {
         Write-Host "[MODE] Empty repo — auto-detection failed. Asking how to use it." -ForegroundColor Yellow
         Write-Host "  [1] Standalone document vault (brain) — flat, projects/areas/... at root"
-        Write-Host "  [2] Code project + document management — nested para/"
+        Write-Host "  [2] Code project + document management — nested brain/"
         $ans = Read-Host "Choose [1/2] (default 2)"
         if ($ans -eq '1') {
             Setup-Brain
