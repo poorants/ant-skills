@@ -105,11 +105,11 @@ for entry in "${MARKETPLACES[@]}"; do
 done
 
 # 3. Plugin installation (install if new, ALWAYS update so existing envs refresh)
-# name|scope — ant-project-kit at user scope (install once globally; hooks self-gate
-# to brain repos, so one install covers every repo and updates land in one place).
-# example-skills is a heavy demo pack, kept opt-in per repo (local).
+# name|scope — both at user scope: install once globally, no per-repo duplication,
+# updates land in one place. ant-project-kit hooks self-gate to brain repos, so a
+# single user install is safe everywhere; example-skills is a demo/reference pack.
 PLUGINS=(
-  "example-skills@anthropic-agent-skills|local"
+  "example-skills@anthropic-agent-skills|user"
   "ant-project-kit@ant-agent-skills|user"
 )
 
