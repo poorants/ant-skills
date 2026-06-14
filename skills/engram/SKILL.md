@@ -488,6 +488,28 @@ Handling results:
 
 The exit code is always 0, so it never blocks work — report and fix together.
 
+## Capture loop — keep the brain fed
+
+Durable thinking that stays in the chat and never lands in `<base>/` is lost. Keep
+the brain fed continuously; the bundled hooks are triggers/backstops, **not** the
+engine — judging what is worth keeping is the model's job.
+
+1. **Capture-as-you-go (primary)**: when a durable concept / decision / good idea
+   / research conclusion / important gotcha crystallizes mid-work, record it
+   *then* via the Create Workflow (place, link, update MOC) — don't wait for
+   session end. Stay selective (Brain boundary + no over-structuring).
+2. **Wrap-up trigger** (`UserPromptSubmit` hook): on an end-of-session sign-off
+   ("고생했다", "수고했어", "wrap up", …) the hook injects a reflect-and-save
+   instruction so the final ideas are captured. Act on it before replying.
+3. **Backstop** (`Stop` hook): a throttled nudge (default 30 min) for long
+   sessions with no sign-off; if nothing is worth keeping, say so in one line —
+   never create filler.
+
+Hooks ship with the plugin (`hooks/hooks.json` → `brain_reflect.py`, beside the
+integrity-lint Stop hook); brain-only and non-blocking. Tune
+`ENGRAM_CAPTURE_COOLDOWN_MIN` / `ENGRAM_CAPTURE_PHRASES`, disable with
+`ENGRAM_CAPTURE_DISABLE=1`. Details: [references/capture-loop.md](references/capture-loop.md).
+
 ## Roadmap (planned, not yet implemented)
 
 A **Publish / Export** workflow: extract a curated, portable subset from the brain
