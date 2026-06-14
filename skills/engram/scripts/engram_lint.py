@@ -1,33 +1,37 @@
 #!/usr/bin/env python3
-"""engram 무결성 검사기 (지식망 린터).
+"""engram integrity linter (knowledge-network linter).
 
-현재 작업 저장소의 PARA base 아래 모든 마크다운 문서를 스캔해
-망형 지식 구조의 두 가지 무결성 문제를 찾는다.
+Scans every markdown document under the current repo's PARA base and finds two
+kinds of integrity problems in the networked-knowledge structure.
 
-  1. 깨진 링크(broken link)
-     - 마크다운 상대 링크 `[텍스트](상대/경로.md)`가 실재하지 않는 파일을 가리킴 (오류)
-     - 위키링크 `[[이름]]`이 어떤 파일과도 매칭되지 않음 (경고: 아직 안 만든 미래 노트일 수 있음)
-  2. 외톨이 문서(orphan node)
-     - 어떤 문서로부터도 인바운드 링크를 받지 못한 문서.
+  1. Broken links
+     - Markdown relative link `[text](relative/path.md)` pointing to a file that
+       does not exist (error).
+     - Wikilink `[[name]]` that matches no file (warning — may be a future note
+       not created yet).
+  2. Orphan nodes
+     - A document that receives no inbound link from any other document.
 
-engram 스킬(지능)이 이 스크립트(공유 근육)를 호출해 결과를 파싱하고,
-끊긴 곳을 잇거나 외톨이에 맥락 링크를 달아 지식망을 복구한다.
+The engram skill (the intelligence) calls this script (the shared muscle),
+parses the result, and repairs the network by reconnecting broken links or
+adding contextual links to orphans.
 
-PARA base 자동 감지 (스킬은 대상 저장소 루트=cwd 에서 실행):
-  - 루트에 projects/·areas/·resources/·archives/ 중 하나라도 있으면 → flat 모드,
-    base = 루트(순수 문서저장소/브레인). 단독 문서 repo가 이 경우.
-  - 아니고 para/ 가 있으면 → nested 모드, base = para/ (코드 프로젝트 + 문서관리).
-  - 둘 다 없으면 → para/ 로 가정(없으면 무음).
-  - `--base PATH` 로 강제 지정 가능.
+PARA base auto-detection (the skill runs at the target repo root = cwd):
+  - If the root contains any of projects/ areas/ resources/ archives/ -> flat
+    mode, base = root (a standalone document vault / brain). This is the
+    standalone-doc-repo case.
+  - Else if para/ exists -> nested mode, base = para/ (a code project + docs).
+  - Else -> assume para/ (silent if missing).
+  - Override with `--base PATH`.
 
-사용법(대상 저장소 루트에서):
-    python <스킬경로>/scripts/engram_lint.py            # 사람용 리포트 (문제 없으면 무음)
-    python <스킬경로>/scripts/engram_lint.py --json     # 기계용 JSON (스킬이 파싱)
-    python <스킬경로>/scripts/engram_lint.py --base .   # base 강제(루트)
-    python <스킬경로>/scripts/engram_lint.py --all      # 깨끗해도 요약 출력
+Usage (from the target repo root):
+    python <skill>/scripts/engram_lint.py            # human report (silent if clean)
+    python <skill>/scripts/engram_lint.py --json     # machine JSON (skill parses)
+    python <skill>/scripts/engram_lint.py --base .   # force base (root)
+    python <skill>/scripts/engram_lint.py --all      # print summary even when clean
 
-종료 코드는 항상 0 (비차단). 위키링크는 미래 노트를 가리킬 수 있어(Obsidian 관행)
-무결성 문제를 보고만 하고 작업을 막지 않는다.
+Exit code is always 0 (non-blocking). Wikilinks may point to future notes
+(Obsidian convention), so problems are reported but never block work.
 """
 
 from __future__ import annotations
@@ -40,16 +44,18 @@ from pathlib import Path
 REPO = Path.cwd()
 PARA_CATEGORIES = ("projects", "areas", "resources", "archives")
 
-# 외톨이 검사에서 제외할 파일명 (구조적 파일은 링크를 '주는' 쪽이라 외톨이 개념이 무의미)
+# Filenames exempt from the orphan check (structural files only give links, so
+# the orphan concept does not apply to them).
 ORPHAN_EXEMPT_NAMES = {"README.md", "_index.md", "index.md", "CLAUDE.md", "MEMORY.md"}
 
-# 외톨이 검사에서 제외할 (base 기준) 경로 접두사 — blog 등 외부 발행용 격리 구역
+# Path prefixes (relative to base) exempt from the orphan check — e.g. a blog
+# kept isolated for external publishing. Harmless when absent.
 ORPHAN_EXEMPT_PREFIXES = ("areas/blog/",)
 
-WIKILINK_RE = re.compile(r"(?<!!)\[\[([^\]\n]+?)\]\]")          # [[target]] / [[target|alias]] (임베드 ![[..]] 제외)
-MDLINK_RE = re.compile(r"(?<!!)\[[^\]\n]*\]\(([^)\s]+)\)")       # [text](target) (이미지 ![..](..) 제외)
-FENCE_RE = re.compile(r"```.*?```", re.DOTALL)                   # 펜스 코드블록
-INLINE_CODE_RE = re.compile(r"`[^`\n]*`")                        # 인라인 코드
+WIKILINK_RE = re.compile(r"(?<!!)\[\[([^\]\n]+?)\]\]")          # [[target]] / [[target|alias]] (excludes embeds ![[..]])
+MDLINK_RE = re.compile(r"(?<!!)\[[^\]\n]*\]\(([^)\s]+)\)")       # [text](target) (excludes images ![..](..))
+FENCE_RE = re.compile(r"```.*?```", re.DOTALL)                   # fenced code blocks
+INLINE_CODE_RE = re.compile(r"`[^`\n]*`")                        # inline code
 
 
 def parse_base_arg() -> str | None:
@@ -62,14 +68,14 @@ def parse_base_arg() -> str | None:
 
 
 def resolve_base() -> tuple[Path, str]:
-    """(base 경로, 표시용 라벨) 반환. flat/nested 자동 감지."""
+    """Return (base path, display label). Auto-detects flat/nested."""
     arg = parse_base_arg()
     if arg is not None:
         return (REPO / arg).resolve(), arg
-    # flat 모드: 루트에 PARA 카테고리 폴더가 있으면 루트가 base (단독 문서저장소)
+    # flat mode: PARA category folders at the root -> root is the base (standalone vault)
     if any((REPO / c).is_dir() for c in PARA_CATEGORIES):
         return REPO, "."
-    # nested 모드: para/ 가 base (코드 프로젝트 + 문서관리)
+    # nested mode: para/ is the base (code project + docs)
     return (REPO / "para").resolve(), "para"
 
 
@@ -78,7 +84,7 @@ def strip_code(text: str) -> str:
 
 
 def is_excluded(parts: tuple[str, ...]) -> bool:
-    """숨김 디렉토리와 node_modules 제외."""
+    """Exclude hidden directories and node_modules."""
     return any(p == "node_modules" or (p.startswith(".") and len(p) > 1) for p in parts)
 
 
@@ -90,11 +96,11 @@ def main() -> int:
 
     if not base.is_dir():
         result = {"base": base_label, "scanned": 0, "broken_md_links": [],
-                  "dangling_wikilinks": [], "orphans": [], "note": "base 디렉토리 없음"}
+                  "dangling_wikilinks": [], "orphans": [], "note": "base directory not found"}
         if as_json:
             print(json.dumps(result, ensure_ascii=False, indent=2))
         elif show_all:
-            print(f"\U0001f9e0 engram: PARA base('{base_label}')를 찾지 못해 검사를 건너뜀.")
+            print(f"[engram] PARA base ('{base_label}') not found - skipping check.")
         return 0
 
     def rel(p: Path) -> str:
@@ -176,19 +182,19 @@ def main() -> int:
     if not has_issues and not show_all:
         return 0
 
-    where = "루트" if base_label == "." else f"{base_label}/"
-    lines = [f"\U0001f9e0 engram 무결성 검사 ({len(files)}개 문서 / {where})"]
+    where = "root" if base_label == "." else f"{base_label}/"
+    lines = [f"[engram] integrity check ({len(files)} docs / {where})"]
     if broken_md:
-        lines.append(f"  ❌ 깨진 링크 {len(broken_md)}건:")
-        lines += [f"     - {s} → {t}" for s, t in broken_md]
+        lines.append(f"  [X] {len(broken_md)} broken link(s):")
+        lines += [f"     - {s} -> {t}" for s, t in broken_md]
     if orphans:
-        lines.append(f"  \U0001f9ed 외톨이 문서 {len(orphans)}건 (인바운드 링크 없음):")
+        lines.append(f"  [orphan] {len(orphans)} orphan doc(s) (no inbound link):")
         lines += [f"     - {o}" for o in orphans]
     if dangling_wiki:
-        lines.append(f"  ⚠️  미연결 위키링크 {len(dangling_wiki)}건 (아직 안 만든 노트일 수 있음):")
-        lines += [f"     - {s} → [[{n}]]" for s, n in dangling_wiki]
+        lines.append(f"  [!] {len(dangling_wiki)} unresolved wikilink(s) (may be a note not created yet):")
+        lines += [f"     - {s} -> [[{n}]]" for s, n in dangling_wiki]
     if not has_issues:
-        lines.append("  ✅ 깨진 링크/외톨이 없음.")
+        lines.append("  [ok] no broken links / orphans.")
     print("\n".join(lines))
     return 0
 

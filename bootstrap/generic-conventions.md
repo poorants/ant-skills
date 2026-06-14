@@ -1,32 +1,37 @@
 # Code Conventions
 
-이 문서는 부트스트랩이 깔아둔 **얇은 시작점**이다. 이 프로젝트의 스택이 자동
-감지되었지만 큐레이션된 전용 시드가 아직 없어, 보편 규칙만 담았다. 실제 규칙은
-이 저장소의 코드에서 `/code-convention` 스킬로 **추출**해 채우는 것이 정확하다.
+This is a **thin starting point** seeded by the bootstrap. Your stack was
+auto-detected but there is no curated dedicated seed yet, so this holds only
+universal rules. The accurate way to fill it in is to **extract** the real rules
+from this repo's code with the `code-convention` skill.
 
-## 채우는 법
+## How to fill this in
 
 ```
-/code-convention        # 기존 코드에서 컨벤션 추출 → 이 문서 갱신
+/code-convention        # extract conventions from existing code -> update this doc
 ```
 
-추출하면 이 프로젝트의 실제 네이밍·구조·에러 처리·테스트 패턴이 규칙으로 정리된다.
-스택에 맞는 구체 규칙은 추측이 아니라 코드에서 끌어내는 것이 신뢰할 수 있다.
+Extraction captures this project's actual naming, structure, error handling, and
+test patterns as rules. Stack-specific rules are more trustworthy when pulled
+from the code than guessed from a template.
 
-## 보편 기준 (추출 전 임시)
+## Universal baseline (temporary, pre-extraction)
 
-스택과 무관하게 적용되는 최소 기준이다. 추출된 규칙이 생기면 그쪽이 우선한다.
+The minimum that applies regardless of stack. Once extracted rules exist, they
+take precedence.
 
-1. **네이밍 일관성**: 한 코드베이스 안에서 케이스 컨벤션(camelCase/snake_case/PascalCase)을
-   혼용하지 않는다. 기존 코드의 우세한 방식을 따른다.
-2. **에러 처리 명시성**: 에러를 삼키지 않는다. 잡으면 처리하거나 맥락을 붙여 다시 던진다.
-3. **보안 기본**: 비밀값(토큰·키·비밀번호)을 코드·로그·커밋에 평문으로 남기지 않는다.
-   환경변수·시크릿 매니저를 쓴다.
-4. **테스트 가능성**: 부수효과와 순수 로직을 분리해 테스트 지점을 확보한다.
-5. **주석은 '왜'**: 무엇을 하는지가 아니라 왜 그렇게 했는지를 남긴다. 코드로 설명되는
-   것은 주석으로 중복하지 않는다.
+1. **Naming consistency**: do not mix case conventions
+   (camelCase/snake_case/PascalCase) within one codebase. Follow the dominant
+   style already present in the code.
+2. **Explicit error handling**: never swallow errors. When caught, handle them or
+   rethrow with added context.
+3. **Security basics**: never leave secrets (tokens, keys, passwords) in code,
+   logs, or commits in plaintext. Use environment variables / a secret manager.
+4. **Testability**: separate side effects from pure logic to keep test seams.
+5. **Comments explain "why"**: capture why, not what. Do not duplicate in
+   comments what the code already explains.
 
-## 관리
+## Management
 
-규칙 추가·수정·점검은 `code-convention` 스킬로 한다 (`/code-convention add`,
-`/code-convention check`, `/code-convention evolve`).
+Add, edit, or check rules with the `code-convention` skill
+(`/code-convention add`, `/code-convention check`, `/code-convention evolve`).

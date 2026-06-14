@@ -1,48 +1,74 @@
-# Networked Knowledge — 망형 연결 규칙
+# Networked Knowledge — Linking Rules
 
-engram이 PARA 폴더(물리적 분류) 위에 얹는 **논리적 연결 레이어**의 규칙이다. 문서를 "뇌처럼 유기적으로 연결된 망"으로 키우기 위한 지침으로, 문서 생성·이동·리뷰 시 항상 적용한다. 대상은 `para/` 아래 문서다.
+The rules for the **logical link layer** engram lays on top of PARA folders
+(physical classification). They grow the vault into a brain-like network of
+connected documents. Apply them whenever creating, moving, or reviewing docs.
+The target is the documents under the resolved PARA base.
 
-## 핵심 개념: Networked PARA
+## Core idea: Networked PARA
 
-PARA 폴더만으로는 정보가 폴더에 격리된다. 여기에 쌍방향 링크를 더해 **물리적 분류(폴더) + 논리적 관계(링크)**를 조합한다.
+PARA folders alone isolate information inside folders. Adding bi-directional
+links combines **physical classification (folders)** with **logical
+relationships (links)**.
 
-- **폴더(물리)**: 문서의 생명 주기와 거버넌스(수정 책임)를 담당. Projects·Areas·Resources·Archives.
-- **링크(논리)**: 문서가 어느 폴더에 있든 맥락으로 자유롭게 연결. 폴더 경계를 넘어 그물망을 형성.
+- **Folders (physical)**: own the document's lifecycle and governance (who edits
+  it). Projects / Areas / Resources / Archives.
+- **Links (logical)**: connect documents by context regardless of which folder
+  they live in, forming a web that crosses folder boundaries.
 
-## 링크 작성 규칙
+## Linking rules
 
-### 1. 쌍방향 링크 (Bi-directional Linking)
+### 1. Bi-directional linking
 
-- 표기는 `[[파일명]]`(Obsidian 위키링크) 또는 `[표시 텍스트](상대/경로.md)`(마크다운 상대 링크)를 쓴다. Graph View 노드 인식과 백링크 활성화를 위해 위키링크를 우선한다.
-- 위키링크는 파일명(stem) 기준으로 해석되므로 폴더를 옮겨도 안 깨진다. 단 파일명 변경에는 약하니 명명을 안정적으로 유지한다.
+- Use `[[filename]]` (Obsidian wikilink) or `[display text](relative/path.md)`
+  (markdown relative link). Prefer wikilinks so nodes are recognized in Graph
+  View and backlinks activate.
+- Wikilinks resolve by filename (stem), so moving a folder does not break them.
+  They are fragile to filename changes, so keep names stable.
 
-### 2. 맥락적 링크 (Contextual Link) 선호
+### 2. Prefer contextual links
 
-문서 하단에 "관련 문서 목록"을 나열하는 방식은 지양한다. 본문 서술 흐름에 링크를 자연스럽게 녹인다.
+Avoid dumping a "related documents" list at the bottom of a file. Weave links
+naturally into the prose.
 
-- 나쁜 예: 본문 끝에 `관련 링크: [[foo]]` 나열
-- 좋은 예: "암호화 모듈은 국가 표준인 [[nis-kcmvp-petracrypto]] 규격을 따라야 한다"처럼 문장 안에 링크
+- Bad: a trailing `Related: [[foo]]` list.
+- Good: "the encryption module must follow the national standard
+  [[nis-kcmvp-petracrypto]]" — the link sits inside the sentence.
 
-### 3. MOC (Map of Content) = 허브 노드
+### 3. MOC (Map of Content) = hub node
 
-각 폴더의 `README.md`가 기본 MOC 역할을 한다. 흩어진 개별 노트를 논리적 순서·카테고리로 엮는 '입구 대시보드'다. 새 문서를 만들면 해당 폴더의 README MOC에 한 줄 링크를 추가해 입구에서 닿게 한다.
+Each folder's `README.md` acts as the default MOC: an entry dashboard that ties
+the folder's individual notes together by logical order/category. When you add a
+document, add a one-line link to it from that folder's README MOC so it is
+reachable from the entry point.
 
-## 지식망 관리 규칙
+## Knowledge-network management rules
 
-1. **Atomic Note (단일 논점)**: 한 문서는 하나의 개념·규칙·프로젝트만 다룬다. 주제가 확장되면 새 문서를 만들어 링크로 잇는다. 거대한 문서는 링크의 전파력을 흐린다.
+1. **Atomic note (one point)**: a document covers exactly one concept, rule, or
+   project. When a topic expands, create a new document and link to it. Oversized
+   documents blur the propagation power of links.
 
-2. **외톨이 노드(Orphan) 방지**: 새로 추가되는 모든 문서는 기존 MOC(`README.md`)나 연관 문서로부터 **최소 1개 이상의 인바운드 링크**를 받아야 한다. 연결되지 않은 지식은 유실된다. (`engram_lint.py`가 외톨이를 탐지한다.)
+2. **No orphan nodes**: every newly added document must receive at least one
+   inbound link from an existing MOC (`README.md`) or a related document.
+   Unlinked knowledge gets lost. (`engram_lint.py` detects orphans.)
 
-3. **참고 자료의 접지(Grounding)**: 외부 리서치(`resources/`)를 인용할 때는 내 해석이 담긴 `areas/`·`projects/` 문서로 연결해 외부 지식을 내 지식망에 접지시킨다.
+3. **Ground reference material**: when citing external research (`resources/`),
+   link it to an `areas/`/`projects/` document that holds your own
+   interpretation, grounding the external knowledge in your network.
 
-## 함정 (실무자들이 경고하는 것)
+## Pitfalls (what practitioners warn about)
 
-- **Collector's fallacy**: 정보를 *수집*하는 것을 *아는 것*과 혼동하는 오류. 모으기만 한 자료는 읽은 게 아니다. 수집고(seeds·ideas 등)는 주기적으로 소화·승격하는 리추얼이 없으면 죽은 더미가 된다.
-- **Over-structuring**: 시스템 정비 자체가 목적이 되어 정작 사고·생산을 안 하는 상태. 규칙·태그·번호를 과하게 깔지 않는다.
-- **Link rot**: 파일명 변경으로 링크가 깨지는 것. 명명 안정화 + `engram_lint.py` 정기 점검으로 막는다.
+- **Collector's fallacy**: mistaking *collecting* information for *knowing* it.
+  Material that is only collected has not been read. Inboxes (seeds, ideas, etc.)
+  become a dead pile without a periodic ritual to digest and promote them.
+- **Over-structuring**: when maintaining the system becomes the goal and actual
+  thinking/output stops. Do not pile on excessive rules, tags, or numbers.
+- **Link rot**: links breaking due to filename changes. Prevent it with stable
+  naming and periodic `engram_lint.py` checks.
 
-## 적용 순서 (문서 작업 시)
+## Order of operations (when working on docs)
 
-1. 문서를 만들거나 옮긴 뒤, 본문에 맥락적 링크를 자연스럽게 심는다.
-2. 해당 폴더 `README.md`(MOC)에 한 줄 추가해 외톨이를 막는다.
-3. 작업 마무리 전 `engram_lint.py`로 깨진 링크·외톨이를 점검하고 복구한다.
+1. After creating or moving a document, weave contextual links into the prose.
+2. Add a one-line entry to the folder's `README.md` (MOC) to avoid orphans.
+3. Before finishing, run `engram_lint.py` to find and repair broken links and
+   orphans.

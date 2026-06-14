@@ -7,7 +7,7 @@
 #   3. Plugin installation
 #   4. .gitignore (exclude docs/)
 #   5. Document structure + conventions — mode-aware:
-#      brain(flat 루트 문서저장소) / project(nested para/ + 스택 컨벤션) / empty(계획 질문)
+#      brain (flat root vault) / project (nested para/ + stack conventions) / empty (ask the plan)
 #
 # Usage:
 #   bash <(curl -sL https://raw.githubusercontent.com/poorants/ant-skills/main/bootstrap/init-claude-project.sh)
@@ -21,9 +21,9 @@ if ! command -v claude &>/dev/null; then
 fi
 
 # --- Mode & stack detection (run at project root, BEFORE any scaffolding) ---
-#   brain   : 루트에 PARA 폴더가 이미 있는 단독 문서저장소 → flat(루트) 사용
-#   project : 코드가 있는 저장소 → nested(para/)로 문서관리 + 컨벤션 시드
-#   empty   : 빈 저장소 → 추측 금지, 사용자에게 계획을 묻도록 노트만 남김
+#   brain   : standalone doc vault with PARA folders already at root -> flat (root)
+#   project : repo with code -> nested (para/) docs + convention seed
+#   empty   : empty repo -> no guessing, leave a note asking the user for the plan
 ROOT_HAS_PARA=false
 for c in projects areas resources archives; do
   if [ -d "$c" ]; then ROOT_HAS_PARA=true; fi
@@ -84,7 +84,7 @@ JSON
 echo "[OK] .claude/settings.json created"
 
 # 2. Plugin marketplaces (register if new, ALWAYS update to latest)
-#    "repo|name" 쌍: add 는 repo 로, update 는 marketplace 이름으로 호출
+#    "repo|name" pairs: add uses the repo, update uses the marketplace name
 MARKETPLACES=(
   "anthropics/skills|anthropic-agent-skills"
   "poorants/ant-skills|ant-agent-skills"
@@ -94,7 +94,7 @@ for entry in "${MARKETPLACES[@]}"; do
   repo="${entry%%|*}"
   name="${entry##*|}"
   echo "[...] Registering marketplace '$repo'..."
-  claude plugin marketplace add "$repo" 2>&1 | cat || true   # 이미 등록돼 있어도 무해
+  claude plugin marketplace add "$repo" 2>&1 | cat || true   # harmless if already registered
   echo "[...] Updating marketplace '$name'..."
   claude plugin marketplace update "$name" 2>&1 | cat || true
   echo "[OK] Marketplace '$name' up to date"
@@ -108,7 +108,7 @@ PLUGINS=(
 
 for p in "${PLUGINS[@]}"; do
   echo "[...] Installing plugin '$p'..."
-  claude plugin install "$p" --scope local 2>&1 | cat || true   # 이미 설치돼 있어도 무해
+  claude plugin install "$p" --scope local 2>&1 | cat || true   # harmless if already installed
   echo "[...] Updating plugin '$p'..."
   claude plugin update "$p" --scope local 2>&1 | cat || true
   echo "[OK] Plugin '$p' up to date"
@@ -127,48 +127,30 @@ else
   echo "[OK] Added 'docs/' to .gitignore"
 fi
 
-# 5 & 6. Document structure + conventions (mode-aware)
-echo ""
-if [ "$MODE" = "brain" ]; then
-  # 단독 문서저장소(브레인) — flat. 루트의 PARA 구조를 사용/보강.
-  echo "[MODE] 단독 문서저장소(브레인) — flat(루트) PARA 사용"
+# 5 & 6. Document structure + conventions
+# Policy: if detected, apply the recommendation automatically. If undetected
+#         (empty repo), prompt for input on the spot. When non-interactive
+#         (pipe/CI, stdin not a tty), fall back to a CLAUDE.md note.
+
+setup_brain() {
+  echo "[SETUP] Standalone document vault (brain) — flat (root) PARA"
   for dir in projects areas resources archives; do
     [ -d "$dir" ] || mkdir -p "$dir"
   done
-  echo "[OK] flat PARA structure ensured (root). 코드 컨벤션은 시드하지 않음(순수 문서 repo)."
+  echo "[OK] flat PARA structure ensured (root). No code conventions seeded (pure doc repo)."
+}
 
-elif [ "$MODE" = "empty" ]; then
-  # 빈 저장소 — 추측 금지. 사용자에게 계획을 묻도록 CLAUDE.md 노트만 남김.
-  echo "[MODE] 빈 저장소 — 계획 미정. 스캐폴딩 보류, 사용자에게 물어보도록 노트만 남김."
-  [ -f CLAUDE.md ] || touch CLAUDE.md
-  if ! grep -qF 'Project setup (pending)' CLAUDE.md 2>/dev/null; then
-    cat >> CLAUDE.md <<'MD'
-
-## Project setup (pending)
-
-This repo was bootstrapped empty. Before scaffolding docs or writing code, ASK the user:
-
-1. 이 저장소를 (a) 코드 프로젝트 + 문서관리(nested `para/`) 로 갈지,
-   (b) 순수 문서저장소(브레인, flat 루트) 로 갈지.
-2. (코드 프로젝트라면) 어떤 스택인지 (예: rust+react, go+react, 웹/맥 데스크탑).
-
-답에 따라 `engram` 스킬로 PARA 구조를, `code-convention` 스킬로 컨벤션을 셋업한다.
-이 섹션은 셋업이 끝나면 지운다.
-MD
-    echo "[OK] CLAUDE.md에 'Project setup (pending)' 노트 추가 — 다음 세션에 Claude가 계획을 묻는다."
-  else
-    echo "[SKIP] 'Project setup (pending)' 노트가 이미 있음"
+# setup_project <has_react:true|false> [backend ...]
+setup_project() {
+  local has_react="$1"; shift
+  local backends=("$@")
+  local desc=""
+  [ "$has_react" = true ] && desc="react"
+  if [ "${#backends[@]}" -gt 0 ]; then
+    desc="${desc:+$desc+}$(IFS=+; echo "${backends[*]}")"
   fi
-
-else
-  # 코드 프로젝트 — nested(para/)로 문서관리 + 스택 맞춤 컨벤션 시드.
-  STACK_DESC=""
-  [ "$HAS_REACT" = true ] && STACK_DESC="react"
-  if [ "${#BACKENDS[@]}" -gt 0 ]; then
-    STACK_DESC="${STACK_DESC:+$STACK_DESC+}$(IFS=+; echo "${BACKENDS[*]}")"
-  fi
-  [ -z "$STACK_DESC" ] && STACK_DESC="generic"
-  echo "[MODE] 코드 프로젝트 + 문서관리 — nested para/ (감지: $STACK_DESC)"
+  [ -z "$desc" ] && desc="generic"
+  echo "[SETUP] Code project + document management — nested para/ (stack: $desc)"
 
   for dir in para/projects para/areas para/resources para/archives; do
     mkdir -p "$dir"
@@ -178,31 +160,27 @@ else
 
   echo ""
   echo "[...] Seeding code conventions..."
-  CC_DIR="para/areas/code-convention"
-  mkdir -p "$CC_DIR"
-  if [ "$HAS_REACT" = true ]; then SEED_FILE="fe-conventions.md"; else SEED_FILE="generic-conventions.md"; fi
+  local cc_dir="para/areas/code-convention"
+  mkdir -p "$cc_dir"
+  local seed_file
+  if [ "$has_react" = true ]; then seed_file="fe-conventions.md"; else seed_file="generic-conventions.md"; fi
 
-  if [ ! -f "$CC_DIR/CONVENTIONS.md" ]; then
-    if curl -sfL "https://raw.githubusercontent.com/poorants/ant-skills/main/bootstrap/$SEED_FILE" -o "$CC_DIR/CONVENTIONS.md"; then
-      echo "[OK] CONVENTIONS.md seeded ($SEED_FILE)"
+  if [ ! -f "$cc_dir/CONVENTIONS.md" ]; then
+    if curl -sfL "https://raw.githubusercontent.com/poorants/ant-skills/main/bootstrap/$seed_file" -o "$cc_dir/CONVENTIONS.md"; then
+      echo "[OK] CONVENTIONS.md seeded ($seed_file)"
     else
-      echo "[WARN] Could not fetch $SEED_FILE (skipping)"
+      echo "[WARN] Could not fetch $seed_file (skipping)"
     fi
   else
     echo "[SKIP] CONVENTIONS.md already exists"
   fi
 
-  if [ "${#BACKENDS[@]}" -gt 0 ]; then
-    echo "[NOTE] 백엔드($(IFS=,; echo "${BACKENDS[*]}")) 컨벤션은 /code-convention 으로 실제 코드에서 추출하세요."
+  if [ "${#backends[@]}" -gt 0 ]; then
+    echo "[NOTE] Backend ($(IFS=,; echo "${backends[*]}")) conventions: extract them from real code with /code-convention."
   fi
 
-  if [ ! -f "$CC_DIR/CHANGELOG.md" ]; then
-    printf '# Code Convention Changelog\n\n## init\nSeeded a stack-detected starter via the ant-skills bootstrap.\nExtract real, stack-specific rules from code with /code-convention, then evolve.\n' > "$CC_DIR/CHANGELOG.md"
-  fi
-
-  if [ ! -f ".code-convention.json" ]; then
-    printf '{\n  "outputDir": "para/areas/code-convention"\n}\n' > ".code-convention.json"
-  fi
+  [ -f "$cc_dir/CHANGELOG.md" ] || printf '# Code Convention Changelog\n\n## init\nSeeded a stack-detected starter via the ant-skills bootstrap.\nExtract real, stack-specific rules from code with /code-convention, then evolve.\n' > "$cc_dir/CHANGELOG.md"
+  [ -f ".code-convention.json" ] || printf '{\n  "outputDir": "para/areas/code-convention"\n}\n' > ".code-convention.json"
 
   if ! grep -qF '.code-convention.json' .gitignore 2>/dev/null; then
     printf '\n# code-convention local config\n.code-convention.json\n' >> .gitignore
@@ -223,6 +201,82 @@ MD
     echo "[OK] CLAUDE.md updated with conventions pointer"
   else
     echo "[SKIP] CLAUDE.md already references conventions"
+  fi
+}
+
+write_pending_note() {
+  [ -f CLAUDE.md ] || touch CLAUDE.md
+  if ! grep -qF 'Project setup (pending)' CLAUDE.md 2>/dev/null; then
+    cat >> CLAUDE.md <<'MD'
+
+## Project setup (pending)
+
+This repo was bootstrapped empty (non-interactive run). Before scaffolding docs or writing
+code, ASK the user:
+
+1. Whether this repo should be (a) a code project + document management (nested `para/`),
+   or (b) a standalone document vault (brain, flat root).
+2. (If a code project) which stack (e.g. rust+react, go+react, web / macOS desktop).
+
+Based on the answer, set up the PARA structure with the `engram` skill and conventions with
+the `code-convention` skill. Delete this section once setup is done.
+MD
+    echo "[OK] Added 'Project setup (pending)' note to CLAUDE.md — Claude will ask for the plan next session."
+  else
+    echo "[SKIP] 'Project setup (pending)' note already present"
+  fi
+}
+
+# --- dispatch ---
+echo ""
+if [ "$MODE" = "brain" ]; then
+  echo "[MODE] Detected: standalone document vault (brain) -> recommending flat (root)"
+  setup_brain
+
+elif [ "$MODE" = "project" ]; then
+  SD=""
+  [ "$HAS_REACT" = true ] && SD="react"
+  if [ "${#BACKENDS[@]}" -gt 0 ]; then SD="${SD:+$SD+}$(IFS=+; echo "${BACKENDS[*]}")"; fi
+  [ -z "$SD" ] && SD="generic"
+  echo "[MODE] Detected: code project -> recommending nested para/ (stack: $SD)"
+  # Expanding an empty "${BACKENDS[@]}" errors under macOS bash 3.2 + set -u -> guard by count
+  if [ "${#BACKENDS[@]}" -gt 0 ]; then
+    setup_project "$HAS_REACT" "${BACKENDS[@]}"
+  else
+    setup_project "$HAS_REACT"
+  fi
+
+else
+  # Empty repo — undetected. Prompt if stdin is a tty, else fall back to a note.
+  if [ ! -t 0 ]; then
+    echo "[MODE] Empty repo (non-interactive) — cannot prompt, leaving a note only."
+    write_pending_note
+  else
+    echo "[MODE] Empty repo — auto-detection failed. Asking how to use it."
+    echo "  [1] Standalone document vault (brain) — flat, projects/areas/... at root"
+    echo "  [2] Code project + document management — nested para/"
+    read -r -p "Choose [1/2] (default 2): " ans
+    if [ "$ans" = "1" ]; then
+      setup_brain
+    else
+      echo "Which stack?"
+      echo "  [1] rust + react   [2] go + react   [3] react only   [4] other (manual)   [5] generic"
+      read -r -p "Choose [1-5] (default 1): " s
+      case "$s" in
+        2) setup_project true go ;;
+        3) setup_project true ;;
+        4)
+          read -r -p "React frontend? [y/N]: " r
+          read -r -p "Backends (space-separated, e.g. rust go) — blank if none: " custom
+          hr=false
+          case "$r" in [yY]*) hr=true ;; esac
+          # shellcheck disable=SC2086
+          setup_project "$hr" $custom
+          ;;
+        5) setup_project false ;;
+        *) setup_project true rust ;;   # 1 or empty -> primary stack
+      esac
+    fi
   fi
 fi
 

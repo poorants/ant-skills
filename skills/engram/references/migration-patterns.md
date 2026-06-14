@@ -74,7 +74,7 @@ When filenames are not conclusive, scan the first ~50 lines of content:
 
 - **High**: Auto-classify with the suggested category
 - **Medium**: Auto-classify but flag for user review in the migration plan
-- **Low / Unclear**: Mark as "수동 분류 필요" (manual classification needed)
+- **Low / Unclear**: Mark as "manual classification needed"
 
 ## Directory Handling
 

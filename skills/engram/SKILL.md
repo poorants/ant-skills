@@ -9,30 +9,32 @@ description: >
   to manage/organize docs, create meeting notes, archive projects, review
   documentation status, OR connect notes, check link integrity, find orphan
   documents, build a knowledge graph, or update MOCs.
-  Triggers: "문서 관리해줘", "프로젝트 문서화해줘", "회의록 저장해줘",
-  "para 정리해줘", "문서 아카이브해줘", "문서 리뷰해줘", "문서 검색해줘",
-  "문서 마이그레이션", "기존 문서 정리",
-  "지식망 정리", "노트 연결해줘", "링크 점검", "링크 무결성", "깨진 링크",
-  "외톨이 문서", "외톨이 노드", "MOC 갱신", "지식 그래프", "브레인 점검",
-  "manage documents", "organize docs", "archive project", "review docs",
-  "create meeting notes", "move document", "list documents", "search docs",
-  "para init", "para review", "para migrate", "migrate docs", "import docs",
-  "connect notes", "link notes", "check links", "lint links", "find orphans",
-  "knowledge graph", "update moc", "engram lint", "engram link"
+  Triggers: "manage documents", "organize docs", "document the project",
+  "save meeting notes", "tidy para", "archive document", "review docs",
+  "search docs", "migrate docs", "import docs", "organize existing docs",
+  "archive project", "create meeting notes", "move document", "list documents",
+  "para init", "para review", "para migrate",
+  "connect notes", "link notes", "tidy the knowledge network", "check links",
+  "lint links", "link integrity", "broken links", "find orphans",
+  "orphan documents", "orphan nodes", "update moc", "knowledge graph",
+  "brain check", "engram lint", "engram link"
 ---
 
 # engram — Networked PARA Document Brain
 
-문서를 PARA 방법으로 관리하는 동시에, 쌍방향 링크·MOC 허브·무결성 린트로
-**하나의 연결된 지식망(브레인)**으로 키운다. 물리적 분류(폴더) 위에 논리적
-연결(링크) 레이어를 얹는 'Networked PARA'가 핵심이다.
+Manage documents with the PARA method while weaving them into **one connected
+knowledge network (a brain)** through bi-directional links, MOC hubs, and
+integrity linting. The core idea is 'Networked PARA' — a logical link layer on
+top of physical classification (folders).
 
-두 개의 층으로 동작한다.
+It works as two layers:
 
-- **관리 층 (PARA)**: 생성·이동·아카이브·마이그레이션·리뷰. 폴더가 거버넌스를 맡는다.
-- **연결 층 (Networked Knowledge)**: 문서를 맥락 링크로 잇고, 외톨이를 없애고,
-  깨진 링크를 잡는다. 링크가 맥락을 맡는다. 상세 규칙은
-  [references/linking-rules.md](references/linking-rules.md)를 로드해 따른다.
+- **Management layer (PARA)**: create, move, archive, migrate, review. Folders
+  own governance.
+- **Connection layer (Networked Knowledge)**: link documents by context, remove
+  orphans, catch broken links. Links own context. Load
+  [references/linking-rules.md](references/linking-rules.md) for the detailed
+  rules and follow them.
 
 ## Path Resolution (do this first)
 
@@ -53,16 +55,17 @@ Throughout this document, `<base>/` denotes the resolved base — an empty prefi
 in flat mode, or `para/` in nested mode. Every path below is written relative to
 it.
 
-**연결 층(링크·MOC·린트)의 대상 범위**: 무결성 린트(`engram_lint.py`)는 위 Path
-Resolution과 동일하게 base를 자동 감지한다 — **flat 모드(단독 문서저장소/브레인)면
-루트 전체**, **nested 모드(코드 프로젝트 + 문서관리)면 `para/` 아래**. `--base`로
-강제 지정도 가능하다. 맥락 링크·MOC 규칙은 해결된 `<base>/` 전반에 적용한다.
+**Scope of the connection layer (links · MOC · lint)**: the integrity linter
+(`engram_lint.py`) auto-detects the base the same way as Path Resolution above —
+**flat mode (standalone vault/brain) scans the whole root**, **nested mode (code
+project + docs) scans under `para/`**. You can force it with `--base`. Contextual
+link and MOC rules apply across the resolved `<base>/`.
 
-두 가지 사용 모드:
-- **단독 문서저장소(브레인)**: 루트에 `projects/`·`areas/` 등이 직접 있는 flat 모드.
-  린트 base는 루트.
-- **다른 프로젝트 + 문서관리**: 코드 저장소 안 `para/` 아래에 문서를 두는 nested 모드.
-  린트 base는 `para/`.
+Two usage modes:
+- **Standalone document vault (brain)**: flat mode with `projects/`, `areas/`,
+  etc. directly at the root. Lint base is the root.
+- **Another project + document management**: nested mode with docs under `para/`
+  inside a code repo. Lint base is `para/`.
 
 ## Quick Reference
 
@@ -168,16 +171,19 @@ Use plain markdown. No frontmatter required. Start with an H1 title.
 
 ### Step 5: Connect (Networked Knowledge)
 
-문서를 만든 직후, 외톨이로 남지 않게 지식망에 잇는다. 상세는
-[references/linking-rules.md](references/linking-rules.md)를 따른다.
+Right after creating a document, wire it into the network so it does not stay an
+orphan. Follow [references/linking-rules.md](references/linking-rules.md).
 
-1. **인바운드 링크 확보**: 새 문서가 관련된 기존 문서나 해당 폴더 `README.md`(MOC)에서
-   최소 1개 이상의 링크를 받게 한다. 외톨이 노드는 유실된다.
-2. **맥락적 링크**: 본문 흐름에 `[[파일명]]` 위키링크를 자연스럽게 녹인다. 하단에
-   "관련 링크" 목록을 나열하지 않는다.
-3. **MOC 갱신**: 해당 폴더 `README.md`에 새 문서로 가는 한 줄 링크를 추가한다.
-4. **참고 자료 접지**: `resources/` 문서라면 내 해석이 담긴 `areas/`·`projects/`
-   문서로도 연결해 지식망에 접지시킨다.
+1. **Secure an inbound link**: make the new document receive at least one link
+   from a related existing document or that folder's `README.md` (MOC). Orphan
+   nodes get lost.
+2. **Contextual links**: weave `[[filename]]` wikilinks naturally into the prose.
+   Do not dump a "related links" list at the bottom.
+3. **Update the MOC**: add a one-line link to the new document in that folder's
+   `README.md`.
+4. **Ground references**: if it is a `resources/` document, also link it to an
+   `areas/`/`projects/` document holding your interpretation, grounding it in the
+   network.
 
 ### Step 6: Confirm and Report
 
@@ -185,7 +191,7 @@ After creation, report:
 - Full path of the created file
 - Which PARA category it was placed in
 - Brief summary of what was created
-- 어떤 문서/MOC에서 인바운드 링크를 받게 되었는지 (연결 상태)
+- Which document/MOC now links to it (connection status)
 
 ## Move Workflow
 
@@ -208,34 +214,35 @@ Steps:
 
 ## Migrate Workflow
 
-**When**: 기존 프로젝트에 산재된 문서를 PARA 구조로 일괄 재분류할 때.
+**When**: bulk-reclassifying documents scattered across an existing project into
+the PARA structure.
 
 ### Step 1: Scan
 
-Glob으로 프로젝트 전체 문서를 탐색한다.
+Discover all project documents with Glob.
 
-- 대상: `**/*.md`, `**/*.txt`
-- 제외: 이미 PARA 카테고리 안에 있는 문서(flat 모드는 루트의
-  `projects/`·`areas/`·`resources/`·`archives/`, nested 모드는 `para/`),
-  그리고 `.git/`, `node_modules/` 등 비문서 디렉토리
-- 루트 메타데이터 파일 제외: `README.md`, `LICENSE`, `CHANGELOG.md` 등
+- Targets: `**/*.md`, `**/*.txt`
+- Exclude: documents already inside a PARA category (in flat mode the root's
+  `projects/`·`areas/`·`resources/`·`archives/`, in nested mode `para/`), and
+  non-document directories such as `.git/`, `node_modules/`
+- Exclude root metadata files: `README.md`, `LICENSE`, `CHANGELOG.md`, etc.
 
-제외 패턴 상세는 `references/migration-patterns.md`를 참조한다.
+See `references/migration-patterns.md` for detailed exclusion patterns.
 
 ### Step 2: Classify
 
-각 문서의 내용을 읽고 PARA 분류를 결정한다.
+Read each document's content and decide its PARA classification.
 
-- `references/para-categories.md`의 분류 플로차트를 활용
-- 파일명/경로 힌트와 내용 키워드로 판단
-- 불확실한 문서는 "수동 분류 필요"로 표시
+- Use the classification flowchart in `references/para-categories.md`
+- Judge by filename/path hints and content keywords
+- Mark uncertain documents as "manual classification needed"
 
-분류 휴리스틱 상세는 `references/migration-patterns.md`를 참조한다.
+See `references/migration-patterns.md` for detailed classification heuristics.
 
 ### Step 3: Present Migration Plan
 
-분류 결과를 마이그레이션 계획으로 출력한다. 목적지 경로는 해결된 base를 따른다
-(flat 모드 예시).
+Output the classification as a migration plan. Destination paths follow the
+resolved base (flat-mode example shown).
 
 ```
 ## Migration Plan
@@ -263,28 +270,28 @@ Glob으로 프로젝트 전체 문서를 탐색한다.
 - Skipped: 3 files
 ```
 
-이름 충돌이 있으면 계획에 명시한다.
+If there are name collisions, state them in the plan.
 
 ### Step 4: Confirm
 
-**반드시 사용자 승인 후 실행한다.** 사용자는 다음을 변경할 수 있다:
+**Always execute only after user approval.** The user may change:
 
-- 개별 파일의 분류 변경
-- 특정 파일 제외
-- 커스텀 경로 지정
+- the classification of individual files
+- exclude specific files
+- specify custom paths
 
 ### Step 5: Execute
 
-승인된 계획에 따라 파일을 이동한다.
+Move files according to the approved plan.
 
-1. Init Workflow로 `<base>/` 구조 보장
-2. Bash `mv`로 파일 이동
-3. 관련 파일 그룹(같은 디렉토리의 연관 파일)은 디렉토리 구조 유지
-4. 디렉토리 처리 상세는 `references/migration-patterns.md` 참조
+1. Ensure the `<base>/` structure via the Init Workflow
+2. Move files with Bash `mv`
+3. Keep directory structure for related file groups (associated files in the same directory)
+4. See `references/migration-patterns.md` for detailed directory handling
 
 ### Step 6: Report
 
-이동 결과를 보고한다.
+Report the move results.
 
 ```
 ## Migration Report
@@ -299,8 +306,8 @@ Glob으로 프로젝트 전체 문서를 탐색한다.
 ### Failed (0 files)
 
 ### Next Steps
-- `para list`로 결과 확인
-- `para review`로 분류 적정성 점검
+- `para list` to verify the result
+- `para review` to check classification appropriateness
 ```
 
 ## List & Search Workflow
@@ -368,54 +375,59 @@ Review report format:
 
 ## Link & Connect Workflow (Networked Knowledge)
 
-**When**: 사용자가 노트를 연결하거나, 지식망을 정리하거나, 외톨이 문서를 잇거나,
-MOC를 갱신하려 할 때. ("노트 연결해줘", "지식망 정리", "MOC 갱신", "외톨이 이어줘")
+**When**: the user wants to connect notes, tidy the knowledge network, link
+orphan documents, or update MOCs. ("connect notes", "tidy the knowledge graph",
+"update moc", "link the orphans")
 
-먼저 [references/linking-rules.md](references/linking-rules.md)를 로드한다.
+First load [references/linking-rules.md](references/linking-rules.md).
 
-1. **현황 파악**: Integrity Lint Workflow를 돌려 외톨이·깨진 링크 목록을 얻는다.
-2. **외톨이 연결**: 각 외톨이 문서의 내용을 읽고, 의미적으로 관련된 기존 문서를
-   Grep/Glob으로 찾아 **그 기존 문서 본문에 맥락적 위키링크**를 심거나, 해당 폴더
-   `README.md`(MOC)에 한 줄 링크를 추가한다. 억지 링크가 아니라 실제 관련이 있는
-   곳에만 잇는다.
-3. **MOC 정비**: 각 폴더 `README.md`가 그 폴더의 문서들을 입구로서 엮고 있는지
-   점검하고, 빠진 링크를 채운다.
-4. **재검사**: 다시 lint를 돌려 외톨이/깨진 링크가 줄었는지 확인하고 보고한다.
+1. **Assess**: run the Integrity Lint Workflow to get the list of orphans and
+   broken links.
+2. **Connect orphans**: read each orphan's content, find semantically related
+   existing documents with Grep/Glob, and either **weave a contextual wikilink
+   into that existing document's prose** or add a one-line link in the folder's
+   `README.md` (MOC). Link only where there is real relevance, not forced links.
+3. **Tidy MOCs**: check that each folder's `README.md` ties its documents
+   together as an entry point, and fill in missing links.
+4. **Re-check**: run the lint again to confirm orphans/broken links decreased,
+   and report.
 
-**억지로 연결하지 않는다.** 관련 없는 문서를 링크로 잇는 것은 over-structuring이며
-지식망의 신호를 흐린다. 관련 노트가 없으면 외톨이로 남겨두고 사용자에게 알린다.
+**Do not force connections.** Linking unrelated documents is over-structuring and
+muddies the network's signal. If there is no related note, leave it as an orphan
+and tell the user.
 
 ## Integrity Lint Workflow
 
-**When**: 사용자가 링크 무결성을 점검하거나, 깨진 링크/외톨이를 찾으려 할 때.
-다른 워크플로우(Create·Move·Migrate·Review)의 마무리 점검으로도 호출한다.
+**When**: the user wants to check link integrity, or find broken links/orphans.
+Also call it as the closing check of other workflows (Create, Move, Migrate,
+Review).
 
-PARA base(flat이면 루트, nested이면 `para/`) 아래 문서의 깨진 링크와 외톨이 노드를
-탐지한다. base는 자동 감지된다. 대상 저장소 루트에서
-[scripts/engram_lint.py](scripts/engram_lint.py)를 실행한다.
+Detects broken links and orphan nodes under the PARA base (root if flat, `para/`
+if nested). The base is auto-detected. Run
+[scripts/engram_lint.py](scripts/engram_lint.py) from the target repo root.
 
 ```bash
-# 사람용 리포트 (문제 없으면 무음) — base 자동 감지
+# human report (silent if clean) — base auto-detected
 python "<skill_dir>/scripts/engram_lint.py"
 
-# 기계용 JSON — 스킬이 파싱해 후속 조치
+# machine JSON — the skill parses it for follow-up actions
 python "<skill_dir>/scripts/engram_lint.py" --json
 
-# base 강제 지정 (예: 루트)
+# force the base (e.g. root)
 python "<skill_dir>/scripts/engram_lint.py" --base . --json
 ```
 
-`<skill_dir>`는 이 SKILL.md가 있는 디렉토리다. 플러그인으로 설치된 경우
-`${CLAUDE_PLUGIN_ROOT}/skills/engram/scripts/engram_lint.py` 형태로 호출한다.
+`<skill_dir>` is the directory holding this SKILL.md. When installed as a plugin,
+call it as `${CLAUDE_PLUGIN_ROOT}/skills/engram/scripts/engram_lint.py`.
 
-결과 처리:
-- **깨진 마크다운 링크(broken_md_links)**: 실재하지 않는 경로 → 올바른 경로로
-  고치거나, 대상 문서를 만들거나, 오타면 수정한다.
-- **외톨이(orphans)**: Link & Connect Workflow로 인바운드 링크를 잇는다.
-- **미연결 위키링크(dangling_wikilinks)**: 경고일 뿐이다. 오타면 고치고, 아직 안 만든
-  미래 노트면 그대로 둔다(의도된 forward link). 사용자에게 만들지 물어볼 수 있다.
+Handling results:
+- **broken_md_links**: a non-existent path → fix it to the correct path, create
+  the target document, or fix the typo.
+- **orphans**: connect inbound links via the Link & Connect Workflow.
+- **dangling_wikilinks**: warnings only. Fix typos; leave intended future notes
+  as-is (deliberate forward links). You may ask the user whether to create them.
 
-종료 코드는 항상 0이라 작업을 막지 않는다 — 보고하고 함께 고친다.
+The exit code is always 0, so it never blocks work — report and fix together.
 
 ## Rules
 
@@ -435,12 +447,12 @@ python "<skill_dir>/scripts/engram_lint.py" --base . --json
 
 8. **Relative paths**: When reporting paths to the user, use paths relative to the project root (e.g., `projects/my-doc.md` in flat mode, `para/projects/my-doc.md` in nested mode).
 
-9. **Migration safety**: Migrate는 파일을 이동하는 작업이므로 반드시 전체 마이그레이션 계획을 먼저 보여주고 사용자 승인을 받은 뒤 실행한다. 절대 자동 마이그레이션하지 않는다.
+9. **Migration safety**: migration moves files, so always show the full migration plan first and execute only after user approval. Never auto-migrate.
 
-10. **No orphans**: 새로 만든 모든 문서는 최소 1개 이상의 인바운드 링크(연관 문서 또는 MOC `README.md`)를 받아야 한다. 연결되지 않은 지식은 유실된다.
+10. **No orphans**: every newly created document must receive at least one inbound link (a related document or a MOC `README.md`). Unlinked knowledge gets lost.
 
-11. **Contextual links**: 링크는 본문 서술 흐름에 자연스럽게 녹인다. 문서 하단에 "관련 링크" 목록을 나열하지 않는다. 억지 연결(over-structuring)은 지양하고 실제 관련 있는 곳에만 잇는다.
+11. **Contextual links**: weave links naturally into the prose. Do not dump a "related links" list at the bottom. Avoid forced connections (over-structuring); link only where there is real relevance.
 
-12. **MOC as hub**: 각 폴더의 `README.md`는 그 폴더 문서들의 입구(MOC)다. 문서를 추가·이동하면 관련 MOC도 함께 갱신한다.
+12. **MOC as hub**: each folder's `README.md` is the entry point (MOC) for that folder's documents. When you add or move a document, update the relevant MOC too.
 
-13. **Lint scope**: 무결성 린트(`engram_lint.py`)는 base를 자동 감지한다(flat이면 루트, nested이면 `para/`). 비차단(보고만 하고 작업을 막지 않음)이며, 미연결 위키링크는 의도된 미래 노트일 수 있으므로 오류가 아닌 경고로 다룬다.
+13. **Lint scope**: the integrity linter (`engram_lint.py`) auto-detects the base (root if flat, `para/` if nested). It is non-blocking (reports but never blocks work), and unresolved wikilinks are treated as warnings, not errors, since they may be intended future notes.

@@ -9,7 +9,7 @@
     4. Plugin installation
     5. .gitignore (exclude docs/)
     6. Document structure + conventions — mode-aware:
-       brain(flat 루트 문서저장소) / project(nested para/ + 스택 컨벤션) / empty(계획 질문)
+       brain (flat root vault) / project (nested para/ + stack conventions) / empty (ask the plan)
 .EXAMPLE
     iex (irm https://raw.githubusercontent.com/poorants/ant-skills/main/bootstrap/init-claude-project.ps1)
 #>
@@ -18,10 +18,10 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 # --- Mode & stack detection (run at project root, BEFORE any scaffolding) ---
-# 세 가지 모드를 구분한다:
-#   brain   : 루트에 PARA 폴더가 이미 있는 단독 문서저장소 → flat(루트) 사용
-#   project : 코드가 있는 저장소 → nested(para/)로 문서관리 + 컨벤션 시드
-#   empty   : 빈 저장소 → 추측 금지, 사용자에게 계획을 묻도록 노트만 남김
+# Three modes:
+#   brain   : standalone doc vault with PARA folders already at root -> flat (root)
+#   project : repo with code -> nested (para/) docs + convention seed
+#   empty   : empty repo -> no guessing, leave a note asking the user for the plan
 function Get-RootHasPara {
     foreach ($c in @('projects', 'areas', 'resources', 'archives')) {
         if (Test-Path $c) { return $true }
@@ -53,7 +53,7 @@ $script:HasCode = ($script:Stack.HasNode -or $script:Stack.Backends.Count -gt 0)
 if (Get-RootHasPara) { $script:Mode = 'brain' }
 elseif ($script:HasCode) { $script:Mode = 'project' }
 elseif (Get-IsEmpty) { $script:Mode = 'empty' }
-else { $script:Mode = 'project' }   # 코드 마커는 없지만 파일이 있는 경우 generic 시드로
+else { $script:Mode = 'project' }   # no code markers but files exist -> generic seed
 
 # 1. Windows Terminal keybindings (iTerm2 style)
 $wtSettingsPath = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
@@ -180,7 +180,7 @@ $marketplaces = @(
 
 foreach ($mp in $marketplaces) {
     Write-Host "[...] Registering marketplace '$($mp.repo)'..."
-    claude plugin marketplace add $mp.repo 2>&1 | Out-Null   # 이미 등록돼 있어도 무해
+    claude plugin marketplace add $mp.repo 2>&1 | Out-Null   # harmless if already registered
     Write-Host "[...] Updating marketplace '$($mp.name)'..."
     claude plugin marketplace update $mp.name 2>&1 | Out-Null
     Write-Host "[OK] Marketplace '$($mp.name)' up to date" -ForegroundColor Green
@@ -194,7 +194,7 @@ $plugins = @(
 
 foreach ($p in $plugins) {
     Write-Host "[...] Installing plugin '$($p.name)'..."
-    claude plugin install $p.name --scope $p.scope 2>&1 | Out-Null   # 이미 설치돼 있어도 무해
+    claude plugin install $p.name --scope $p.scope 2>&1 | Out-Null   # harmless if already installed
     Write-Host "[...] Updating plugin '$($p.name)'..."
     claude plugin update $p.name --scope $p.scope 2>&1 | Out-Null
     Write-Host "[OK] Plugin '$($p.name)' up to date" -ForegroundColor Green
@@ -222,63 +222,40 @@ foreach ($entry in $entries) {
     }
 }
 
-# 6 & 7. Document structure + conventions (mode-aware)
-Write-Host ""
-if ($script:Mode -eq 'brain') {
-    # 단독 문서저장소(브레인) — flat. 루트의 PARA 구조를 사용/보강.
-    Write-Host "[MODE] 단독 문서저장소(브레인) — flat(루트) PARA 사용" -ForegroundColor Cyan
+# 6 & 7. Document structure + conventions
+# Policy: if detected, apply the recommendation automatically. If undetected
+#         (empty repo), prompt for input on the spot. When non-interactive
+#         (pipe/CI), input is impossible, so fall back to a CLAUDE.md note.
+
+function Setup-Brain {
+    Write-Host "[SETUP] Standalone document vault (brain) — flat (root) PARA" -ForegroundColor Cyan
     foreach ($dir in @("projects", "areas", "resources", "archives")) {
         if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
     }
-    Write-Host "[OK] flat PARA structure ensured (root). 코드 컨벤션은 시드하지 않음(순수 문서 repo)." -ForegroundColor Green
+    Write-Host "[OK] flat PARA structure ensured (root). No code conventions seeded (pure doc repo)." -ForegroundColor Green
 }
-elseif ($script:Mode -eq 'empty') {
-    # 빈 저장소 — 추측 금지. 사용자에게 계획을 묻도록 CLAUDE.md 노트만 남김.
-    Write-Host "[MODE] 빈 저장소 — 계획 미정. 스캐폴딩 보류, 사용자에게 물어보도록 노트만 남김." -ForegroundColor Yellow
-    $claudeMd = "CLAUDE.md"
-    if (-not (Test-Path $claudeMd)) { New-Item -ItemType File -Path $claudeMd -Force | Out-Null }
-    $cm = Get-Content $claudeMd -Raw
-    if (-not $cm) { $cm = "" }
-    if ($cm -notmatch 'Project setup \(pending\)') {
-        Add-Content -Path $claudeMd -Encoding UTF8 -Value @'
 
-## Project setup (pending)
-
-This repo was bootstrapped empty. Before scaffolding docs or writing code, ASK the user:
-
-1. 이 저장소를 (a) 코드 프로젝트 + 문서관리(nested `para/`) 로 갈지,
-   (b) 순수 문서저장소(브레인, flat 루트) 로 갈지.
-2. (코드 프로젝트라면) 어떤 스택인지 (예: rust+react, go+react, 웹/맥 데스크탑).
-
-답에 따라 `engram` 스킬로 PARA 구조를, `code-convention` 스킬로 컨벤션을 셋업한다.
-이 섹션은 셋업이 끝나면 지운다.
-'@
-        Write-Host "[OK] CLAUDE.md에 'Project setup (pending)' 노트 추가 — 다음 세션에 Claude가 계획을 묻는다." -ForegroundColor Green
-    } else {
-        Write-Host "[SKIP] 'Project setup (pending)' 노트가 이미 있음" -ForegroundColor Yellow
-    }
-}
-else {
-    # 코드 프로젝트 — nested(para/)로 문서관리 + 스택 맞춤 컨벤션 시드.
+function Setup-Project {
+    param([bool]$HasReact, [string[]]$Backends)
+    if (-not $Backends) { $Backends = @() }
     $stackDesc = @()
-    if ($script:Stack.HasReact) { $stackDesc += "react" }
-    if ($script:Stack.Backends.Count -gt 0) { $stackDesc += $script:Stack.Backends }
+    if ($HasReact) { $stackDesc += "react" }
+    if ($Backends.Count -gt 0) { $stackDesc += $Backends }
     if ($stackDesc.Count -eq 0) { $stackDesc += "generic" }
-    Write-Host "[MODE] 코드 프로젝트 + 문서관리 — nested para/ (감지: $($stackDesc -join '+'))" -ForegroundColor Cyan
+    Write-Host "[SETUP] Code project + document management — nested para/ (stack: $($stackDesc -join '+'))" -ForegroundColor Cyan
 
-    $paraDirs = @("para\projects", "para\areas", "para\resources", "para\archives")
-    foreach ($dir in $paraDirs) {
+    foreach ($dir in @("para\projects", "para\areas", "para\resources", "para\archives")) {
         if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
         $gitkeep = Join-Path $dir ".gitkeep"
         if (-not (Test-Path $gitkeep)) { New-Item -ItemType File -Path $gitkeep -Force | Out-Null }
     }
     Write-Host "[OK] nested PARA structure initialized (para/)" -ForegroundColor Green
 
-    # 컨벤션 시드: React 있으면 큐레이션된 FE 표준, 아니면 얇은 generic 베이스 (없을 때만)
+    # Convention seed: curated FE standard if React, else a thin generic base (only when absent)
     Write-Host "`n[...] Seeding code conventions..."
     $ccDir = "para\areas\code-convention"
     New-Item -ItemType Directory -Path $ccDir -Force | Out-Null
-    $seedFile = if ($script:Stack.HasReact) { "fe-conventions.md" } else { "generic-conventions.md" }
+    $seedFile = if ($HasReact) { "fe-conventions.md" } else { "generic-conventions.md" }
 
     $convPath = Join-Path $ccDir "CONVENTIONS.md"
     if (-not (Test-Path $convPath)) {
@@ -294,9 +271,8 @@ else {
         Write-Host "[SKIP] CONVENTIONS.md already exists" -ForegroundColor Yellow
     }
 
-    # 백엔드(rust/go 등)는 큐레이션 시드가 없으니 코드에서 추출하도록 안내
-    if ($script:Stack.Backends.Count -gt 0) {
-        Write-Host "[NOTE] 백엔드($($script:Stack.Backends -join ', ')) 컨벤션은 /code-convention 으로 실제 코드에서 추출하세요." -ForegroundColor Yellow
+    if ($Backends.Count -gt 0) {
+        Write-Host "[NOTE] Backend ($($Backends -join ', ')) conventions: extract them from real code with /code-convention." -ForegroundColor Yellow
     }
 
     $changelogPath = Join-Path $ccDir "CHANGELOG.md"
@@ -322,7 +298,6 @@ Extract real, stack-specific rules from code with /code-convention, then evolve.
         }
     }
 
-    # CLAUDE.md pointer (idempotent) — auto-loaded every session, @import pulls the rules in
     $claudeMd = "CLAUDE.md"
     if (-not (Test-Path $claudeMd)) { New-Item -ItemType File -Path $claudeMd -Force | Out-Null }
     $cm = Get-Content $claudeMd -Raw
@@ -341,6 +316,82 @@ before writing or changing code; manage them with the `code-convention` skill.
         Write-Host "[OK] CLAUDE.md updated with conventions pointer" -ForegroundColor Green
     } else {
         Write-Host "[SKIP] CLAUDE.md already references conventions" -ForegroundColor Yellow
+    }
+}
+
+function Write-PendingNote {
+    $claudeMd = "CLAUDE.md"
+    if (-not (Test-Path $claudeMd)) { New-Item -ItemType File -Path $claudeMd -Force | Out-Null }
+    $cm = Get-Content $claudeMd -Raw
+    if (-not $cm) { $cm = "" }
+    if ($cm -notmatch 'Project setup \(pending\)') {
+        Add-Content -Path $claudeMd -Encoding UTF8 -Value @'
+
+## Project setup (pending)
+
+This repo was bootstrapped empty (non-interactive run). Before scaffolding docs or writing
+code, ASK the user:
+
+1. Whether this repo should be (a) a code project + document management (nested `para/`),
+   or (b) a standalone document vault (brain, flat root).
+2. (If a code project) which stack (e.g. rust+react, go+react, web / macOS desktop).
+
+Based on the answer, set up the PARA structure with the `engram` skill and conventions with
+the `code-convention` skill. Delete this section once setup is done.
+'@
+        Write-Host "[OK] Added 'Project setup (pending)' note to CLAUDE.md — Claude will ask for the plan next session." -ForegroundColor Green
+    } else {
+        Write-Host "[SKIP] 'Project setup (pending)' note already present" -ForegroundColor Yellow
+    }
+}
+
+# --- dispatch ---
+Write-Host ""
+$interactive = [Environment]::UserInteractive -and -not [Console]::IsInputRedirected
+
+if ($script:Mode -eq 'brain') {
+    Write-Host "[MODE] Detected: standalone document vault (brain) -> recommending flat (root)" -ForegroundColor Cyan
+    Setup-Brain
+}
+elseif ($script:Mode -eq 'project') {
+    $sd = @()
+    if ($script:Stack.HasReact) { $sd += "react" }
+    if ($script:Stack.Backends.Count -gt 0) { $sd += $script:Stack.Backends }
+    if ($sd.Count -eq 0) { $sd += "generic" }
+    Write-Host "[MODE] Detected: code project -> recommending nested para/ (stack: $($sd -join '+'))" -ForegroundColor Cyan
+    Setup-Project -HasReact $script:Stack.HasReact -Backends $script:Stack.Backends
+}
+else {
+    # Empty repo — undetected. Prompt if interactive, else fall back to a note.
+    if (-not $interactive) {
+        Write-Host "[MODE] Empty repo (non-interactive) — cannot prompt, leaving a note only." -ForegroundColor Yellow
+        Write-PendingNote
+    } else {
+        Write-Host "[MODE] Empty repo — auto-detection failed. Asking how to use it." -ForegroundColor Yellow
+        Write-Host "  [1] Standalone document vault (brain) — flat, projects/areas/... at root"
+        Write-Host "  [2] Code project + document management — nested para/"
+        $ans = Read-Host "Choose [1/2] (default 2)"
+        if ($ans -eq '1') {
+            Setup-Brain
+        } else {
+            Write-Host "Which stack?"
+            Write-Host "  [1] rust + react   [2] go + react   [3] react only   [4] other (manual)   [5] generic"
+            $s = Read-Host "Choose [1-5] (default 1)"
+            $hr = $true; $bk = @("rust")
+            switch ($s) {
+                '2' { $hr = $true;  $bk = @("go") }
+                '3' { $hr = $true;  $bk = @() }
+                '4' {
+                    $r = Read-Host "React frontend? [y/N]"
+                    $hr = ($r -match '^[yY]')
+                    $custom = Read-Host "Backends (comma-separated, e.g. rust,go) — blank if none"
+                    if ($custom) { $bk = @($custom -split '\s*,\s*' | Where-Object { $_ }) } else { $bk = @() }
+                }
+                '5' { $hr = $false; $bk = @() }
+                default { $hr = $true; $bk = @("rust") }   # 1 or empty -> primary stack
+            }
+            Setup-Project -HasReact $hr -Backends $bk
+        }
     }
 }
 
