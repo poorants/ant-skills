@@ -317,6 +317,28 @@ Report the move results.
 - `para review` to check classification appropriateness
 ```
 
+## Unify a Legacy Flat Vault into brain/
+
+**When**: a repo has PARA folders directly at the root (legacy flat) and the user
+wants the unified layout (source under `brain/`, root for meta + exports).
+
+1. **Move the folders** with `git mv` to preserve history:
+   `git mv projects brain/projects` (and `areas`, `resources`, `archives`). Only
+   move folders that exist/are tracked; create `brain/archives/.gitkeep` if empty.
+2. **Relative links are mostly preserved** — links between docs that move together
+   keep resolving (the relative structure is intact). `[[wikilinks]]` resolve by
+   filename, so they survive regardless.
+3. **Catch breakage with the linter**: run `engram_lint.py --json` (it now detects
+   base `brain/`) and fix every `broken_md_links` entry — these are links that
+   crossed the moved/not-moved boundary (e.g. into root-level files).
+4. **Update references**: in `CLAUDE.md` change the doc-layout note to nested
+   `brain/`; fix any path references in config/memory that pointed at the old
+   root paths.
+5. **Verify**: re-run the linter; report what moved and what was fixed.
+
+This is a `git mv` move, so it is reversible — but still show the plan and get
+user approval first (Migration safety rule).
+
 ## List & Search Workflow
 
 **When**: User wants to see what documents exist or find specific content.
