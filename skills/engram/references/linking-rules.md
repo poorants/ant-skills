@@ -48,6 +48,19 @@ reachable from the entry point.
    project. When a topic expands, create a new document and link to it. Oversized
    documents blur the propagation power of links.
 
+   But **atomic means "one linkable idea," not "the smallest possible fragment."**
+   Discernment test: *would you ever link to or reuse this concept independently
+   from somewhere else?* If yes, it deserves its own note; if it only ever appears
+   in one context, keep it inline. Shattering everything into tiny stubs is
+   over-structuring (see Pitfalls) — it adds navigation overhead and loses
+   cohesion. Some documents are legitimately one concept even when long: a single
+   spec, a meeting log (one event, chronological), a reference table.
+
+   **Migrate opportunistically, never big-bang.** Don't rewrite the whole vault at
+   once (it invites link rot and wasted effort). Apply atomicity to new notes, and
+   split an existing bloated doc only when you're already editing it and notice it
+   packs several independently-linkable concepts — then split and wire the links.
+
 2. **No orphan nodes**: every newly added document must receive at least one
    inbound link from an existing MOC (`README.md`) or a related document.
    Unlinked knowledge gets lost. (`engram_lint.py` detects orphans.)
