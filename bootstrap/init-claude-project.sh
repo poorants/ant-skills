@@ -105,16 +105,21 @@ for entry in "${MARKETPLACES[@]}"; do
 done
 
 # 3. Plugin installation (install if new, ALWAYS update so existing envs refresh)
+# name|scope — ant-project-kit at user scope (install once globally; hooks self-gate
+# to brain repos, so one install covers every repo and updates land in one place).
+# example-skills is a heavy demo pack, kept opt-in per repo (local).
 PLUGINS=(
-  "example-skills@anthropic-agent-skills"
-  "ant-project-kit@ant-agent-skills"
+  "example-skills@anthropic-agent-skills|local"
+  "ant-project-kit@ant-agent-skills|user"
 )
 
-for p in "${PLUGINS[@]}"; do
-  echo "[...] Installing plugin '$p'..."
-  claude plugin install "$p" --scope local 2>&1 | cat || true   # harmless if already installed
+for entry in "${PLUGINS[@]}"; do
+  p="${entry%%|*}"
+  scope="${entry##*|}"
+  echo "[...] Installing plugin '$p' (scope: $scope)..."
+  claude plugin install "$p" --scope "$scope" 2>&1 | cat || true   # harmless if already installed
   echo "[...] Updating plugin '$p'..."
-  claude plugin update "$p" --scope local 2>&1 | cat || true
+  claude plugin update "$p" --scope "$scope" 2>&1 | cat || true
   echo "[OK] Plugin '$p' up to date"
 done
 

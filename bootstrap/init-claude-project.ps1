@@ -190,8 +190,8 @@ foreach ($mp in $marketplaces) {
 
 # 4. Plugin installation (install if new, ALWAYS update so existing envs refresh)
 $plugins = @(
-    @{ name = "example-skills@anthropic-agent-skills"; scope = "local" }
-    @{ name = "ant-project-kit@ant-agent-skills"; scope = "local" }
+    @{ name = "example-skills@anthropic-agent-skills"; scope = "local" }   # heavy demo pack — opt-in per repo
+    @{ name = "ant-project-kit@ant-agent-skills"; scope = "user" }         # engram/convention + hooks — install once globally; hooks self-gate to brain repos, so one user-scope install covers every repo and updates land in one place
 )
 
 foreach ($p in $plugins) {
