@@ -74,6 +74,36 @@ Two usage shapes (both default to `brain/`):
 Legacy flat repos (PARA folders directly at the root) are still detected for
 back-compat, but new repos use `brain/`.
 
+## Brain boundary — what stays in the brain vs what separates
+
+The brain (`<base>/`) holds **thinking and knowledge** — everything you link to
+and revisit. Under PARA that includes active **planning / spec / strategy
+documents**: they are Projects, and they are the highest-value nodes because they
+are where your knowledge gets applied. Keep them in the brain — do not pull them
+out just because they look "output-like."
+
+Separate a set of documents into a **root sibling folder** (next to `<base>/`,
+e.g. `blog/`) only when it has its own **external delivery / publishing
+lifecycle** — a workflow, repo, or timeline that lives outside your thinking
+network. Examples: a blog (`seeds → drafts → published → static site / social`),
+or submission deliverables (resumes/portfolios sent to companies).
+
+Decision test (one line): *Is this linked and re-read as part of your thinking
+(→ brain), or an output with its own external workflow/lifecycle (→ separate
+sibling)?*
+
+- **Default to keeping documents in the brain.** Separation severs the
+  project↔knowledge links that make Networked PARA valuable, so it must earn its
+  place with a distinct-lifecycle justification; splitting without one is
+  over-structuring.
+- A separated sibling sits **outside the link network and the lint base**. It may
+  reference brain documents one-directionally; the brain must not depend on it.
+  When you separate, move the folder, fix cross-boundary links both ways, and
+  note it in the relevant MOC/rules.
+- **Separation is the one move you do NOT decide on your own.** Make every other
+  organizational call autonomously, but externalize a document set only on an
+  explicit user request (e.g. "move the blog out").
+
 ## Quick Reference
 
 | Category | Path | Purpose | Lifespan |
@@ -466,6 +496,32 @@ or a static site), resolving wikilinks and stripping private/unpublished notes �
 the source brain stays visible and untouched. Design details in
 [references/roadmap.md](references/roadmap.md). If the user asks to "publish",
 "export the brain", or "build a doc bundle", follow that design.
+
+## Continuous self-improvement (loop engineering)
+
+This skill is meant to get better through use. During any engram operation, stay
+alert for a concrete way to improve the skill itself — a cleaner method, fewer
+tokens, faster execution, clearer rules, or a missing workflow. When you spot one,
+act on it in the same loop rather than deferring:
+
+1. **Apply it** — edit the skill source (`skills/engram/…`), keeping the change
+   small, focused, and reversible (it is under git). Prefer many small verified
+   edits over large rewrites.
+2. **Sync it** so the running copy reflects the change: push, then
+   `claude plugin marketplace update <marketplace>` and
+   `claude plugin update <plugin>@<marketplace> --scope <scope>` (a Claude Code
+   restart activates it).
+3. **Record it** — a one-line note in the commit message (and any changelog or
+   memory that tracks skill versions).
+
+If you lack permission to write to the skill source or to run the sync, **do not
+silently skip the improvement** — tell the user exactly what you want to change
+and why, and ask for access: e.g. "I want to update engram to <X> for a
+<token/speed/clarity> gain but don't have write access to <path> — may I?"
+
+Self-improvement targets the **how** (efficiency, clarity, robustness), not the
+**contract**: do not change externally observable behavior (the `brain/` model,
+link semantics, folder governance) without the user's say-so.
 
 ## Rules
 
