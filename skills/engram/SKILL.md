@@ -5,16 +5,19 @@ description: >
   Resources, and Archives, AND weaves them into a connected knowledge graph
   via bi-directional links, MOC hub notes, and integrity linting. Layers a
   logical link network on top of physical folders so the vault grows like an
-  interconnected brain rather than isolated folders. Use when the user wants
-  to manage/organize docs, create meeting notes, archive projects, review
-  documentation status, OR connect notes, check link integrity, find orphan
-  documents, build a knowledge graph, update MOCs, or review what the brain
-  gained this session.
+  interconnected brain rather than isolated folders. Also the upgrade path from a
+  legacy folders-only PARA vault (e.g. a `para/` base) to a networked brain —
+  renaming the base to `brain/` and wiring up the connection layer. Use when the
+  user wants to manage/organize docs, create meeting notes, archive projects,
+  review documentation status, migrate/upgrade a legacy vault to brain, OR connect
+  notes, check link integrity, find orphan documents, build a knowledge graph,
+  update MOCs, or review what the brain gained this session.
   Triggers: "manage documents", "organize docs", "document the project",
   "save meeting notes", "tidy para", "archive document", "review docs",
   "search docs", "migrate docs", "import docs",
+  "upgrade vault to brain", "migrate para to brain", "para to brain",
   "archive project", "create meeting notes", "move document", "list documents",
-  "para init", "para review", "para migrate",
+  "para init", "para review", "para migrate", "para upgrade",
   "connect notes", "link notes", "tidy the knowledge network", "check links",
   "link integrity", "broken links", "find orphans", "orphan documents",
   "update moc", "knowledge graph", "brain check", "engram lint", "engram link",
@@ -51,11 +54,27 @@ holds meta files and any exported/published output, kept separate from the sourc
 2. Else if a legacy `para/` exists → nested mode, base = `para/` (back-compat).
 3. Else if the root already contains `projects/`, `areas/`, `resources/`, or
    `archives/` → **flat mode** (legacy standalone vault), base = the root.
-   Consider migrating it under `brain/` for the unified layout.
+   Consider the **Upgrade Workflow** to bring it under `brain/`.
 4. Else (fresh repo) → nested mode, base = `brain/` (create it).
 5. If the project's `CLAUDE.md` states a documentation-layout convention
    explicitly, that convention wins over the heuristic above.
 6. Once the mode is determined, stay consistent within that project.
+
+> **Legacy base (`para/`, or flat PARA folders at the root)?** engram *is* the
+> upgrade path from the old folders-only para-docs world to a networked brain, so a
+> legacy vault is a first-class case, not an edge case. Two things can be
+> "migrated", and they are **independent**:
+> - **Base layout** — rename/move the base to `brain/` (`para/ → brain/`, or
+>   flat-root → `brain/`). Optional: the connection layer works under any base name.
+> - **Connection layer** — add the links/MOCs/lint that make it a *brain* (the part
+>   plain para-docs never had).
+>
+> "Complete migration to brain" means doing **both**. Do **not** default to skipping
+> the base rename — route to the **Upgrade Workflow**, which branches on the user's
+> intent (full vs. connection-only) and handles the base rename as a *guarded
+> refactor* (the base folder can be load-bearing — a code import path, CI/script, or
+> build reference — so it is not a bare `git mv`). See "Migration: three operations,
+> one word" below for the vocabulary.
 
 Throughout this document, `<base>/` denotes the resolved base — `brain/` in the
 default nested mode, or an empty prefix in legacy flat mode. Every path below is
@@ -75,6 +94,23 @@ Two usage shapes (both default to `brain/`):
 
 Legacy flat repos (PARA folders directly at the root) are still detected for
 back-compat, but new repos use `brain/`.
+
+## Migration: three operations, one word
+
+"Migrate" is overloaded in this skill — it names **three independent operations**.
+Keep them distinct; a request can want one, two, or all three, and routing to the
+wrong one is the most common failure.
+
+| Operation | What it changes | Workflow |
+|-----------|-----------------|----------|
+| **Classify & Import** | scattered, *unclassified* docs → PARA folders | Classify & Import Workflow |
+| **Base migration** | the base *layout/name* → `brain/` (`para/`→`brain/`, or flat→nested) | Upgrade Workflow, Phase A |
+| **Connection-layer upgrade** | folders-only vault → *networked brain* (links/MOCs/lint) | Link & Connect Workflow (= Upgrade Workflow, Phase B) |
+
+Route by the *current state of the vault*, not the word the user used: docs unfiled
+→ **Classify & Import**; filed but base is `para/`/flat and the user wants `brain/`
+→ **Upgrade** (Phase A+B); filed and based, only links missing → **Link & Connect**
+(Upgrade Phase B alone).
 
 ## Brain boundary — what stays in the brain vs what separates
 
@@ -251,125 +287,93 @@ Steps:
 
 **IMPORTANT: Never delete documents. Always move to archives instead.**
 
-## Migrate Workflow
+## Classify & Import Workflow
 
-**When**: bulk-reclassifying documents scattered across an existing project into
-the PARA structure.
+**When**: bulk-reclassifying documents **scattered outside** the PARA structure
+into it — the *classification* sense of migration (one of three; see "Migration:
+three operations, one word"). For renaming the base to `brain/` or wiring up links,
+use the **Upgrade Workflow** / **Link & Connect Workflow** instead.
 
-### Step 1: Scan
+> **First check: are the docs already PARA-classified?** If they already live in
+> `projects/`·`areas/`·`resources/`·`archives/`, there is nothing to classify — do
+> NOT run scan→classify→move. What's actually missing is one of the *other* two
+> migrations. Route by what the user wants:
+> - the `brain/` layout (from `para/` or flat) → **Upgrade Workflow** (Phase A base
+>   rename + Phase B connection layer; this is the "complete migration to brain").
+> - links/MOCs only, base is fine → **Link & Connect Workflow** (build per-folder
+>   README MOCs first — the highest-leverage orphan fix — then contextual links).
+>
+> Use this Classify & Import flow only when documents are genuinely unfiled.
 
-Discover all project documents with Glob.
+Six steps: **1. Scan** (Glob for `**/*.md`·`**/*.txt`, excluding existing PARA
+folders, `.git/`/`node_modules/`, and root metadata) → **2. Classify** (read each
+doc, assign a PARA category via `references/para-categories.md`, flag the unclear)
+→ **3. Present a migration plan** (a Classified/Manual/Skipped table; name the
+collisions) → **4. Confirm** (execute only after approval; the user may reclassify,
+exclude, or repath) → **5. Execute** (init the base, `mv` files, keep related groups
+together) → **6. Report** the moves, then close with the Integrity Lint.
 
-- Targets: `**/*.md`, `**/*.txt`
-- Exclude: documents already inside a PARA category (in flat mode the root's
-  `projects/`·`areas/`·`resources/`·`archives/`, in nested mode `brain/` or `para/`), and
-  non-document directories such as `.git/`, `node_modules/`
-- Exclude root metadata files: `README.md`, `LICENSE`, `CHANGELOG.md`, etc.
+Full step detail, plan/report templates, exclusion and classification heuristics,
+directory handling, and conflict rules: `references/migration-patterns.md`.
 
-See `references/migration-patterns.md` for detailed exclusion patterns.
+## Upgrade Workflow — legacy para-docs vault → engram brain
 
-### Step 2: Classify
+**When**: a repo is a legacy vault — a non-`brain/` nested base (`para/`) or flat
+PARA folders at the root — and the user wants to bring it up to the engram brain
+model. This is engram's signature migration-support path: the upgrade from
+folders-only para-docs to a networked brain. It has **two independent phases**;
+"full / complete migration to brain" runs **both**, a lighter "just connect it"
+runs only Phase B.
 
-Read each document's content and decide its PARA classification.
+**Decide scope first** (ask if unstated): **full** (A + B) vs **connection-only**
+(B). Default the legacy-base case to **full** unless the user opts out — engram's
+whole point is the `brain/` model — but never auto-execute Phase A (it touches code;
+see Migration safety).
 
-- Use the classification flowchart in `references/para-categories.md`
-- Judge by filename/path hints and content keywords
-- Mark uncertain documents as "manual classification needed"
+### Phase A — Base migration (rename/move the base to `brain/`)
 
-See `references/migration-patterns.md` for detailed classification heuristics.
+Skip if the user wants connection-only, or if `CLAUDE.md` pins a different base by
+convention (Path Resolution rule 5) and the user keeps it.
 
-### Step 3: Present Migration Plan
+This is a **guarded refactor, not a bare `git mv`** — the base folder name can be
+load-bearing far beyond doc links.
 
-Output the classification as a migration plan. Destination paths follow the
-resolved base (flat-mode example shown).
-
-```
-## Migration Plan
-
-### Classified (12 files)
-| Source | Destination | Reason |
-|--------|-------------|--------|
-| docs/api-spec.md | resources/api-spec.md | Reference material |
-| old/roadmap.md | projects/roadmap.md | Active project with deadline |
-
-### Manual Classification Needed (2 files)
-| Source | Notes |
-|--------|-------|
-| notes/misc.md | Content unclear — user decision needed |
-
-### Skipped (3 files)
-| Source | Reason |
-|--------|--------|
-| README.md | Root metadata file |
-
-### Summary
-- Total scanned: 17 files
-- Auto-classified: 12 files
-- Manual needed: 2 files
-- Skipped: 3 files
-```
-
-If there are name collisions, state them in the plan.
-
-### Step 4: Confirm
-
-**Always execute only after user approval.** The user may change:
-
-- the classification of individual files
-- exclude specific files
-- specify custom paths
-
-### Step 5: Execute
-
-Move files according to the approved plan.
-
-1. Ensure the `<base>/` structure via the Init Workflow
-2. Move files with Bash `mv`
-3. Keep directory structure for related file groups (associated files in the same directory)
-4. See `references/migration-patterns.md` for detailed directory handling
-
-### Step 6: Report
-
-Report the move results.
-
-```
-## Migration Report
-
-### Completed (11 files)
-- docs/api-spec.md → resources/api-spec.md
-- old/roadmap.md → projects/roadmap.md
-
-### Skipped (1 file)
-- notes/misc.md — user excluded
-
-### Failed (0 files)
-
-### Next Steps
-- `para list` to verify the result
-- `para review` to check classification appropriateness
-```
-
-## Unify a Legacy Flat Vault into brain/
-
-**When**: a repo has PARA folders directly at the root (legacy flat) and the user
-wants the unified layout (source under `brain/`, root for meta + exports).
-
-1. **Move the folders** with `git mv` to preserve history:
-   `git mv projects brain/projects` (and `areas`, `resources`, `archives`). Only
-   move folders that exist/are tracked; create `brain/archives/.gitkeep` if empty.
-2. **Relative links are mostly preserved** — links between docs that move together
-   keep resolving (the relative structure is intact). `[[wikilinks]]` resolve by
-   filename, so they survive regardless.
-3. **Catch breakage with the linter**: run `engram_lint.py --json` (it now detects
-   base `brain/`) and fix every `broken_md_links` entry — these are links that
+1. **Grep the whole repo for the old base name** (`para`, or the moved folder
+   names) — not just markdown links. It may appear in **code import paths**
+   (`module/para/resources/...`), build/CI configs, scripts, or code comments. The
+   linter only sees markdown, so these never surface in its output, and a bare
+   `git mv` would break compilation, not just links.
+   - If the base has become a **code import path**, that's an architectural smell:
+     move the embedded/imported package *out* of the doc tree as part of the
+     upgrade, rather than carrying `brain/` into source code.
+2. **Move with `git mv`** to preserve history:
+   - nested rename (`para/`): `git mv para brain`.
+   - flat unify (root folders): `git mv projects brain/projects` (and `areas`,
+     `resources`, `archives`). Only move folders that exist/are tracked; create
+     `brain/archives/.gitkeep` if empty.
+3. **Update every non-doc reference** found in step 1: the `CLAUDE.md` doc-layout
+   note, config/memory, CI/build scripts, and code (import paths, comments).
+4. **Fix doc links**: relative links between docs that move together keep resolving;
+   `[[wikilinks]]` resolve by filename and survive. Run `engram_lint.py --json` (it
+   auto-detects the new `brain/` base) and fix every `broken_md_links` entry — these
    crossed the moved/not-moved boundary (e.g. into root-level files).
-4. **Update references**: in `CLAUDE.md` change the doc-layout note to nested
-   `brain/`; fix any path references in config/memory that pointed at the old
-   root paths.
-5. **Verify**: re-run the linter; report what moved and what was fixed.
+5. **Scope, approve, execute**: because this touches code and not just docs, show
+   the full reference-update plan and get approval first (Migration safety rule). It
+   is a `git mv`, so it stays reversible.
 
-This is a `git mv` move, so it is reversible — but still show the plan and get
-user approval first (Migration safety rule).
+### Phase B — Connection-layer upgrade (make it an actual brain)
+
+This is the real para-docs → engram value-add — add what folders-only management
+never had. Run the **Link & Connect Workflow**: build a per-folder README MOC for
+each folder first (the highest-leverage orphan fix — one MOC clears a whole
+folder's orphans at once, and MOC entries must be **real `[links](…)`, not backtick
+filenames**), then weave the genuinely cross-cutting contextual links, then re-run
+the Integrity Lint to confirm orphans/broken links dropped.
+
+### Verify & report
+
+Re-run the linter and report both phases: base before→after and references updated
+(Phase A); MOCs created and orphans/broken links resolved (Phase B).
 
 ## List & Search Workflow
 
@@ -460,8 +464,8 @@ and tell the user.
 ## Integrity Lint Workflow
 
 **When**: the user wants to check link integrity, or find broken links/orphans.
-Also call it as the closing check of other workflows (Create, Move, Migrate,
-Review).
+Also call it as the closing check of other workflows (Create, Move, Classify &
+Import, Upgrade, Review).
 
 Detects broken links and orphan nodes under the PARA base (root if flat, `brain/`
 if nested). The base is auto-detected. Run
@@ -482,9 +486,18 @@ python "<skill_dir>/scripts/engram_lint.py" --base . --json
 call it as `${CLAUDE_PLUGIN_ROOT}/skills/engram/scripts/engram_lint.py`.
 
 Handling results:
-- **broken_md_links**: a non-existent path → fix it to the correct path, create
-  the target document, or fix the typo.
-- **orphans**: connect inbound links via the Link & Connect Workflow.
+- **broken_md_links**: a non-existent path → fix it to the correct path, or create
+  the target document, or fix the typo. If the target is **permanently gone** (a
+  deleted historical reference in an archive, or a link to source code that no
+  longer exists), **de-link it** — convert `[text](dead/path.md)` to a plain code
+  span `` `text` `` so the textual reference survives without a broken link. Don't
+  turn it into a `[[wikilink]]`: that falsely implies an intended future note.
+- **orphans**: connect inbound links via the Link & Connect Workflow. The fastest
+  fix is structural — orphans cluster by folder, so one **per-folder README MOC**
+  that links every doc in its folder clears the whole folder at once; build MOCs
+  before hunting individual contextual links. **Gotcha:** if a folder already has a
+  README full of `` `filename.md` `` in backticks and its docs are still orphans,
+  that's why — code spans aren't links; rewrite them as `[filename.md](filename.md)`.
 - **dangling_wikilinks**: warnings only. Fix typos; leave intended future notes
   as-is (deliberate forward links). You may ask the user whether to create them.
 
@@ -578,7 +591,7 @@ link semantics, folder governance) without the user's say-so.
 
 8. **Relative paths**: When reporting paths to the user, use paths relative to the project root (e.g., `projects/my-doc.md` in flat mode, `brain/projects/my-doc.md` in nested mode).
 
-9. **Migration safety**: migration moves files, so always show the full migration plan first and execute only after user approval. Never auto-migrate.
+9. **Migration safety**: any operation that moves files or renames the base (Classify & Import, and the Upgrade Workflow's Phase A) — always show the full plan first and execute only after user approval. Never auto-migrate. A base rename also touches **non-doc references** (code import paths, CI/build scripts), so include those in the plan, not just the file moves.
 
 10. **No orphans**: every newly created document must receive at least one inbound link (a related document or a MOC `README.md`). Unlinked knowledge gets lost.
 

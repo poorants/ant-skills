@@ -1,5 +1,102 @@
 # Migration Patterns Reference
 
+This reference covers the **Classify & Import** operation (scattered, unclassified
+docs → PARA folders) — one of engram's three "migration" senses. For the **base
+migration** (`para/`→`brain/`) and **connection-layer upgrade** senses, see the
+Upgrade Workflow and Link & Connect Workflow in SKILL.md.
+
+## Classify & Import Procedure (Steps 1–6)
+
+The full step detail for the Classify & Import Workflow.
+
+### Step 1: Scan
+
+Discover all candidate documents with Glob.
+
+- Targets: `**/*.md`, `**/*.txt`
+- Exclude: documents already inside a PARA category (in flat mode the root's
+  `projects/`·`areas/`·`resources/`·`archives/`, in nested mode `brain/` or `para/`),
+  and non-document directories such as `.git/`, `node_modules/`.
+- Exclude root metadata files: `README.md`, `LICENSE`, `CHANGELOG.md`, etc.
+
+See Exclusion Patterns below for the full list.
+
+### Step 2: Classify
+
+Read each document's content and decide its PARA classification.
+
+- Use the classification flowchart in `references/para-categories.md`.
+- Judge by filename/path hints and content keywords.
+- Mark uncertain documents as "manual classification needed".
+
+See Classification Heuristics below for detail.
+
+### Step 3: Present Migration Plan
+
+Output the classification as a migration plan. Destination paths follow the
+resolved base (flat-mode example shown). State any name collisions in the plan.
+
+```
+## Migration Plan
+
+### Classified (12 files)
+| Source | Destination | Reason |
+|--------|-------------|--------|
+| docs/api-spec.md | resources/api-spec.md | Reference material |
+| old/roadmap.md | projects/roadmap.md | Active project with deadline |
+
+### Manual Classification Needed (2 files)
+| Source | Notes |
+|--------|-------|
+| notes/misc.md | Content unclear — user decision needed |
+
+### Skipped (3 files)
+| Source | Reason |
+|--------|--------|
+| README.md | Root metadata file |
+
+### Summary
+- Total scanned: 17 files
+- Auto-classified: 12 files
+- Manual needed: 2 files
+- Skipped: 3 files
+```
+
+### Step 4: Confirm
+
+**Always execute only after user approval.** The user may change a file's
+classification, exclude specific files, or specify custom paths.
+
+### Step 5: Execute
+
+Move files according to the approved plan.
+
+1. Ensure the `<base>/` structure via the Init Workflow.
+2. Move files with Bash `mv`.
+3. Keep directory structure for related file groups (associated files in the same
+   directory). See Directory Handling below.
+
+### Step 6: Report
+
+Report the move results, then close with the Integrity Lint.
+
+```
+## Migration Report
+
+### Completed (11 files)
+- docs/api-spec.md → resources/api-spec.md
+- old/roadmap.md → projects/roadmap.md
+
+### Skipped (1 file)
+- notes/misc.md — user excluded
+
+### Failed (0 files)
+
+### Next Steps
+- `para list` to verify the result
+- `para review` to check classification appropriateness
+```
+
 ## Exclusion Patterns
 
 ### Directories to Exclude

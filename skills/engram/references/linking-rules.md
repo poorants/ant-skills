@@ -25,6 +25,10 @@ relationships (links)**.
   View and backlinks activate.
 - Wikilinks resolve by filename (stem), so moving a folder does not break them.
   They are fragile to filename changes, so keep names stable.
+- **Match the vault's dominant style.** Both forms count as an inbound link to the
+  linter, so when an existing corpus already uses one style consistently (e.g.
+  markdown relative links throughout), follow it rather than mixing in wikilinks —
+  on an established vault, consistency beats the wikilink preference.
 
 ### 2. Prefer contextual links
 
@@ -41,6 +45,20 @@ Each folder's `README.md` acts as the default MOC: an entry dashboard that ties
 the folder's individual notes together by logical order/category. When you add a
 document, add a one-line link to it from that folder's README MOC so it is
 reachable from the entry point.
+
+- **MOC entries must be REAL links, not backtick filenames.** A table listing
+  `` `00-overview.md` `` in code spans looks like an index, but the linter strips
+  inline code before counting links — so those docs stay orphans. Always write
+  `[00-overview.md](00-overview.md)`. This is the #1 silent reason a folder with a
+  fully populated README still shows every doc as an orphan.
+- **READMEs/index files are orphan-exempt.** `engram_lint.py` never flags
+  `README.md`, `index.md`, `_index.md`, `CLAUDE.md`, or `MEMORY.md` as orphans —
+  they are structural hubs. So a MOC needs no inbound link of its own to be
+  "connected," though linking it from a parent MOC is still good navigation hygiene.
+- **A per-folder README MOC is the highest-leverage orphan fix.** Orphans cluster
+  by folder; one README that links every doc in its folder clears that whole
+  folder's orphans at once — far faster than hunting one contextual link per
+  orphan. Build MOCs first, then weave the genuinely cross-cutting contextual links.
 
 ## Knowledge-network management rules
 
