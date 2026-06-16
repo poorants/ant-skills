@@ -21,6 +21,7 @@ description: >
   "connect notes", "link notes", "tidy the knowledge network", "check links",
   "link integrity", "broken links", "find orphans", "orphan documents",
   "update moc", "knowledge graph", "brain check", "engram lint", "engram link",
+  "engram weave", "weave notes", "raise neural density", "fix lonely spokes",
   "engram session review", "review brain updates",
   "이번 세션 브레인 업데이트 리뷰"
 ---
@@ -37,7 +38,8 @@ It works as two layers:
 - **Management layer (PARA)**: create, move, archive, migrate, review. Folders
   own governance.
 - **Connection layer (Networked Knowledge)**: link documents by context, remove
-  orphans, catch broken links. Links own context. Load
+  orphans, weave lonely spokes into a woven mesh (not just a star of MOC links),
+  catch broken links. Links own context. Load
   [references/linking-rules.md](references/linking-rules.md) for the detailed
   rules and follow them.
 
@@ -60,40 +62,28 @@ holds meta files and any exported/published output, kept separate from the sourc
    explicitly, that convention wins over the heuristic above.
 6. Once the mode is determined, stay consistent within that project.
 
-> **Legacy base (`para/`, or flat PARA folders at the root)?** engram *is* the
-> upgrade path from the old folders-only para-docs world to a networked brain, so a
-> legacy vault is a first-class case, not an edge case. Two things can be
-> "migrated", and they are **independent**:
-> - **Base layout** — rename/move the base to `brain/` (`para/ → brain/`, or
->   flat-root → `brain/`). Optional: the connection layer works under any base name.
-> - **Connection layer** — add the links/MOCs/lint that make it a *brain* (the part
->   plain para-docs never had).
->
-> "Complete migration to brain" means doing **both**. Do **not** default to skipping
-> the base rename — route to the **Upgrade Workflow**, which branches on the user's
-> intent (full vs. connection-only) and handles the base rename as a *guarded
-> refactor* (the base folder can be load-bearing — a code import path, CI/script, or
-> build reference — so it is not a bare `git mv`). See "Migration: three operations,
-> one word" below for the vocabulary.
+> **Legacy base (`para/`, or flat PARA folders at the root)?** A legacy vault is a
+> first-class case: engram *is* the upgrade path from folders-only para-docs to a
+> networked brain. Two independent things can be "migrated" — the **base layout**
+> (rename to `brain/`) and the **connection layer** (links/MOCs/lint). "Complete
+> migration to brain" does both; route to the **Upgrade Workflow** (it branches on
+> full vs. connection-only and treats the base rename as a guarded refactor, since
+> the base name can be load-bearing in code/CI). See "Migration: three operations,
+> one word" below.
 
 Throughout this document, `<base>/` denotes the resolved base — `brain/` in the
 default nested mode, or an empty prefix in legacy flat mode. Every path below is
 written relative to it.
 
-**Scope of the connection layer (links · MOC · lint)**: the integrity linter
-(`engram_lint.py`) auto-detects the base the same way as Path Resolution above —
-**nested mode scans under `brain/`** (or a legacy `para/`); **legacy flat mode
-scans the whole root**. You can force it with `--base`. Contextual link and MOC
-rules apply across the resolved `<base>/`.
+**Scope of the connection layer (links · MOC · lint)**: the linter
+(`engram_lint.py`) auto-detects the base like Path Resolution — nested scans under
+`brain/` (or legacy `para/`), flat scans the root; force with `--base`. Contextual
+link and MOC rules apply across the resolved `<base>/`.
 
-Two usage shapes (both default to `brain/`):
-- **Standalone document vault (brain)**: a doc-only repo. Docs under `brain/`;
-  the root holds meta + exports.
-- **Another project + document management**: docs under `brain/` inside a code
-  repo, alongside the source code.
-
-Legacy flat repos (PARA folders directly at the root) are still detected for
-back-compat, but new repos use `brain/`.
+Two usage shapes (both default to `brain/`): a **standalone vault** (doc-only repo,
+root holds meta + exports) or **a code project + docs** (docs under `brain/`
+alongside source). Legacy flat repos (PARA folders at the root) are still detected
+for back-compat; new repos use `brain/`.
 
 ## Migration: three operations, one word
 
@@ -160,11 +150,8 @@ Resolve the base first (see Path Resolution), then run
 [scripts/init.py](scripts/init.py):
 
 ```bash
-# flat mode — categories created at the project root
-python scripts/init.py --output . --flat
-
-# nested mode — categories created under brain/ (or a legacy para/ if present)
-python scripts/init.py --output .
+python scripts/init.py --output . --flat   # flat: categories at the project root
+python scripts/init.py --output .           # nested: under brain/ (or legacy para/)
 ```
 
 Report what was created.
@@ -194,11 +181,8 @@ Templates (simple doc, directory tree, meeting notes) and full per-step detail:
 
 **When**: User wants to relocate a document between PARA categories.
 
-Common moves:
-- `projects/` → `archives/` (project completed)
-- `areas/` → `archives/` (responsibility ended)
-- `resources/` → `archives/` (outdated reference)
-- `archives/` → `projects/` (reactivating archived work)
+Common moves: `projects/`→`archives/` (completed), `areas/`→`archives/` (ended),
+`resources/`→`archives/` (outdated), `archives/`→`projects/` (reactivated).
 
 Steps:
 1. Identify the source file/directory using Glob
@@ -351,7 +335,24 @@ First load [references/linking-rules.md](references/linking-rules.md).
 
 **Do not force connections.** Linking unrelated documents is over-structuring and
 muddies the network's signal. If there is no related note, leave it as an orphan
-and tell the user.
+and tell the user. When orphans are already zero but the graph is a **star** (every
+doc hangs off its MOC), the next move is the **Weave Workflow** below, not more MOCs.
+
+## Weave Workflow (raise neural density)
+
+**When**: orphans are handled but the brain is a star, not a mesh (low
+`woven_ratio`, many `weak_nodes`) — the user wants it "more connected / more
+neural". The deepening counterpart to Link & Connect: that removes orphans (≥1
+inbound); this removes *lonely spokes* (earns a contextual, cross-folder inbound).
+
+Run `scripts/weave_candidates.py --json` for two advisory candidate lists —
+**missing_links** (a doc already names another note but doesn't link it; the
+cheapest spoke-dissolver, spokes ranked first) and **concept_candidates** (a term
+recurring across folders with no node; promote to a shared concept note). Judge
+which are *real*, weave them contextually where the mention sits (don't force —
+over-structuring is the failure here), then re-run `engram_lint.py --json` to
+confirm `woven_ratio`/`weak_nodes` improved. Full procedure + the brain-boundary
+caveat: [references/weave-workflow.md](references/weave-workflow.md).
 
 ## Integrity Lint Workflow
 
@@ -390,6 +391,11 @@ Handling results:
   before hunting individual contextual links. **Gotcha:** if a folder already has a
   README full of `` `filename.md` `` in backticks and its docs are still orphans,
   that's why — code spans aren't links; rewrite them as `[filename.md](filename.md)`.
+- **weak_nodes** + **metrics** (`woven_ratio`, `cross_folder_link_ratio`, …):
+  advisory, never blocking. Weak nodes are lonely spokes (only a MOC inbound) — a
+  star, not a brain. Don't fix them with more MOC links (that deepens the star);
+  route to the **Weave Workflow**. Low `woven_ratio` with orphans=0 = a pristine
+  star that needs weaving, not more foldering.
 - **dangling_wikilinks**: warnings only. Fix typos; leave intended future notes
   as-is (deliberate forward links). You may ask the user whether to create them.
 
