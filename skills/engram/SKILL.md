@@ -173,100 +173,22 @@ Report what was created.
 
 **When**: User wants to create a new document or documentation item.
 
-### Step 1: Determine Category
+Six steps:
+1. **Category** — Projects (deadline/goal), Areas (ongoing, no end date), or
+   Resources (reference). If unsure, load `references/para-categories.md`.
+2. **Structure** — a single `.md` for one topic, or a `kebab-case/` directory for
+   multi-deliverable work.
+3. **Filename** — `kebab-case.md`; date-prefix time-sensitive items
+   (`YYYY-MM-DD-topic.md`).
+4. **Write** — plain markdown, start with an H1, no frontmatter, no `---` rules.
+5. **Connect** — secure at least one inbound link (a related doc or the folder's
+   README MOC), weave contextual `[[wikilinks]]` into the prose, update the MOC,
+   and ground a `resources/` doc to an `areas/`/`projects/` doc. Follow
+   [references/linking-rules.md](references/linking-rules.md).
+6. **Report** — path, PARA category, a brief summary, and what now links to it.
 
-Ask the user or infer from context. Use the classification guide:
-- Has a deadline or specific goal? → **Projects**
-- Ongoing responsibility, no end date? → **Areas**
-- Reference material for future use? → **Resources**
-
-If uncertain, load `references/para-categories.md` for the detailed classification flowchart.
-
-### Step 2: Determine Structure
-
-**Simple item** (single topic, standalone):
-→ Create a single `.md` file directly in the category directory.
-
-**Complex item** (multiple deliverables, ongoing outputs):
-→ Create a directory containing multiple `.md` files as needed.
-
-### Step 3: Choose Filename
-
-Naming convention: `kebab-case.md`
-- Use descriptive, lowercase names with hyphens
-- Include date prefix for time-sensitive items: `YYYY-MM-DD-topic-name.md`
-- For directories: `kebab-case/<document-name>.md`
-
-Examples:
-- `<base>/projects/website-redesign/requirements.md`
-- `<base>/areas/team-onboarding.md`
-- `<base>/resources/api-reference.md`
-- `<base>/projects/website-redesign/2024-03-15-kickoff-notes.md`
-
-### Step 4: Write Content
-
-Use plain markdown. No frontmatter required. Start with an H1 title.
-
-**Simple document template:**
-```markdown
-# [Title]
-
-[Content starts here]
-```
-
-**Directory with multiple files:**
-```
-<base>/projects/website-redesign/
-├── requirements.md
-├── design-spec.md
-├── 2024-03-15-kickoff-notes.md
-└── 2024-03-20-review-notes.md
-```
-
-**Meeting notes template:**
-```markdown
-# [Meeting Title] — YYYY-MM-DD
-
-## Attendees
-
-- [Names]
-
-## Agenda
-
-1. [Topic]
-
-## Notes
-
-[Notes here]
-
-## Action Items
-
-- [ ] [Action item with owner]
-```
-
-### Step 5: Connect (Networked Knowledge)
-
-Right after creating a document, wire it into the network so it does not stay an
-orphan. Follow [references/linking-rules.md](references/linking-rules.md).
-
-1. **Secure an inbound link**: make the new document receive at least one link
-   from a related existing document or that folder's `README.md` (MOC). Orphan
-   nodes get lost.
-2. **Contextual links**: weave `[[filename]]` wikilinks naturally into the prose.
-   Do not dump a "related links" list at the bottom.
-3. **Update the MOC**: add a one-line link to the new document in that folder's
-   `README.md`.
-4. **Ground references**: if it is a `resources/` document, also link it to an
-   `areas/`/`projects/` document holding your interpretation, grounding it in the
-   network.
-
-### Step 6: Confirm and Report
-
-After creation, report:
-- Full path of the created file
-- Which PARA category it was placed in
-- Brief summary of what was created
-- Which document/MOC now links to it (connection status)
+Templates (simple doc, directory tree, meeting notes) and full per-step detail:
+[references/create-workflow.md](references/create-workflow.md).
 
 ## Move Workflow
 
@@ -381,23 +303,9 @@ Re-run the linter and report both phases: base before→after and references upd
 
 ### List (Dashboard)
 
-Generate a summary table for each non-empty PARA category:
-
-```
-## PARA Dashboard
-
-### Projects (3 items)
-| Name | Type | Last Modified |
-|------|------|--------------|
-| website-redesign | directory | 2024-03-15 |
-| api-migration.md | file | 2024-03-10 |
-| q2-planning.md | file | 2024-03-01 |
-
-### Areas (2 items)
-...
-```
-
-Use Glob to discover items and Bash `git log` or file stats for dates.
+Generate a markdown summary table per non-empty PARA category — group rows under
+`### <Category> (N items)` with columns `Name | Type | Last Modified`. Use Glob to
+discover items and Bash `git log` or file stats for dates.
 
 ### Search
 
@@ -420,23 +328,7 @@ Steps:
 6. **Suggest** archive candidates — **never auto-archive**
 7. Execute moves only after explicit user confirmation
 
-Review report format:
-```
-## PARA Review Report — YYYY-MM-DD
-
-### Archive Candidates
-- [ ] projects/old-project — last modified 45 days ago
-- [ ] resources/deprecated-api — superseded by new-api
-
-### Needs Update
-- areas/onboarding.md — last reviewed 60 days ago
-
-### Summary
-- Projects: X active, Y archive candidates
-- Areas: X items, Y need review
-- Resources: X items, Y outdated
-- Archives: X items total
-```
+Use the Review Report Format in `references/review-checklist.md` for the output.
 
 ## Link & Connect Workflow (Networked Knowledge)
 
