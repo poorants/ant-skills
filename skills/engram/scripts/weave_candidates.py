@@ -120,8 +120,10 @@ def main() -> int:
             return p.as_posix()
 
     def top_folder(p: Path) -> str:
-        parts = p.relative_to(base).parts
-        return parts[0] if len(parts) > 1 else ""
+        # immediate parent dir relative to base = the "topic folder". Cross-folder
+        # is judged here, not at the PARA top, so a concept recurring across
+        # areas/management and areas/meeting-logs counts as genuinely cross-topic.
+        return p.relative_to(base).parent.as_posix()
 
     by_stem: dict[str, list[Path]] = {}
     for f in files:

@@ -147,9 +147,13 @@ def main() -> int:
         apply to it. Inbound links FROM a hub only make a target a folder spoke."""
         return p.name in ORPHAN_EXEMPT_NAMES
 
-    def top_folder(p: Path) -> str:
-        parts = p.relative_to(base).parts
-        return parts[0] if len(parts) > 1 else ""
+    def folder_key(p: Path) -> str:
+        """The file's immediate parent dir relative to base — its 'topic folder'.
+        Cross-folder is judged at THIS granularity, not the PARA top, because one
+        PARA category (e.g. areas/) often holds many unrelated topics; a link from
+        areas/management to areas/meeting-logs is genuinely cross-context and must
+        not count as same-folder just because both sit under areas/."""
+        return p.relative_to(base).parent.as_posix()
 
     # Split inbound by source type: links from a hub (README/index) replicate the
     # folder tree (a spoke); links from a content doc are what actually weave the
@@ -167,7 +171,7 @@ def main() -> int:
             continue
 
         src_is_hub = is_hub(src)
-        src_top = top_folder(src)
+        src_folder = folder_key(src)
 
         def record(dst: Path) -> None:
             nonlocal total_edges, hub_edges, cross_folder_edges
@@ -179,7 +183,7 @@ def main() -> int:
                 inbound_hub[dst] += 1
             else:
                 inbound_content[dst] += 1
-            if src_top != top_folder(dst):
+            if src_folder != folder_key(dst):
                 cross_folder_edges += 1
 
         for raw in WIKILINK_RE.findall(text):

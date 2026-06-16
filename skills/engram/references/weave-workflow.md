@@ -56,7 +56,9 @@ candidates (the user's call; see SKILL.md "Brain boundary"), not density targets
 ## Relationship to the metrics
 
 `woven_ratio` = content docs with ≥1 contextual (non-MOC) inbound / all content
-docs. `cross_folder_link_ratio` = links crossing a top-folder boundary / all links.
+docs. `cross_folder_link_ratio` = links crossing a topic-folder boundary (the
+file's immediate directory, not the PARA top — areas/management vs areas/meeting-
+logs counts as crossing) / all links.
 Both rise as you weave; `weak` (the spoke count) falls. These are the scoreboard
 for whether the brain is getting more neural over time, beyond the pass/fail orphan
 check.
