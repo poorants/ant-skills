@@ -61,9 +61,13 @@ PARA_CATEGORIES = ("projects", "areas", "resources", "archives")
 # the orphan concept does not apply to them).
 ORPHAN_EXEMPT_NAMES = {"README.md", "_index.md", "index.md", "CLAUDE.md", "MEMORY.md"}
 
-# Path prefixes (relative to base) exempt from the orphan check — e.g. a blog
-# kept isolated for external publishing. Harmless when absent.
-ORPHAN_EXEMPT_PREFIXES = ("areas/blog/",)
+# Path prefixes (relative to base) exempt from the orphan/weak/density accounting.
+# - "areas/blog/": a blog kept isolated for external publishing.
+# - "archives/": archived items are read-only storage, intentionally removed from
+#   the active thinking network — orphan-ness does not apply (archived knowledge is
+#   set aside on purpose, not "lost"), and dead docs should not dilute the active
+#   density metrics. Harmless when absent.
+ORPHAN_EXEMPT_PREFIXES = ("areas/blog/", "archives/")
 
 WIKILINK_RE = re.compile(r"(?<!!)\[\[([^\]\n]+?)\]\]")          # [[target]] / [[target|alias]] (excludes embeds ![[..]])
 MDLINK_RE = re.compile(r"(?<!!)\[[^\]\n]*\]\(([^)\s]+)\)")       # [text](target) (excludes images ![..](..))
