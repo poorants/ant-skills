@@ -11,6 +11,8 @@ window.POC_SPEC = {
   title: "키 그룹 카드",          // string — page title + localStorage key (keep stable across rounds)
   brief: "한 그룹 = 색 · 팩 · 키 묶음 …", // one-line description shown under the title
   round: 2,                       // integer — shown in the provenance line, included in export
+  roundIntent: "CSS 파격",        // optional — the active Stage-ladder level; shown in the header so the
+                                  // user knows what THIS round varies (e.g. "레이아웃 파격" → "CSS 섬세")
   themeSource: "frontend/src/theme/tokens.ts", // optional — where the palette was extracted from
   themeCss: ":root{ --canvas:#1a1c1f; --card:#22252a; --brand:#a7adb7; … }", // raw CSS, overrides defaults
 
@@ -69,6 +71,10 @@ they liked, drop dead ends). There is no per-card memo field.
   `themeCss`. Don't rely on external stylesheets — the page must open from `file://`.
 - **Make variants genuinely distinct** — vary structure (1-line vs 2-row, bar vs dot vs avatar,
   chips vs keycaps vs mini-map), not just spacing. 20–30 per round.
+- **Honor the stage ladder** (see SKILL.md). Vary only the *current* level — everything locked in
+  earlier rounds is baked into every variant and carried in `finalists`. Coarse → fine: early rounds
+  swing the layout skeleton; later rounds, once the frame is locked, swing then refine the CSS. Set
+  `roundIntent` to the active stage so reviewers see what this round is exploring.
 - **Stress-test with samples** — include an overflow case and an empty/placeholder case so density
   and truncation are visible at review time.
 - **No `</script>` in data** — if a variant must contain that literal, write `<\/script>`.

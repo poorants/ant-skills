@@ -29,6 +29,7 @@
       header h1 { margin: 0; font-size: 17px; letter-spacing: -0.01em; }
       .prov { font-family: var(--mono); font-size: 11.5px; color: var(--text-faint); }
       header p.brief { margin: 6px 0 0; color: var(--text-dim); font-size: 13px; max-width: 760px; }
+      .intent { margin: 9px 0 0; display: inline-block; font-size: 12px; font-weight: 600; color: var(--brand-hover); background: color-mix(in srgb, var(--brand) 16%, transparent); border: 1px solid var(--line-strong); border-radius: 999px; padding: 4px 12px; }
       .controls { margin-top: 12px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
       .label { font-size: 12.5px; color: var(--text-faint); }
       .seg { display: inline-flex; gap: 2px; background: rgba(255,255,255,0.04); border-radius: 9px; padding: 3px; }
@@ -69,6 +70,7 @@
     <header>
       <div class="htop"><h1 id="title">Component POC</h1><span class="prov" id="prov"></span></div>
       <p class="brief" id="brief"></p>
+      <p class="intent" id="intent" style="display:none"></p>
       <div class="controls">
         <div id="sampleWrap" style="display:none"><span class="label">샘플</span> <span class="seg" id="seg"></span></div>
       </div>
@@ -103,6 +105,11 @@
       document.getElementById("prov").textContent =
         "round " + (S.round ?? 1) + (S.themeSource ? " · theme: " + S.themeSource : "");
       document.getElementById("brief").textContent = S.brief || "";
+      if (S.roundIntent) {
+        const intentEl = document.getElementById("intent");
+        intentEl.textContent = "이번 라운드 목표 · " + S.roundIntent;
+        intentEl.style.display = "inline-block";
+      }
 
       const samples = S.samples && S.samples.length ? S.samples : [{ id: "_", label: "기본", data: S.sample }];
       const candidates = S.candidates || [];

@@ -61,7 +61,7 @@ Dev-focused tooling. Grows as more development skills are added.
 | Skill | Description |
 |-------|-------------|
 | **code-convention** | Extract, enforce, and evolve project code conventions |
-| **component-poc** | UI variant prototyping tournament — generate many native-looking variants, vote, iterate to a final design |
+| **component-prototype** | UI variant prototyping tournament — generate many native-looking variants, vote, iterate to a final design |
 
 ```bash
 claude plugin install ant-dev-kit@ant-agent-skills --scope user
