@@ -11,12 +11,13 @@
   "plugins": [
     {
       "name": "ant-project-kit",
-      "description": "Code convention enforcement and networked PARA document management (engram)",
+      "description": "Code convention enforcement, networked PARA document management (engram), and UI component prototyping tournaments (component-poc)",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/code-convention",
-        "./skills/engram"
+        "./skills/engram",
+        "./skills/component-poc"
       ],
       "hooks": "./hooks/hooks.json"
     }
