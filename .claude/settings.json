@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/check_release_sync.py\" --hook",
+            "statusMessage": "Checking release sync before commit..."
+          }
+        ]
+      }
+    ]
+  }
+}

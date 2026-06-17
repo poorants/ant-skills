@@ -16,8 +16,9 @@ Desktop.ini
 *.swp
 *.swo
 
-# Claude Code local settings
-.claude/
+# Claude Code settings — share project settings.json (hooks), ignore personal/local overrides
+.claude/*
+!.claude/settings.json
 
 # bkit local state
 .bkit/
