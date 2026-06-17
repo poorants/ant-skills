@@ -56,6 +56,26 @@ The gradient (and each stage itself runs coarse → fine across its own rounds):
    systems, typographic scale, density, quiet-vs-loud borders, accent strategy. Different *looks*, identical bones.
 4. **CSS 섬세 — visual, refine.** Visual direction locked. Micro-deltas only — exact spacing, radius,
    weight, hover/active states, shadow depth, contrast.
+When CSS stages (3–4) run, they default to swinging the variant as **one cohesive look** — useful for
+picking a single finished direction, but slow if the user wants to *assemble* a result from parts. For
+that, run a **parts-catalog** round instead:
+
+- **CSS 조립 — mix-and-match parts catalog.** Layout locked. Don't restyle each card as one monolithic
+  look, and don't freeze sub-elements into shared helpers. Instead **vary EVERY sub-element's CSS
+  independently and richly within each card** (header, chips, badges, meta rows, action buttons,
+  dividers) so each card is a *different full combination* — a catalog the reviewer mines for parts.
+  **Name each restyled part** in the `desc` (`헤더: 모노+복사 / 칩: 솔리드 알약 / 액션: 텍스트링크`) so the
+  user can cherry-pick across cards fast: *"r4-07의 칩 + r4-03의 헤더 + r4-12의 액션."* Maximize
+  cross-element diversity — the goal is SPEED of assembly, not one finished look.
+
+When the user makes a **composite/assembly request**, synthesize the named parts into one assembled
+candidate next round (carry it as a finalist), then keep varying the still-undecided parts around it.
+
+> **Why this matters.** Stages 1–4 swing CSS at the *whole-variant* level, so a hero sub-element (e.g.
+> the role chip) can ride through every round unchanged — worsened if you collapse it into one shared
+> helper, which erases the variation seam. If a reviewer asks "왜 이 칩은 하나도 안 변했어?" or "전부 다 다르게
+>섞어줘," switch to the parts-catalog mode above. See the per-part skinning recipe in
+> `references/data-contract.md`.
 
 **Advance only on a lock signal.** Read the vote + rationale each round: when the user signals the
 current level is decided ("이 레이아웃이다", "배치 확정", "이 색감/스타일이다"), freeze it and step to the

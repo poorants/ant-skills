@@ -77,4 +77,24 @@ they liked, drop dead ends). There is no per-card memo field.
   `roundIntent` to the active stage so reviewers see what this round is exploring.
 - **Stress-test with samples** — include an overflow case and an empty/placeholder case so density
   and truncation are visible at review time.
+- **CSS parts-catalog (mix-and-match for fast assembly).** When the user wants to *assemble* a result
+  from pieces ("전부 다르게 섞어줘", "이 칩 + 저 헤더"), don't restyle each card as one monolithic look.
+  Build a **skin per sub-element** and have each candidate compose a *different combination* of them, so
+  every card varies header + chips + badges + meta + actions all at once:
+
+  ```js
+  const HEADER = [ (d)=>`…모노+복사…`, (d)=>`…상태 액센트 바…`, (d)=>`…한 줄 압축…` ];
+  const CHIP   = [ (c)=>`…알약 outline…`, (c)=>`…솔리드…`, (c)=>`…도트+라벨…` ];
+  const ACTION = [ (d)=>`…아이콘…`, (d)=>`…텍스트링크…`, (d)=>`…풀폭 버튼…` ];
+  // candidate i mixes a distinct (header, chip, action) tuple — name the parts in desc:
+  { id: "r4-07", title: "조합 G", desc: "헤더:상태바 / 칩:솔리드 / 액션:텍스트",
+    render: (d,i) => frame(d, HEADER[i%3](d), CHIP, ACTION[i%3]) },
+  ```
+
+  **Name each part in `desc`** so the reviewer can cherry-pick across cards by id+part. On a composite
+  request, synthesize the named tuple into one assembled candidate and carry it as a finalist.
+- **Keep a variation seam on every sub-element.** Do **not** over-collapse a sub-element (chip, badge,
+  pill, header) into one shared helper used verbatim everywhere — that erases the seam and it rides
+  through every round unchanged. Inline it per candidate, or pass its skin as a parameter
+  (`chip(c, variant)`). A reviewer noticing "이 원소는 하나도 안 변했다" means the seam got factored away.
 - **No `</script>` in data** — if a variant must contain that literal, write `<\/script>`.
