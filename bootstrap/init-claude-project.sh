@@ -105,12 +105,15 @@ for entry in "${MARKETPLACES[@]}"; do
 done
 
 # 3. Plugin installation (install if new, ALWAYS update so existing envs refresh)
-# name|scope — both at user scope: install once globally, no per-repo duplication,
-# updates land in one place. ant-project-kit hooks self-gate to brain repos, so a
-# single user install is safe everywhere; example-skills is a demo/reference pack.
+# name|scope — all at user scope: install once globally, no per-repo duplication,
+# updates land in one place. ant-common-kit carries engram's capture-loop hooks
+# (they self-gate to brain repos, so one user install is safe everywhere);
+# ant-dev-kit is dev tooling (conventions, component POC); example-skills is a
+# demo/reference pack.
 PLUGINS=(
   "example-skills@anthropic-agent-skills|user"
-  "ant-project-kit@ant-agent-skills|user"
+  "ant-common-kit@ant-agent-skills|user"
+  "ant-dev-kit@ant-agent-skills|user"
 )
 
 for entry in "${PLUGINS[@]}"; do

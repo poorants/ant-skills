@@ -15,7 +15,7 @@ iex (irm https://raw.githubusercontent.com/poorants/ant-skills/main/bootstrap/in
 | 1 | Windows Terminal keybindings (iTerm2 style) |
 | 2 | `.claude/settings.json` (all permissions) |
 | 3 | Plugin marketplace registration + **update** (anthropic, ant-skills) |
-| 4 | Plugin installation + **update** (example-skills, ant-project-kit) |
+| 4 | Plugin installation + **update** (example-skills, ant-common-kit, ant-dev-kit) |
 | 5 | `.gitignore` setup (docs/) |
 | 6 | Document structure + conventions — **mode-aware** (see below) |
 
@@ -34,7 +34,7 @@ bash <(curl -sL https://raw.githubusercontent.com/poorants/ant-skills/main/boots
 |------|--------|
 | 1 | `.claude/settings.json` (all permissions) |
 | 2 | Plugin marketplace registration + **update** (anthropic, ant-skills) |
-| 3 | Plugin installation + **update** (example-skills, ant-project-kit) |
+| 3 | Plugin installation + **update** (example-skills, ant-common-kit, ant-dev-kit) |
 | 4 | `.gitignore` setup (docs/) |
 | 5 | Document structure + conventions — **mode-aware** (see below) |
 
@@ -62,10 +62,11 @@ flagged to be extracted from real code with `/code-convention`. A `## Code
 conventions` section is added to `CLAUDE.md` that `@import`s the rules so every
 session auto-loads them. All writes are idempotent (existing files untouched).
 
-## Optional Plugins
+## Installing kits individually
 
-Install additional plugins as needed:
+The bootstrap installs both kits. To install just one:
 
 ```bash
-claude plugin install ant-app-kit@ant-agent-skills --scope local
+claude plugin install ant-common-kit@ant-agent-skills --scope user   # general/cross-cutting (engram)
+claude plugin install ant-dev-kit@ant-agent-skills --scope user      # dev tooling (code-convention, component-poc)
 ```

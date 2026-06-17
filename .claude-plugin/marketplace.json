@@ -10,16 +10,24 @@
   },
   "plugins": [
     {
-      "name": "ant-project-kit",
-      "description": "Code convention enforcement, networked PARA document management (engram), and UI component prototyping tournaments (component-poc)",
+      "name": "ant-common-kit",
+      "description": "General-purpose, cross-cutting tools usable in any project or context. Currently bundles engram — a networked PARA document brain (PARA management + knowledge-graph linking, MOC hubs, and integrity lint). Carries engram's capture-loop hooks.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/engram"
+      ],
+      "hooks": "./hooks/hooks.json"
+    },
+    {
+      "name": "ant-dev-kit",
+      "description": "Software-development tooling. Bundles code-convention (extract, enforce, and evolve project code conventions) and component-poc (UI variant prototyping tournament). Grows as more dev-focused skills are added.",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/code-convention",
-        "./skills/engram",
         "./skills/component-poc"
-      ],
-      "hooks": "./hooks/hooks.json"
+      ]
     }
   ]
 }

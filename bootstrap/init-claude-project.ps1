@@ -191,7 +191,8 @@ foreach ($mp in $marketplaces) {
 # 4. Plugin installation (install if new, ALWAYS update so existing envs refresh)
 $plugins = @(
     @{ name = "example-skills@anthropic-agent-skills"; scope = "user" }    # demo/reference pack — user scope: install once globally, no per-repo duplication
-    @{ name = "ant-project-kit@ant-agent-skills"; scope = "user" }         # engram/convention + hooks — install once globally; hooks self-gate to brain repos, so one user-scope install covers every repo and updates land in one place
+    @{ name = "ant-common-kit@ant-agent-skills"; scope = "user" }          # general/cross-cutting (engram) + capture-loop hooks — hooks self-gate to brain repos, so one user-scope install covers every repo
+    @{ name = "ant-dev-kit@ant-agent-skills"; scope = "user" }             # dev tooling (code-convention, component-poc) — grows as more dev skills are added
 )
 
 foreach ($p in $plugins) {
