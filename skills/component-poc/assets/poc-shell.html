@@ -108,7 +108,7 @@
       const candidates = S.candidates || [];
       const finalists = S.finalists || [];
 
-      const LSKEY = "poc:" + (S.title || "untitled");
+      const LSKEY = "poc:" + (S.title || "untitled") + ":r" + (S.round ?? 1);
       const saved = (() => { try { return JSON.parse(localStorage.getItem(LSKEY)) || {}; } catch { return {}; } })();
       const state = {
         sample: samples[0].id,
@@ -185,7 +185,9 @@
       // ── Footer: count + export ──
       const byId = {};
       [...candidates, ...finalists].forEach((c) => { byId[c.id] = c; });
-      function keptIds() { return Object.keys(state.checked).filter((k) => state.checked[k]); }
+      // Only count/export ids present in THIS round (candidates+finalists) — guard against
+      // stale checks bleeding in from a prior round's localStorage at the same file:// origin.
+      function keptIds() { return Object.keys(state.checked).filter((k) => state.checked[k] && byId[k]); }
       function updateCount() { document.getElementById("cnt").textContent = keptIds().length; }
       function resultJson() {
         // Carry just id (번호) + name + description — enough to identify picks and carry them forward.

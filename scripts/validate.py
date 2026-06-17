@@ -14,19 +14,34 @@ MAX_SKILL_LINES = 500
 
 
 def parse_frontmatter(skill_md: Path) -> dict:
-    """Parse YAML frontmatter from SKILL.md."""
+    """Parse YAML frontmatter from SKILL.md.
+
+    Prefer a real YAML parser so multi-line block/folded scalars (e.g. `description: >`)
+    are read in full — a naive line parser sees only ">" and silently under-counts length.
+    Falls back to a flat line parser if PyYAML is unavailable.
+    """
     text = skill_md.read_text(encoding="utf-8")
     if not text.startswith("---"):
         return {}
     end = text.find("---", 3)
     if end == -1:
         return {}
-    fm = {}
-    for line in text[3:end].strip().splitlines():
-        if ":" in line:
-            key, _, value = line.partition(":")
-            fm[key.strip()] = value.strip()
-    return fm
+    block = text[3:end]
+    try:
+        import yaml  # type: ignore
+    except ImportError:
+        fm = {}
+        for line in block.strip().splitlines():
+            if ":" in line:
+                key, _, value = line.partition(":")
+                fm[key.strip()] = value.strip()
+        return fm
+    data = yaml.safe_load(block)
+    if not isinstance(data, dict):
+        return {}
+    # Normalize scalar values to strings so len()/regex checks behave; drop trailing newline
+    # that block scalars carry so it doesn't inflate the length count.
+    return {k: (str(v).rstrip("\n") if v is not None else "") for k, v in data.items()}
 
 
 def validate_skill(skill_dir: Path) -> list[str]:

@@ -1,29 +1,17 @@
 ---
 name: engram
 description: >
-  Networked PARA document brain. Organizes documents into Projects, Areas,
-  Resources, and Archives, AND weaves them into a connected knowledge graph
-  via bi-directional links, MOC hub notes, and integrity linting. Layers a
-  logical link network on top of physical folders so the vault grows like an
-  interconnected brain rather than isolated folders. Also the upgrade path from a
-  legacy folders-only PARA vault (e.g. a `para/` base) to a networked brain —
-  renaming the base to `brain/` and wiring up the connection layer. Use when the
-  user wants to manage/organize docs, create meeting notes, archive projects,
-  review documentation status, migrate/upgrade a legacy vault to brain, OR connect
-  notes, check link integrity, find orphan documents, build a knowledge graph,
-  update MOCs, or review what the brain gained this session.
-  Triggers: "manage documents", "organize docs", "document the project",
-  "save meeting notes", "tidy para", "archive document", "review docs",
-  "search docs", "migrate docs", "import docs",
-  "upgrade vault to brain", "migrate para to brain", "para to brain",
-  "archive project", "create meeting notes", "move document", "list documents",
-  "para init", "para review", "para migrate", "para upgrade",
-  "connect notes", "link notes", "tidy the knowledge network", "check links",
-  "link integrity", "broken links", "find orphans", "orphan documents",
-  "update moc", "knowledge graph", "brain check", "engram lint", "engram link",
-  "engram weave", "weave notes", "raise neural density", "fix lonely spokes",
-  "engram session review", "review brain updates",
-  "이번 세션 브레인 업데이트 리뷰"
+  Networked PARA document brain — manages docs by PARA (Projects, Areas, Resources,
+  Archives) AND weaves them into one connected knowledge graph via bi-directional
+  links, MOC hubs, and integrity linting: a logical link layer over physical folders,
+  so the vault grows like an interconnected brain, not isolated folders. Also upgrades
+  a legacy folders-only PARA vault (`para/`) into a networked `brain/`. Use when the
+  user wants to manage/organize/search docs, save meeting notes, archive or migrate a
+  project, review doc status, OR connect notes, find orphan documents, fix broken links,
+  update MOCs, raise neural density, build a knowledge graph, or review what the brain
+  gained this session. Matches intent in any language — e.g. "문서 정리", "회의록 저장",
+  "문서 아카이브", "para→brain 마이그레이션", "노트 연결", "링크 점검", "고아 문서", "MOC 업데이트",
+  "브레인 리뷰", "organize docs", "connect notes", "check links", "find orphans", "para to brain".
 ---
 
 # engram — Networked PARA Document Brain

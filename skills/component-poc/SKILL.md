@@ -1,18 +1,14 @@
 ---
 name: component-poc
 description: >
-  Visual prototyping tournament for UI components/layouts. When you need to decide how to
-  represent something on screen (a card, list row, panel, control, empty state, page section),
-  generate 20–30 distinct variants as a single lightweight HTML page that reuses the PROJECT's own
-  theme tokens (palette, fonts, radii) so they look native — then review in the browser, VOTE per
-  variant with checkboxes, carry the winners forward into a locked tab, regenerate the empty slots
-  with fresh variants, and iterate over N rounds until it converges to the final design, which you
-  then wire into the real code. Use when the user wants to explore/compare UI options, prototype a
-  component, "see a few designs", run a design bake-off, or says a layout feels off (too much empty
-  space, too tall, cluttered) and wants alternatives before committing.
-  Triggers: "component POC", "POC 만들어", "프로토타입", "디자인 시안", "카드 타입", "여러 개 만들어서 고르자",
-  "샘플 페이지", "design bake-off", "design tournament", "compare layouts", "show me options",
-  "이 컴포넌트 다른 방식", "다른 방안", "n개 만들어봐", "투표해서 고르자", "시안 비교".
+  UI 컴포넌트/레이아웃을 글이 아니라 "보고 골라서" 정하는 시각적 프로토타이핑 토너먼트. 화면에 무언가를
+  어떻게 표현할지(카드, 목록 행, 패널, 컨트롤, 빈 상태 등) 정해야 할 때, 프로젝트의 실제 테마 토큰
+  (팔레트·폰트·radii)을 재사용한 단일 오프라인 HTML로 20–30개의 서로 다른 시안을 생성하고 — 브라우저에서
+  체크박스로 투표 → 당선작을 잠긴 탭으로 이월 → 빈 슬롯을 새 시안으로 재생성하며 N라운드 반복해 최종안으로
+  수렴시킨 뒤 실제 코드에 반영한다. UI 옵션을 탐색/비교하거나, 컴포넌트를 프로토타이핑하거나, 레이아웃이
+  어색(너무 길다/비었다/복잡)해서 커밋 전에 대안을 보고 싶을 때 사용. 언어 무관 — 예: "컴포넌트 POC",
+  "시안 만들어", "프로토타입", "디자인 시안", "카드 타입", "여러 개 만들어서 고르자", "투표해서 고르자",
+  "시안 비교", "component POC", "design bake-off", "compare layouts", "show me options".
 ---
 
 # component-poc — UI variant tournament (prototype → vote → iterate → finalize)
