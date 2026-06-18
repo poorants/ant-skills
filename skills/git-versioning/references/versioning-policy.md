@@ -1,114 +1,116 @@
-# 버전 관리 정책 (git-versioning)
+# Versioning Policy (git-versioning)
 
-> 이 문서는 `git-versioning` 스킬이 `init` 시 프로젝트에 `docs/versioning.md`(또는 지정 경로)로
-> 복사하는 **정책 템플릿**이다. `{PROJECT}` 자리표시자를 프로젝트명으로 바꿔 쓴다.
+> This document is the **policy template** that the `git-versioning` skill copies into a project as
+> `docs/versioning.md` (or a path you specify) during `init`. Replace the `{PROJECT}` placeholder with your project name.
 
-{PROJECT} 의 버전을 어떻게 매기는지 정리한다.
+This describes how {PROJECT} assigns version numbers.
 
-> **방식**: **구조 기반(git 커밋 그래프) `MAJOR.MINOR.PATCH`**. 빌드할 때 로컬 git 에서 계산한다 —
-> **태그·CI·토큰 불필요**. minor 는 머지(MR/PR) 수, patch 는 마지막 머지 이후 main 직접 커밋 수,
-> major 는 사람이 정하는 마일스톤. 버전 번호는 "이 빌드가 git 어디에 있나"를 가리키는 **단조 증가
-> 빌드 식별자**다.
+> **Approach**: **structure-based (git commit graph) `MAJOR.MINOR.PATCH`**, computed from the local git repo at build time —
+> **no tags, no CI, no tokens required**. MINOR is the number of merges (MR/PR), PATCH is the number of direct commits to main
+> since the last merge, and MAJOR is a human-chosen milestone. The version number is a **monotonically increasing
+> build identifier** that points to "where in git this build sits."
 
-## 0. 왜 표준(semantic-release)이 아니라 이 방식인가 — 의식적 이탈 기록
+## 0. Why this approach instead of the standard (semantic-release) — a record of a deliberate departure
 
-가장 정통·글로벌 표준은 보통 **Conventional Commits + semantic-release**(커밋 메시지 타입으로 SemVer 를
-자동 산출)다. 이 정책은 그 표준을 **의식적으로 보류**하며 이유를 남긴다. (외부 공개 라이브러리라면 표준을
-쓰는 게 맞다 — §5 의 적용 조건을 먼저 읽고 채택 여부를 판단하라.)
+The most orthodox and widely adopted standard is usually **Conventional Commits + semantic-release** (deriving SemVer
+automatically from commit-message types). This policy **deliberately sets that standard aside**, and records why. (If you are
+building an externally published library, the standard is the right choice — read the adoption criteria in §5 first before deciding.)
 
-1. **제품 성격** — 알려진 고객/QA 에 on-demand 로 출고하는 **내부 제품**이다. SemVer 번호의 핵심 가치인
-   "외부 소비자를 위한 호환성 계약"(major=깨짐 등)을 읽을 외부 소비자가 없다.
-2. **실제로 필요한 건 빌드 식별** — 개발 중 QA 에 여러 빌드를 넘긴다. QA 가 **"방금 받은 게 더 최신인가,
-   어느 빌드인가"** 를 번호로 바로 구분해야 한다. → 번호가 **커밋마다 단조 증가**해야 한다.
-3. **무-CI/무-토큰 로컬 결정성** — 내부·QA 빌드는 태그를 추출하지 않는다(태그는 실제 출고에서만).
-   semantic-release 는 CI 러너 + 토큰 + 머지마다 태그 생성을 전제하는데, 토큰이 없으면 버전이 마지막
-   태그에 **얼어붙고**, 머지마다 태그가 쌓여 on-demand 출고 모델과 어긋난다.
-4. **트레이드오프 수용** — 이 방식은 번호로 **호환성/breaking 여부를 알려주지 못하고**, CHANGELOG·Release
-   노트를 공짜로 얻지 못한다(§5). 위 1~3 의 이득이 이 손실보다 크다고 판단했다.
+1. **Product nature** — this is an **internal product** shipped on-demand to known customers/QA. The core value of a SemVer
+   number — a "compatibility contract for external consumers" (major = breaking, etc.) — has no external consumers to read it.
+2. **What's actually needed is build identification** — during development we hand multiple builds to QA. QA needs to tell at a
+   glance, from the number alone, **"is the one I just got newer, and which build is it?"** → the number must **increase
+   monotonically with every commit**.
+3. **CI-free, token-free local determinism** — internal and QA builds do not pull tags (tags only happen on actual shipments).
+   semantic-release assumes a CI runner + a token + a tag created on every merge; without a token the version **freezes** at the
+   last tag, and accumulating a tag per merge clashes with the on-demand shipping model.
+4. **Accepting the trade-off** — this approach **cannot tell you compatibility/breaking status from the number**, and you don't
+   get a CHANGELOG or release notes for free (§5). We judged the gains in points 1–3 to outweigh those losses.
 
-## 1. 규칙 — git 구조가 버전을 정한다
+## 1. The rule — git structure decides the version
 
-`scripts/version.sh` 가 빌드 시 git 에서 계산한다:
+`scripts/version.sh` computes it from git at build time:
 
 ```
-MR_TOTAL  = git rev-list --merges --count HEAD      # HEAD 에서 도달 가능한 머지(=MR/PR) 수
-minor_raw = MR_TOTAL - MR_BASE                       # 현재 major 구간의 머지 수
-MAJOR     = MAJOR_BASE + minor_raw / 1000000         # 평소 사람이 정한 값 (+ 오버플로 캐리)
+MR_TOTAL  = git rev-list --merges --count HEAD      # merges reachable from HEAD (= MR/PR count)
+minor_raw = MR_TOTAL - MR_BASE                       # merges within the current major
+MAJOR     = MAJOR_BASE + minor_raw / 1000000         # usually a human-set value (+ overflow carry)
 MINOR     = minor_raw % 1000000                      # 0 ~ 999999
-PATCH     = git rev-list --count --first-parent <last-merge>..HEAD   # 마지막 머지 이후 main 직접 커밋
+PATCH     = git rev-list --count --first-parent <last-merge>..HEAD   # direct main commits since the last merge
 ```
 
-| 필드 | 무엇을 세나 | 언제 오르나 |
+| Field | What it counts | When it increments |
 |------|------------|------------|
-| **MAJOR** | 사람이 정하는 마일스톤 | 사람이 `version.conf` 에서 수동 bump (드뭄). minor 가 999999 초과하면 자동 캐리(사실상 없음). |
-| **MINOR** | 머지(MR/PR) 수 | **머지가 main 에 들어올 때마다 +1**, patch 0 리셋. |
-| **PATCH** | main 직접 커밋 수 | **main 에 직접 커밋(머지 안 거친 핫픽스)할 때마다 +1.** 머지 직후엔 0. |
+| **MAJOR** | Human-chosen milestone | Bumped manually by a human in `version.conf` (rare). Auto-carries when MINOR exceeds 999999 (effectively never). |
+| **MINOR** | Number of merges (MR/PR) | **+1 every time a merge lands on main**, resetting PATCH to 0. |
+| **PATCH** | Number of direct commits to main | **+1 for every direct commit to main (a hotfix that bypasses a merge).** 0 immediately after a merge. |
 
-- 빌드 버전엔 **`v` 접두사 없음**(`0.20.2`). 실제 릴리스 **태그**만 `vX.Y.Z` (§3).
-- 모든 작업을 머지로 넣으면: `0.20.0 → 0.21.0 → 0.22.0`(minor 만 증가, patch 항상 0). main 직접 커밋할
-  때만 patch 가 오른다.
-- 결정적: 버전은 **커밋 + `version.conf` 의 순수 함수**다. 같은 커밋이면 항상 같은 버전(`+dev`/`-dirty` 제외).
+- Build versions have **no `v` prefix** (`0.20.2`). Only actual release **tags** use `vX.Y.Z` (§3).
+- If you route all work through merges: `0.20.0 → 0.21.0 → 0.22.0` (MINOR only increases, PATCH stays 0). PATCH only rises when
+  you commit directly to main.
+- Deterministic: the version is a **pure function of the commit + `version.conf`**. The same commit always yields the same version
+  (aside from `+dev`/`-dirty`).
 
-> **GitHub(squash-merge) 주의**: PR 을 squash-merge 하면 머지 커밋이 안 생겨 MINOR 가 안 오른다.
-> 이 경우 두 선택지 중 하나를 쓴다 — (a) PR 머지를 **"Create a merge commit"** 으로 설정(권장, MR=머지
-> 모델 유지), 또는 (b) squash 를 유지하되 MINOR 의 의미를 "merge 수" 대신 받아들이고 PATCH(=first-parent
-> 커밋 수) 중심으로 본다. GitLab 기본(머지 커밋 생성)에선 그대로 동작한다.
+> **GitHub (squash-merge) caveat**: squash-merging a PR produces no merge commit, so MINOR does not increase.
+> In that case use one of two options — (a) configure PR merges to use **"Create a merge commit"** (recommended, preserving the
+> MR=merge model), or (b) keep squashing but accept MINOR's meaning as something other than "number of merges" and look primarily
+> at PATCH (= first-parent commit count). Under GitLab's default (merge commits created), it works as-is.
 
-## 2. 버전이 사는 곳
+## 2. Where the version lives
 
-- **`scripts/version.sh`** — 계산 로직(단일 원본). 빌드 시스템이 호출.
-- **`version.conf`**(리포 루트) — 베이스라인 `MAJOR_BASE` / `MR_BASE` (0.x 동안 `0` / `0`).
-- **빌드 시스템** → `version.sh` 출력을 바이너리/아티팩트에 주입(언어별 배선은 §6).
-- **매니페스트 stamp 없음**: 버전을 파일에 저장하지 않고 빌드 시 git 에서 읽는다.
+- **`scripts/version.sh`** — the computation logic (single source of truth). Invoked by the build system.
+- **`version.conf`** (repo root) — the baselines `MAJOR_BASE` / `MR_BASE` (`0` / `0` during 0.x).
+- **The build system** → injects `version.sh` output into the binary/artifact (language-specific wiring in §6).
+- **No manifest stamp**: the version is not stored in a file; it is read from git at build time.
 
-> 비-shallow clone 필요(머지 수를 세므로). dev 머신/호스트 빌드는 항상 full clone 이라 무관.
+> A non-shallow clone is required (since it counts merges). Dev machines / host builds are always full clones, so this is moot.
 
-## 3. 두 배포 프로세스 — 태그는 실제 출고에서만
+## 3. Two deployment processes — tags only on actual shipments
 
-| 단계 | 빌드 | 버전 | 태그 |
+| Stage | Build | Version | Tag |
 |------|------|------|------|
-| 개발자 로컬/랩 이터레이션 | dev 빌드 | `0.20.5+dev` (커밋마다 증가, dev 도구 ON) | ❌ |
-| **① QA 배포(테스트)** | 릴리스 모드 | `0.20.5` (커밋마다 증가 → QA 가 빌드 구분) | ❌ |
-| **② 제품 릴리스(QA 통과 후)** | ① 에서 QA 가 통과시킨 **그 빌드** | `0.21.0` | ✅ `git tag v0.21.0 && git push origin v0.21.0` |
+| Developer local/lab iteration | dev build | `0.20.5+dev` (increments per commit, dev tools ON) | ❌ |
+| **① QA deployment (test)** | release mode | `0.20.5` (increments per commit → QA distinguishes builds) | ❌ |
+| **② Product release (after QA passes)** | the **exact build** QA passed in ① | `0.21.0` | ✅ `git tag v0.21.0 && git push origin v0.21.0` |
 
-- QA 이터레이션은 **번호만 증가, 태그 0개**. 태그는 **실제 출고 횟수만큼만** 쌓인다.
-- 태그는 "이 커밋이 출고분"이라는 **마커**일 뿐, 버전 계산은 태그를 **보지 않는다**(§1). 출고 시점에 나온
-  계산값 `0.21.0` 으로 같은 이름 태그 `v0.21.0` 을 찍으면 끝.
+- QA iterations **only increment the number; zero tags**. Tags accumulate **only as many times as actual shipments**.
+- A tag is merely a **marker** saying "this commit is the shipped one"; version computation **does not look at tags** (§1). At
+  ship time, you take the computed value `0.21.0` and stamp a same-named tag `v0.21.0`, and that's it.
 
-## 4. MAJOR 수동 bump + 오버플로
+## 4. Manual MAJOR bump + overflow
 
-- **수동 bump(마일스톤)**: `version.conf` 에서 `MAJOR_BASE` 를 올리고 `MR_BASE` 를 현재
-  `git rev-list --merges --count <main>` 값으로 설정 → MINOR 가 0 으로 리셋. 그 커밋부터 `1.0.x`.
-- **자동 캐리(페일세이프)**: MINOR(=현재 major 구간 머지 수)가 999999 를 넘으면 `/1000000` 이 MAJOR 로
-  올라가고 MINOR 가 wrap. 실무에선 사람이 한참 전에 수동 bump 하므로 거의 발동 안 한다.
-- 0.x 동안은 둘 다 기본값(`0`/`0`)으로 두고, `1.0` 승격 시 위 절차로 정한다.
+- **Manual bump (milestone)**: in `version.conf`, raise `MAJOR_BASE` and set `MR_BASE` to the current
+  `git rev-list --merges --count <main>` value → MINOR resets to 0. From that commit on, `1.0.x`.
+- **Auto-carry (failsafe)**: when MINOR (= merges in the current major range) exceeds 999999, the `/1000000` carries into MAJOR
+  and MINOR wraps. In practice a human will have bumped manually long before, so this almost never fires.
+- During 0.x, leave both at their defaults (`0`/`0`); when promoting to `1.0`, decide via the procedure above.
 
-## 5. 글로벌 스탠다드와의 차이 — 채택 조건
+## 5. How this differs from the global standard — adoption criteria
 
-형식(`MAJOR.MINOR.PATCH`)은 같고 **숫자의 의미가 다르다**.
+The format (`MAJOR.MINOR.PATCH`) is the same; **the meaning of the numbers differs**.
 
-| 축 | 글로벌 스탠다드 (SemVer + semantic-release) | **구조 기반(이 정책)** |
+| Axis | Global standard (SemVer + semantic-release) | **Structure-based (this policy)** |
 |---|---|---|
-| 숫자의 의미 | **호환성 계약** | **빌드 식별·진척(오도미터)** |
-| major / minor / patch | 깨짐 / 기능(`feat`) / 버그(`fix`) | 마일스톤 / 머지 수 / 직접 커밋 수 |
-| 답하는 질문 | "업그레이드해도 안전한가?" | "어느 빌드인가 / 더 최신인가?" |
-| bump 트리거 | 커밋 **메시지 타입** | git **구조**(머지/커밋) |
-| 계산 위치·시점 | CI 러너, main 머지 시 | **로컬, 빌드 시** |
-| 의존성 | CI + 토큰 + Conventional Commits 규율 | **없음 (순수 git)** |
-| 태그 | 릴리스 가능한 머지마다 자동(다수) | 실제 제품 릴리스만 수동(소수) |
-| 부가물 | CHANGELOG · Release 노트 자동 | 없음(원하면 수동) |
+| Meaning of the numbers | **Compatibility contract** | **Build identification / progress (odometer)** |
+| major / minor / patch | breaking / feature (`feat`) / bug (`fix`) | milestone / merge count / direct-commit count |
+| Question it answers | "Is it safe to upgrade?" | "Which build is it / is it newer?" |
+| Bump trigger | commit **message type** | git **structure** (merges/commits) |
+| Where & when computed | CI runner, on main merge | **local, at build time** |
+| Dependencies | CI + token + Conventional Commits discipline | **none (pure git)** |
+| Tags | automatic on every releasable merge (many) | manual, only on actual product releases (few) |
+| Extras | CHANGELOG · release notes automatic | none (manual if you want them) |
 
-**이 정책을 쓰기 적합한 프로젝트**: 외부 소비자가 없는 내부/사내 제품, on-demand 출고, QA 빌드 식별이
-핵심, CI/토큰 없이 로컬 결정성을 원함.
+**Projects this policy suits**: internal/in-house products with no external consumers, on-demand shipping, where QA build
+identification is the priority and you want local determinism without CI/tokens.
 
-**대신 표준(semantic-release)을 써야 하는 프로젝트**: 공개 npm/라이브러리/SDK 등 **모르는 외부 소비자가
-업그레이드 안전성을 번호로 판단**해야 하는 경우. 이때는 이 정책을 채택하지 말 것.
+**Projects that should use the standard (semantic-release) instead**: public npm packages / libraries / SDKs and the like, where
+**unknown external consumers must judge upgrade safety from the number**. In that case, do not adopt this policy.
 
-## 6. dev / release 빌드 구분 (배선은 언어별)
+## 6. Distinguishing dev / release builds (wiring is language-specific)
 
-- **dev 빌드** → `+dev` 접미사(`0.20.2+dev`), dev 전용 라우트/도구 ON. 개발자 본인/랩 검증용.
-  `version.sh --dev` 로 접미사를 붙인다.
-- **release 빌드** → 접미사 없음(`0.20.2`), dev 도구 OFF. **QA·고객 출고물과 동일.**
-- 커밋 안 된 tracked 변경이 있으면 `-dirty` 가 붙는다(`0.20.2-dirty`, `git describe --dirty` 와 동일 의미 —
-  untracked 파일은 무시).
-- 빌드 시스템에 버전을 주입하는 구체적 배선은 `references/build-wiring.md` 참고(Make/Go/Node/Python/generic).
+- **dev build** → `+dev` suffix (`0.20.2+dev`), dev-only routes/tools ON. For the developer's own / lab verification.
+  Add the suffix with `version.sh --dev`.
+- **release build** → no suffix (`0.20.2`), dev tools OFF. **Identical to the QA/customer shipment.**
+- If there are uncommitted tracked changes, `-dirty` is appended (`0.20.2-dirty`, same meaning as `git describe --dirty` —
+  untracked files are ignored).
+- For the concrete wiring that injects the version into the build system, see [references/build-wiring.md](references/build-wiring.md) (Make/Go/Node/Python/generic).

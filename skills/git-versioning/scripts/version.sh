@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Structure-based build version — derived from the git commit graph (no tags / CI
 # / token). Single source of truth for the build system and any version stamp.
-# Full rationale: ../references/versioning-policy.md (copied into the project as
-# docs/versioning.md by `git-versioning init`).
+# Full rationale: the versioning policy doc installed by `git-versioning init`
+# (default docs/versioning.md, or the project's doc-convention path — e.g. brain/).
 #
 #   VERSION = MAJOR.MINOR.PATCH[-dirty][+dev]
 #     MR_TOTAL  = merge commits reachable from HEAD            (each merge/MR/PR = one)

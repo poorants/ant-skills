@@ -1,16 +1,16 @@
-# 빌드 배선 레시피 — version.sh 를 빌드에 주입하기
+# Build Wiring Recipes — injecting version.sh into the build
 
-`scripts/version.sh` 는 버전 **문자열**만 계산한다. 그 문자열을 실제 아티팩트(바이너리/패키지/런타임)에
-넣는 "배선"은 빌드 시스템마다 다르다. `init` 은 프로젝트를 감지해 아래 레시피 중 맞는 것을 적용한다.
+`scripts/version.sh` only computes the version **string**. The "wiring" that puts that string into the actual artifact
+(binary/package/runtime) differs per build system. `init` detects the project and applies whichever recipe below fits.
 
-감지 우선순위: `Makefile` → `go.mod` → `package.json` → `pyproject.toml`/`setup.py` → 그 외(generic).
-여러 개가 보이면 사용자에게 어느 빌드 시스템에 배선할지 묻는다.
+Detection priority: `Makefile` → `go.mod` → `package.json` → `pyproject.toml`/`setup.py` → otherwise (generic).
+If several are present, it asks the user which build system to wire into.
 
 ---
 
-## Make (언어 무관, petra-console 원형)
+## Make (language-agnostic, the petra-console archetype)
 
-`Makefile` 상단:
+Top of the `Makefile`:
 
 ```makefile
 VERSION     ?= $(shell scripts/version.sh 2>/dev/null || echo 0.0.0)
@@ -21,11 +21,11 @@ version:
 	@echo "VERSION=$(VERSION)"
 ```
 
-이후 `build` 타깃은 `$(VERSION)`, `build-dev` 타깃은 `$(DEV_VERSION)` 을 사용한다.
+After that, the `build` target uses `$(VERSION)` and the `build-dev` target uses `$(DEV_VERSION)`.
 
-## Go (ldflags 주입)
+## Go (ldflags injection)
 
-`internal/buildinfo/buildinfo.go`(또는 유사):
+`internal/buildinfo/buildinfo.go` (or similar):
 
 ```go
 package buildinfo
@@ -33,16 +33,16 @@ package buildinfo
 import "strings"
 
 var (
-	Version   = "dev"     // 빌드 시 -ldflags 로 주입
+	Version   = "dev"     // injected at build time via -ldflags
 	Commit    = "unknown"
 	BuildTime = "unknown"
 )
 
-// IsDevBuild: dev 빌드(+dev 접미사)에서만 켜지는 표면 게이팅용.
+// IsDevBuild: gates surfaces that turn on only in dev builds (+dev suffix).
 func IsDevBuild() bool { return strings.HasSuffix(Version, "+dev") }
 ```
 
-Makefile 의 build 타깃:
+The build target in the Makefile:
 
 ```makefile
 COMMIT     := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
@@ -55,14 +55,14 @@ build-dev:
 	go build -tags dev -ldflags "-X your-module/internal/buildinfo.Version=$(DEV_VERSION) -X your-module/internal/buildinfo.Commit=$(COMMIT)" -o output/app ./cmd/app
 ```
 
-> Makefile 이 없으면 위 ldflags 를 `go build` 명령에 직접 넣거나 작은 `build.sh` 로 감싼다.
+> If there is no Makefile, put the ldflags above directly on the `go build` command or wrap it in a small `build.sh`.
 
 ## Node / npm
 
-`package.json` 의 `version` 필드는 **건드리지 않는다**(npm 도구 호환을 위해 그대로 두거나 `0.0.0` 고정).
-대신 빌드 직전 생성 파일에 주입한다.
+**Do not touch** the `version` field in `package.json` (leave it as-is, or pin it to `0.0.0`, for npm-tool compatibility).
+Instead, inject into a generated file right before the build.
 
-`scripts/gen-version.sh` 또는 `package.json` 스크립트:
+`scripts/gen-version.sh` or a `package.json` script:
 
 ```json
 {
@@ -73,7 +73,7 @@ build-dev:
 }
 ```
 
-또는 빌드 타임 define(Vite 예):
+Or a build-time define (Vite example):
 
 ```js
 // vite.config.js
@@ -82,23 +82,23 @@ const VERSION = execSync('bash scripts/version.sh').toString().trim()
 export default { define: { __APP_VERSION__: JSON.stringify(VERSION) } }
 ```
 
-런타임에서 `__APP_VERSION__` 또는 생성된 `src/version.ts` 를 읽는다.
+At runtime, read `__APP_VERSION__` or the generated `src/version.ts`.
 
 ## Python
 
-빌드/패키징 직전 생성 파일에 stamp:
+Stamp a generated file right before building/packaging:
 
 ```bash
 # scripts/gen-version.sh
 echo "__version__ = \"$(bash scripts/version.sh)\"" > src/yourpkg/_version.py
 ```
 
-`yourpkg/__init__.py` → `from ._version import __version__`. `pyproject.toml` 의 정적 `version` 은
-플레이스홀더로 두고 실제 식별은 `__version__` 로 한다(또는 `hatch`/`setuptools-scm` 대신 이 stamp 사용).
+`yourpkg/__init__.py` → `from ._version import __version__`. Leave the static `version` in `pyproject.toml` as a placeholder and
+use `__version__` as the real identifier (or use this stamp instead of `hatch`/`setuptools-scm`).
 
-## Generic (빌드 시스템 무관)
+## Generic (build-system-agnostic)
 
-배선 없이 `scripts/version.sh` 만 노출한다. 패키징 스크립트나 CI 에서 직접 호출:
+Expose only `scripts/version.sh`, with no wiring. Call it directly from a packaging script or CI:
 
 ```bash
 VER=$(bash scripts/version.sh)
@@ -107,10 +107,10 @@ tar czf "myapp-${VER}.tar.gz" dist/
 
 ---
 
-## Docker / CI 주의
+## Docker / CI caveat
 
-`version.sh` 는 머지 수를 세므로 **full clone** 이 필요하다. 컨테이너 빌드는 보통 shallow 이거나 git 히스토리가
-없으니, **호스트에서 계산해 build-arg/env 로 전달**한다:
+`version.sh` counts merges, so it needs a **full clone**. Container builds are usually shallow or have no git history, so
+**compute it on the host and pass it in via build-arg/env**:
 
 ```dockerfile
 ARG VERSION=0.0.0
@@ -121,4 +121,4 @@ ENV APP_VERSION=$VERSION
 docker build --build-arg VERSION="$(bash scripts/version.sh)" -t myapp .
 ```
 
-GitLab CI 라면 `GIT_DEPTH: 0`(full clone) 설정 후 잡 안에서 `version.sh` 를 호출해도 된다.
+With GitLab CI, you can also set `GIT_DEPTH: 0` (full clone) and then call `version.sh` inside the job.
