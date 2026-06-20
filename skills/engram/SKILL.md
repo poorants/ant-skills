@@ -4,14 +4,15 @@ description: >
   Networked PARA document brain — manages docs by PARA (Projects, Areas, Resources,
   Archives) AND weaves them into one connected knowledge graph via bi-directional
   links, MOC hubs, and integrity linting: a logical link layer over physical folders,
-  so the vault grows like an interconnected brain, not isolated folders. Also upgrades
-  a legacy folders-only PARA vault (`para/`) into a networked `brain/`. Use when the
-  user wants to manage/organize/search docs, save meeting notes, archive or migrate a
-  project, review doc status, OR connect notes, find orphan documents, fix broken links,
-  update MOCs, raise neural density, build a knowledge graph, or review what the brain
-  gained this session. Matches intent in any language — e.g. "문서 정리", "회의록 저장",
-  "문서 아카이브", "para→brain 마이그레이션", "노트 연결", "링크 점검", "고아 문서", "MOC 업데이트",
-  "브레인 리뷰", "organize docs", "connect notes", "check links", "find orphans", "para to brain".
+  so the vault grows like an interconnected brain. Also upgrades a legacy folders-only
+  PARA vault (`para/`) into a networked `brain/`. Use to manage/organize/search docs,
+  save meeting notes, archive or migrate a project, connect notes, find orphans, fix
+  broken links, update MOCs, raise neural density, review what the brain gained this
+  session, OR manage a brain WORKSPACE — a shared external brain several repos use in
+  common (register/assign/switch brains, share knowledge across repos, autosync).
+  Matches intent in any language — e.g. "문서 정리", "회의록 저장", "노트 연결", "링크 점검",
+  "고아 문서", "MOC 업데이트", "브레인 리뷰", "브레인 워크스페이스", "공유 브레인", "organize docs",
+  "connect notes", "find orphans", "para to brain", "shared brain workspace".
 ---
 
 # engram — Networked PARA Document Brain
@@ -40,44 +41,64 @@ category folders live. This is the first step of every workflow.
 (brains) and code projects. The source brain lives under `brain/`; the repo root
 holds meta files and any exported/published output, kept separate from the source.
 
-1. If `brain/` exists → **nested mode**, base = `brain/`. (Default / recommended.)
-2. Else if a legacy `para/` exists → nested mode, base = `para/` (back-compat).
-3. Else if the root already contains `projects/`, `areas/`, `resources/`, or
-   `archives/` → **flat mode** (legacy standalone vault), base = the root.
-   Consider the **Upgrade Workflow** to bring it under `brain/`.
-4. Else (fresh repo) → nested mode, base = `brain/` (create it).
-5. If the project's `CLAUDE.md` states a documentation-layout convention
-   explicitly, that convention wins over the heuristic above.
-6. Once the mode is determined, stay consistent within that project.
+A repo may instead be **assigned to a shared workspace brain** (an external brain
+several repos share — see **Brain Workspace** below). Run the registry resolver
+first — `python "<skill_dir>/scripts/workspace.py" resolve --json` → `{base, label,
+source, …}` — then route on `source`:
 
-> **Legacy base (`para/`, or flat PARA folders at the root)?** A legacy vault is a
-> first-class case: engram *is* the upgrade path from folders-only para-docs to a
-> networked brain. Two independent things can be "migrated" — the **base layout**
-> (rename to `brain/`) and the **connection layer** (links/MOCs/lint). "Complete
-> migration to brain" does both; route to the **Upgrade Workflow** (it branches on
-> full vs. connection-only and treats the base rename as a guarded refactor, since
-> the base name can be load-bearing in code/CI). See "Migration: three operations,
-> one word" below.
+1. `--base` given (linter) → use it.
+2. **`assignment`** → assigned to a shared brain; base = that brain's path (may be
+   **outside** this repo). Wins over local detection.
+3. **`local` / `assignment-local`** → use the repo-local base: `brain/` if present
+   (**nested**, default); else legacy `para/` (nested); else PARA folders at the
+   root → **flat mode** (consider the **Upgrade Workflow** to bring it under
+   `brain/`). A repo-local `brain/` always wins when there is no assignment.
+4. **`none`** (no assignment, no local base — typically a fresh code repo) → run the
+   **Workspace Picker** (Brain Workspace below) to point the repo at a shared brain
+   or keep it `local`, then proceed.
+5. If `CLAUDE.md` states a doc-layout convention explicitly, it wins over the above.
+6. Once the base is determined, stay consistent within that project.
 
-Throughout this document, `<base>/` denotes the resolved base — `brain/` in the
-default nested mode, or an empty prefix in legacy flat mode. Every path below is
-written relative to it.
+> **Legacy base (`para/`, or flat PARA folders at the root)?** A first-class case:
+> engram *is* the upgrade path from folders-only para-docs to a networked brain. Two
+> things can be "migrated" — the **base layout** (rename to `brain/`) and the
+> **connection layer** (links/MOCs/lint); "complete migration to brain" does both →
+> **Upgrade Workflow** (a guarded refactor, since the base name can be load-bearing
+> in code/CI). See "Migration: three operations, one word" below.
 
-**Scope of the connection layer (links · MOC · lint)**: the linter
-(`engram_lint.py`) auto-detects the base like Path Resolution — nested scans under
-`brain/` (or legacy `para/`), flat scans the root; force with `--base`. Contextual
-link and MOC rules apply across the resolved `<base>/`.
+Throughout, `<base>/` denotes the resolved base — `brain/` in nested mode, an empty
+prefix in legacy flat mode. Every path below is relative to it. The linter
+(`engram_lint.py`) auto-detects the base the same way (nested scans `brain/`/`para/`,
+flat scans the root; force with `--base`), and contextual link/MOC rules apply
+across `<base>/`.
 
 Two usage shapes (both default to `brain/`): a **standalone vault** (doc-only repo,
 root holds meta + exports) or **a code project + docs** (docs under `brain/`
-alongside source). Legacy flat repos (PARA folders at the root) are still detected
-for back-compat; new repos use `brain/`.
+alongside source). Legacy flat repos are still detected for back-compat.
+
+## Brain Workspace (shared brains across repos)
+
+A repo-local `brain/` traps knowledge in one repo. A **workspace brain** is one
+external, independently git-versioned brain a *group* of repos share (e.g. all under
+`d:/devel/github` → a `personal` brain; in-house GitLab → a `work` brain), so
+knowledge follows you across repos. Engram-only. Like SSH host aliases, a
+**user-scope registry** (`<config_dir>/engram/config.json`, managed by
+[scripts/workspace.py](scripts/workspace.py)) names the brains and maps each repo (by
+git root) to one — assignments live in the registry, **not in the code repo**.
+
+Commands (natural language): **register** (`workspace.py register <path>
+[--name N]`), **assign**/**switch** (`workspace.py assign <name>`), **list**,
+**unassign** (`assign local`), **remove** (`workspace.py remove <name>`).
+**Workspace Picker (rule 4)**: on `source: "none"`, **ask before creating
+anything** — offer `local` + each registered brain + "register a new path", persist
+(`assign`), then Init. Never silently default a new repo to a shared brain. Full
+schema/semantics: [references/workspace.md](references/workspace.md).
 
 ## Migration: three operations, one word
 
-"Migrate" is overloaded in this skill — it names **three independent operations**.
-Keep them distinct; a request can want one, two, or all three, and routing to the
-wrong one is the most common failure.
+"Migrate" is overloaded — it names **three independent operations**. Keep them
+distinct (a request can want one, two, or all three); routing to the wrong one is
+the most common failure.
 
 | Operation | What it changes | Workflow |
 |-----------|-----------------|----------|
@@ -85,40 +106,34 @@ wrong one is the most common failure.
 | **Base migration** | the base *layout/name* → `brain/` (`para/`→`brain/`, or flat→nested) | Upgrade Workflow, Phase A |
 | **Connection-layer upgrade** | folders-only vault → *networked brain* (links/MOCs/lint) | Link & Connect Workflow (= Upgrade Workflow, Phase B) |
 
-Route by the *current state of the vault*, not the word the user used: docs unfiled
-→ **Classify & Import**; filed but base is `para/`/flat and the user wants `brain/`
-→ **Upgrade** (Phase A+B); filed and based, only links missing → **Link & Connect**
+Route by the *current state of the vault*, not the user's word: docs unfiled →
+**Classify & Import**; filed but base is `para/`/flat and user wants `brain/` →
+**Upgrade** (Phase A+B); filed and based, only links missing → **Link & Connect**
 (Upgrade Phase B alone).
 
 ## Brain boundary — what stays in the brain vs what separates
 
-The brain (`<base>/`) holds **thinking and knowledge** — everything you link to
-and revisit. Under PARA that includes active **planning / spec / strategy
-documents**: they are Projects, and they are the highest-value nodes because they
-are where your knowledge gets applied. Keep them in the brain — do not pull them
-out just because they look "output-like."
+The brain (`<base>/`) holds **thinking and knowledge** — everything you link to and
+revisit. Under PARA that includes active **planning / spec / strategy documents**:
+they are Projects, the highest-value nodes (where knowledge gets applied). Keep them
+in the brain — don't pull them out just because they look "output-like."
 
-Separate a set of documents into a **root sibling folder** (next to `<base>/`,
-e.g. `blog/`) only when it has its own **external delivery / publishing
-lifecycle** — a workflow, repo, or timeline that lives outside your thinking
-network. Examples: a blog (`seeds → drafts → published → static site / social`),
-or submission deliverables (resumes/portfolios sent to companies).
-
-Decision test (one line): *Is this linked and re-read as part of your thinking
-(→ brain), or an output with its own external workflow/lifecycle (→ separate
-sibling)?*
+Separate a set of documents into a **root sibling folder** (next to `<base>/`, e.g.
+`blog/`) only when it has its own **external delivery / publishing lifecycle** — a
+workflow/repo/timeline outside your thinking network (e.g. a blog `seeds → drafts →
+published`, or submission deliverables). Decision test: *Is this linked and re-read
+as part of your thinking (→ brain), or an output with its own external lifecycle
+(→ separate sibling)?*
 
 - **Default to keeping documents in the brain.** Separation severs the
   project↔knowledge links that make Networked PARA valuable, so it must earn its
-  place with a distinct-lifecycle justification; splitting without one is
-  over-structuring.
+  place with a distinct-lifecycle justification (splitting without one is
+  over-structuring).
 - A separated sibling sits **outside the link network and the lint base**. It may
-  reference brain documents one-directionally; the brain must not depend on it.
-  When you separate, move the folder, fix cross-boundary links both ways, and
-  note it in the relevant MOC/rules.
+  reference brain docs one-directionally; the brain must not depend on it. When you
+  separate, move the folder, fix cross-boundary links both ways, note it in the MOC.
 - **Separation is the one move you do NOT decide on your own.** Make every other
-  organizational call autonomously, but externalize a document set only on an
-  explicit user request (e.g. "move the blog out").
+  call autonomously, but externalize a document set only on explicit user request.
 
 ## Quick Reference
 
@@ -129,20 +144,24 @@ sibling)?*
 | **Resources** | `<base>/resources/` | Reference material and collected knowledge | Persistent — update as needed |
 | **Archives** | `<base>/archives/` | Completed or inactive items from above | Permanent — read-only storage |
 
+**Organizing a shared brain**: PARA folders own one axis (actionability); the repo
+axis is a folder **only** in `projects/<repo>/` — `resources`/`areas` mix across
+repos by design, and language/domain knowledge stays shallow in `resources/` under a
+MOC (not deep folders). Retiring a repo archives only its `projects/<repo>/`; its
+reusable knowledge stays. Detail: [references/workspace.md](references/workspace.md).
+
 ## Init Workflow
 
 **When**: First PARA interaction OR the category folders are missing.
 **Auto-execute without confirmation** — this operation is idempotent.
 
 Resolve the base first (see Path Resolution), then run
-[scripts/init.py](scripts/init.py):
+[scripts/init.py](scripts/init.py), and report what was created:
 
 ```bash
 python scripts/init.py --output . --flat   # flat: categories at the project root
 python scripts/init.py --output .           # nested: under brain/ (or legacy para/)
 ```
-
-Report what was created.
 
 ## Create Workflow
 
@@ -411,6 +430,12 @@ integrity-lint Stop hook); brain-only and non-blocking. Tune
 `ENGRAM_CAPTURE_COOLDOWN_MIN` / `ENGRAM_CAPTURE_PHRASES`, disable with
 `ENGRAM_CAPTURE_DISABLE=1`. Details: [references/capture-loop.md](references/capture-loop.md).
 
+**Brain autosync** (shared workspace brains only):
+[scripts/brain_sync.py](scripts/brain_sync.py) acts **only** on an external
+**assigned** brain with `autopush: true`, never on a repo-local `brain/`. The `Stop`
+hook commits-on-save (`brain_sync.py auto`); at wrap-up the capture instruction runs
+`brain_sync.py push` (`pull --rebase` then `push`, surfacing conflicts not forcing).
+
 ## Session Update Review Workflow
 
 **When**: the user asks to see what the brain gained *this session* — a wrap-up
@@ -419,10 +444,10 @@ counterpart to the Capture loop. ("이번 세션 브레인 업데이트 리뷰",
 리뷰", "브레인 업데이트 알려줘", "review brain updates", "engram session review")
 
 Load [references/session-review.md](references/session-review.md) for the full
-procedure. In short: reconcile your **session memory** (notes/links/MOCs you
-touched) with a **git cross-check** (`git status --short -- <base>/`,
-`git diff --stat -- <base>/`), run the Integrity Lint as the closing check, then
-present the session review report. If nothing landed, say so in one line.
+procedure. In short: reconcile your **session memory** (notes/links/MOCs touched)
+with a **git cross-check** (`git status --short`/`git diff --stat -- <base>/`), run
+the Integrity Lint as the closing check, then present the report. If nothing landed,
+say so in one line.
 
 ## Roadmap (planned, not yet implemented)
 
@@ -436,28 +461,15 @@ the source brain stays visible and untouched. Design details in
 ## Continuous self-improvement (loop engineering)
 
 This skill is meant to get better through use. During any engram operation, stay
-alert for a concrete way to improve the skill itself — a cleaner method, fewer
-tokens, faster execution, clearer rules, or a missing workflow. When you spot one,
-act on it in the same loop rather than deferring:
-
-1. **Apply it** — edit the skill source (`skills/engram/…`), keeping the change
-   small, focused, and reversible (it is under git). Prefer many small verified
-   edits over large rewrites.
-2. **Sync it** so the running copy reflects the change: push, then
-   `claude plugin marketplace update <marketplace>` and
-   `claude plugin update <plugin>@<marketplace> --scope <scope>` (a Claude Code
-   restart activates it).
-3. **Record it** — a one-line note in the commit message (and any changelog or
-   memory that tracks skill versions).
-
-If you lack permission to write to the skill source or to run the sync, **do not
-silently skip the improvement** — tell the user exactly what you want to change
-and why, and ask for access: e.g. "I want to update engram to <X> for a
-<token/speed/clarity> gain but don't have write access to <path> — may I?"
-
-Self-improvement targets the **how** (efficiency, clarity, robustness), not the
-**contract**: do not change externally observable behavior (the `brain/` model,
-link semantics, folder governance) without the user's say-so.
+alert for a concrete improvement (cleaner method, fewer tokens, clearer rules, a
+missing workflow) and act on it in the same loop: **apply it** (small, reversible
+edits to `skills/engram/…`), **sync it** (push, then `claude plugin marketplace
+update <marketplace>` + `claude plugin update <plugin>@<marketplace> --scope
+<scope>`, restart to activate), **record it** (one line in the commit message). If
+you lack write/sync access, don't silently skip — tell the user what you'd change,
+why, and ask. Target the **how** (efficiency, clarity, robustness), never the
+**contract** (the `brain/` model, link semantics, folder governance) without the
+user's say-so.
 
 ## Rules
 

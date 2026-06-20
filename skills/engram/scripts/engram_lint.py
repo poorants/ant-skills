@@ -85,10 +85,26 @@ def parse_base_arg() -> str | None:
 
 
 def resolve_base() -> tuple[Path, str]:
-    """Return (base path, display label). Auto-detects flat/nested."""
+    """Return (base path, display label). Auto-detects flat/nested, and honors a
+    workspace assignment (a shared external brain) from the user-scope registry.
+
+    Order: --base > workspace assignment > local brain/para/flat > default brain/.
+    The assignment may point the lint at a brain OUTSIDE this repo (a shared
+    workspace brain); links/wikilinks all live inside that brain so they still
+    resolve."""
     arg = parse_base_arg()
     if arg is not None:
         return (REPO / arg).resolve(), arg
+    # workspace registry: an explicit repo->brain assignment wins over local
+    # detection (a repo-local brain/ still wins when there is no assignment).
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from workspace import resolve_brain
+        r = resolve_brain(str(REPO))
+        if r.get("source") == "assignment" and r.get("base"):
+            return Path(r["base"]).resolve(), r.get("label") or "brain"
+    except Exception:
+        pass  # degrade to local detection if the registry is unavailable
     # nested mode (default): brain/ is the base for standalone vaults AND code
     # projects; the root holds repo meta and any exported output.
     if (REPO / "brain").is_dir():
