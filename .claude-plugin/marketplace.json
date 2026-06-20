@@ -21,13 +21,14 @@
     },
     {
       "name": "ant-dev-kit",
-      "description": "Software-development tooling. Bundles code-convention (extract, enforce, and evolve project code conventions), component-prototype (UI variant prototyping tournament), and git-versioning (structure-based MAJOR.MINOR.PATCH computed from the git commit graph — no tags/CI/token). Grows as more dev-focused skills are added.",
+      "description": "Software-development tooling. Bundles code-convention (extract, enforce, and evolve project code conventions), component-prototype (UI variant prototyping tournament), git-versioning (structure-based MAJOR.MINOR.PATCH computed from the git commit graph — no tags/CI/token), and repo-map (agent-friendly link-map + overview of a repo's organization, regenerable, stored in the repo). Grows as more dev-focused skills are added.",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/code-convention",
         "./skills/component-prototype",
-        "./skills/git-versioning"
+        "./skills/git-versioning",
+        "./skills/repo-map"
       ]
     }
   ]
