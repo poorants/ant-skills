@@ -94,6 +94,20 @@ anything** — offer `local` + each registered brain + "register a new path", pe
 (`assign`), then Init. Never silently default a new repo to a shared brain. Full
 schema/semantics: [references/workspace.md](references/workspace.md).
 
+**Repo-side pointer (auto) — so the repo advertises its brain.** Because the
+assignment lives only in the user-scope registry (machine-specific abs paths must
+not be committed), a fresh agent session in an assigned repo otherwise has *no way
+to know a brain exists* — durable knowledge sits in the brain undiscovered until
+someone invokes engram. So `assign <brain>` also writes a small **portable** pointer
+block into the repo's `CLAUDE.md` (loaded every session): brain name + git remote +
+the in-brain subpath (`projects/<repo>/`) + "resolve the local path via engram". The
+machine-specific checkout path is deliberately left out. The block is
+marker-delimited and **idempotent** (re-runs replace it in place); `assign local` /
+`unassign` strip it. Re-apply on demand with `workspace.py link` (or
+`link --remove`); opt out of the auto-write with `assign --no-pointer`. This is the
+**repo-side counterpart to Init** — Init wires the brain side (PARA folders), `link`
+wires the repo side (discovery pointer).
+
 ## Migration: three operations, one word
 
 "Migrate" is overloaded — it names **three independent operations**. Keep them

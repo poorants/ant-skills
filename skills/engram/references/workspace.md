@@ -49,10 +49,44 @@ Managed by [scripts/workspace.py](../scripts/workspace.py) (installed plugin pat
 | **Switch** | "이 레포 work로 바꿔" | `workspace.py assign work` |
 | **Unassign** | "이 레포 로컬로 되돌려" | `workspace.py assign local` (or `unassign`) |
 | **Remove** | "work 브레인 등록 해제" | `workspace.py remove <name>` (leaves the directory untouched) |
+| **Link** | "이 레포에 브레인 포인터 다시 박아줘" | `workspace.py link` (write/refresh) · `link --remove` (strip) |
 
 Registering validates the path is a directory inside a git repo; if `autopush` is
 on it also checks the remote exists, and disables autopush (with a warning) if not.
 `remove` warns if any repo is still assigned to the brain being removed.
+
+## Repo-side pointer — so an assigned repo advertises its brain
+
+Assignments live only in the user-scope registry (so machine-local abs paths never
+land in a shared code repo). The cost: a fresh agent session opening an assigned
+repo has **no signal that a brain exists** — the durable knowledge sits in the brain
+undiscovered until someone explicitly invokes engram. The pointer closes that gap.
+
+`assign <brain>` writes a **portable, marker-delimited block** into the repo's
+`CLAUDE.md` (which every session auto-loads):
+
+```
+<!-- BEGIN engram:brain-pointer (managed by engram …) -->
+## Project knowledge lives in an engram brain
+… brain name + git remote + in-brain subpath (projects/<repo>/) +
+  "resolve the local checkout path via the engram skill" …
+<!-- END engram:brain-pointer -->
+```
+
+- **Only portable facts are committed**: brain name, the brain repo's **git remote
+  URL** (cross-machine identity), and the `projects/<repo>/` subpath. The
+  machine-specific local checkout path is **never** written — it is resolved on
+  demand via `workspace.py resolve` (the `base` field).
+- **Idempotent**: the block is delimited by `BEGIN/END engram:brain-pointer`
+  markers, so re-runs replace it in place (never duplicate). It coexists with any
+  other CLAUDE.md content (appended once, updated thereafter).
+- **Lifecycle**: `assign <brain>` writes/refreshes it; `assign local` and `unassign`
+  strip it (deleting CLAUDE.md only if the block was its sole content). Re-apply
+  anytime with `workspace.py link`; remove with `link --remove`; skip the auto-write
+  with `assign --no-pointer`.
+- **Relationship to Init**: Init wires the **brain side** (PARA folders at the
+  resolved base); `link` wires the **repo side** (the discovery pointer). A complete
+  "connect this repo to a shared brain" is `assign` (which now does both) → Init.
 
 ## Resolution (used by the skill, engram_lint.py, brain_reflect.py, brain_sync.py)
 

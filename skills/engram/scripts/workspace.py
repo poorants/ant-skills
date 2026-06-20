@@ -35,12 +35,20 @@ Resolution (the engram skill, engram_lint.py and brain_reflect.py all call this)
 
 Importable: `from workspace import resolve_brain`. CLI for the skill:
     register <path> [--name N] [--no-autopush] [--remote R] [--branch B]
-    assign <brain-name|local> [--repo P]
-    unassign [--repo P]
+    assign <brain-name|local> [--repo P] [--no-pointer]
+    unassign [--repo P] [--no-pointer]
+    link [--repo P] [--remove]
     remove <brain-name>
     list [--repo P] [--json]
     resolve [--repo P] [--json]
 All CLI output is UTF-8 regardless of console code page.
+
+Repo-side pointer: the assignment lives only in this user-scope registry (abs
+paths must not be committed), so a fresh agent session in an assigned repo would
+not know a brain exists. `assign <brain>` therefore also drops a small *portable*
+pointer block into the repo's CLAUDE.md (brain name + git remote + in-brain
+subpath + "resolve the local path via engram") so every session discovers the
+brain; `assign local`/`unassign` strip it again. `link` re-applies it on demand.
 """
 
 from __future__ import annotations
@@ -48,6 +56,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -219,6 +228,118 @@ def resolve_brain(cwd: str | Path | None = None) -> dict:
 
 
 # --------------------------------------------------------------------------- #
+# repo-side brain pointer (CLAUDE.md)
+# --------------------------------------------------------------------------- #
+# A repo assigned to a shared brain keeps that assignment in the user-scope
+# registry only — machine-specific absolute paths must never be committed. The
+# side effect: a fresh agent session in the repo has no idea a brain exists, so
+# durable knowledge in the brain stays undiscovered until someone invokes engram.
+# Fix: drop a small *portable* pointer into the repo's CLAUDE.md (which every
+# session loads) — brain name + git remote + the in-brain subpath + "resolve the
+# local path via engram". The machine-specific checkout path is left out and
+# resolved on demand. The block is marker-delimited so it is idempotent: re-runs
+# replace it in place, and unassign/assign-local strip it.
+
+POINTER_BEGIN = (
+    "<!-- BEGIN engram:brain-pointer (managed by engram — regenerate via the "
+    "engram skill / `workspace.py link`; do not hand-edit) -->"
+)
+POINTER_END = "<!-- END engram:brain-pointer -->"
+_POINTER_RE = re.compile(
+    r"\n*<!-- BEGIN engram:brain-pointer.*?<!-- END engram:brain-pointer -->[ \t]*\n?",
+    re.DOTALL,
+)
+
+
+def remote_url(path: str | Path, remote: str = "origin") -> str | None:
+    """The brain repo's remote URL (portable, committable) — None if unavailable."""
+    root = owning_git_dir(path)
+    if not root:
+        return None
+    try:
+        out = subprocess.run(
+            ["git", "-C", root, "remote", "get-url", remote],
+            capture_output=True, text=True, timeout=5,
+        )
+        if out.returncode == 0 and out.stdout.strip():
+            return out.stdout.strip()
+    except Exception:
+        pass
+    return None
+
+
+def _pointer_body(brain: str, remote: str | None, subpath: str) -> str:
+    remote_line = (
+        f"- Brain (git remote): `{remote}`" if remote
+        else "- Brain: a shared engram workspace brain (see the engram registry)"
+    )
+    return (
+        "## Project knowledge lives in an engram brain\n\n"
+        f"This repo is assigned to the engram **{brain}** brain. Its durable design\n"
+        "knowledge, decisions, and history live in that brain — not in this repo's code.\n\n"
+        f"{remote_line}\n"
+        f"- This repo's notes within the brain: `{subpath}`\n\n"
+        "Before answering architecture, history, or \"why is it built this way\"\n"
+        "questions, read those brain docs first. The brain's local checkout path is\n"
+        "machine-specific, so it is deliberately not hard-coded here — resolve it on\n"
+        "this machine with the engram skill (it runs `workspace.py resolve` and reads\n"
+        "the `base` field). Manage this pointer and the assignment with `/engram`.\n"
+    )
+
+
+def build_pointer(repo_root: str | Path, r: dict) -> str:
+    subpath = f"projects/{Path(repo_root).name}/"
+    rurl = remote_url(r["base"], r.get("remote") or "origin") if r.get("base") else None
+    body = _pointer_body(r.get("brain") or r.get("label") or "shared", rurl, subpath)
+    return f"{POINTER_BEGIN}\n{body}{POINTER_END}"
+
+
+def write_repo_pointer(repo_root: str | Path, r: dict) -> tuple[str, Path]:
+    """Create/refresh the brain-pointer block in <repo>/CLAUDE.md. Idempotent."""
+    f = Path(repo_root) / "CLAUDE.md"
+    original = f.read_text(encoding="utf-8") if f.is_file() else None
+    existed = original is not None
+    stripped = _POINTER_RE.sub("\n", original).rstrip() if existed else ""
+    block = build_pointer(repo_root, r)
+    new = f"{stripped}\n\n{block}\n" if stripped else f"{block}\n"
+    if existed and new == original:
+        return "unchanged", f
+    f.write_text(new, encoding="utf-8")
+    return ("updated" if existed else "created"), f
+
+
+def remove_repo_pointer(repo_root: str | Path) -> tuple[str, Path]:
+    """Strip the brain-pointer block from <repo>/CLAUDE.md. Deletes the file only
+    if the block was its sole content."""
+    f = Path(repo_root) / "CLAUDE.md"
+    if not f.is_file():
+        return "absent", f
+    original = f.read_text(encoding="utf-8")
+    stripped = _POINTER_RE.sub("\n", original)
+    if stripped == original:
+        return "absent", f
+    rest = stripped.strip()
+    if rest:
+        f.write_text(rest + "\n", encoding="utf-8")
+        return "removed", f
+    f.unlink()
+    return "removed-empty", f
+
+
+def apply_repo_pointer(repo_root: str, *, emit=lambda _m: None) -> None:
+    """Sync the repo's CLAUDE.md pointer to its current assignment: write when
+    assigned to a shared brain, strip otherwise."""
+    r = resolve_brain(repo_root)
+    if r["source"] == "assignment" and r.get("brain"):
+        state, f = write_repo_pointer(repo_root, r)
+        emit(f"brain pointer {state}: {Path(f).as_posix()} (-> {r['brain']})")
+    else:
+        state, f = remove_repo_pointer(repo_root)
+        if state != "absent":
+            emit(f"brain pointer {state}: {Path(f).as_posix()}")
+
+
+# --------------------------------------------------------------------------- #
 # CLI commands
 # --------------------------------------------------------------------------- #
 def _emit(obj: dict) -> None:
@@ -274,6 +395,8 @@ def cmd_assign(args) -> int:
     cfg["assignments"][_display(repo)] = args.brain
     save_config(cfg)
     _print(f"assigned {_display(repo)} -> {args.brain}")
+    if not getattr(args, "no_pointer", False):
+        apply_repo_pointer(repo, emit=_print)
     return 0
 
 
@@ -286,6 +409,24 @@ def cmd_unassign(args) -> int:
     save_config(cfg)
     _print(f"unassigned {_display(repo)}" if len(cfg["assignments"]) < before
            else f"no assignment for {_display(repo)}")
+    if not getattr(args, "no_pointer", False):
+        apply_repo_pointer(repo, emit=_print)
+    return 0
+
+
+def cmd_link(args) -> int:
+    repo = git_root(args.repo or os.getcwd())
+    if args.remove:
+        state, f = remove_repo_pointer(repo)
+        _print(f"brain pointer {state}: {Path(f).as_posix()}")
+        return 0
+    r = resolve_brain(repo)
+    if not (r["source"] == "assignment" and r.get("brain")):
+        _print(f"error: {_display(repo)} is not assigned to a shared brain "
+               f"(source={r['source']}). Assign one first: workspace.py assign <name>")
+        return 1
+    state, f = write_repo_pointer(repo, r)
+    _print(f"brain pointer {state}: {Path(f).as_posix()} (-> {r['brain']})")
     return 0
 
 
@@ -350,11 +491,22 @@ def main() -> int:
     p = sub.add_parser("assign", help="assign this repo to a brain (or 'local')")
     p.add_argument("brain")
     p.add_argument("--repo")
+    p.add_argument("--no-pointer", action="store_true",
+                   help="do not touch the repo's CLAUDE.md brain pointer")
     p.set_defaults(func=cmd_assign)
 
     p = sub.add_parser("unassign", help="remove this repo's assignment")
     p.add_argument("--repo")
+    p.add_argument("--no-pointer", action="store_true",
+                   help="do not touch the repo's CLAUDE.md brain pointer")
     p.set_defaults(func=cmd_unassign)
+
+    p = sub.add_parser("link", help="write/refresh (or --remove) this repo's "
+                                    "CLAUDE.md brain pointer")
+    p.add_argument("--repo")
+    p.add_argument("--remove", action="store_true",
+                   help="strip the pointer instead of writing it")
+    p.set_defaults(func=cmd_link)
 
     p = sub.add_parser("remove", help="remove a brain from the registry")
     p.add_argument("name")
