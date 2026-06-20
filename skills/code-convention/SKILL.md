@@ -26,6 +26,27 @@ decisions an agent can NOT infer from reading code.
 The contract must live **where the agent reads it**: keep `CONVENTIONS.md` as the
 source of truth and ensure `CLAUDE.md` points to it, so every session loads it.
 
+## Shared base + per-repo deltas (inheritance)
+
+Same-stack projects share most conventions, so a stack-level **base** can be
+inherited instead of re-decided (and left to drift) per repo:
+
+- The shared base is a **brain resources doc** — `resources/conventions/<stack>.md`
+  (e.g. `tauri-react-rust.md`) — that **engram stores and curates**; this skill only
+  **consumes** it. Resolve the brain via the engram workspace (the repo's assigned
+  brain); if there is no brain/base, operate standalone.
+- A repo's contract = **base + deltas**: its `CONVENTIONS.md` declares "inherits
+  `<stack>` base" and lists only the project-specific rules (its arbitrary-but-
+  consistent decisions, product-specific security/architecture invariants). `check`
+  evaluates against **base ∪ deltas**; `init`/`evolve` only write rules NOT already in
+  the base (don't restate inherited rules).
+- **promote**: when a delta proves itself and is genuinely stack-general, propose
+  promoting it into the base (an engram capture/update on that resources doc), then
+  other repos inherit it. **Promote, don't homogenize** — adoption is opt-in per repo;
+  forcing every rule onto all repos produces monoculture, not cross-pollination.
+  Project-specific rules stay deltas. (This skill proposes/consumes; engram owns the
+  base doc.)
+
 ## Usage
 
 ```
