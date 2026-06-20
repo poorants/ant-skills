@@ -1,11 +1,30 @@
 ---
 name: code-convention
-description: "Manage and enforce project code conventions. Extract conventions from existing code, check compliance, and evolve rules over the project lifecycle. Use when user says /code-convention, 'check conventions', 'code style', 'naming rules', 'add convention', 'convention check', 'extract conventions', or asks about coding standards. Triggers include 코드 컨벤션, 코딩 규칙, 네이밍 규칙, 코드 스타일, 컨벤션 검사, 컨벤션 추출, 코딩 표준, 컨벤션 추가."
+description: "Manage a project's code conventions as a machine-readable contract that steers AI coding across sessions — focused on the rules a linter/formatter CAN'T enforce and an agent CAN'T infer (tooling taxonomies like error/test-id/i18n codes, security and architecture invariants), not formatting trivia. Extract from existing code, check compliance, evolve over the lifecycle, and surface the rules where the agent reads them (CLAUDE.md). Use when user says /code-convention, 'check conventions', 'code style', 'naming rules', 'add convention', 'convention check', 'extract conventions', 'project rules', or asks about coding standards. Triggers include 코드 컨벤션, 코딩 규칙, 네이밍 규칙, 코드 스타일, 컨벤션 검사, 컨벤션 추출, 코딩 표준, 컨벤션 추가, 프로젝트 규칙."
 ---
 
-# code-convention: Code Convention Manager
+# code-convention: project rules as an AI-steering contract
 
-Extract, manage, check, and evolve project code conventions throughout the project lifecycle.
+Extract, manage, check, and evolve a project's code conventions — but treat them as a
+**machine-readable contract that steers AI coding**, not a human-era style guide.
+
+**Why this still matters when AI writes the code:** an agent infers style by mimicking
+surrounding code — which only works when the code is *already* consistent, and breaks
+down across many AI sessions (the new "many contributors" problem) and in fresh or
+messy codebases. Conventions are the deterministic tiebreaker, and they encode the
+decisions an agent can NOT infer from reading code.
+
+**What belongs here vs. what to delegate (the dividing line):**
+- ❌ **Delegate to tools — do not author here**: formatting, line length, import
+  order, trivial naming — anything a formatter/linter (Prettier, eslint, rustfmt,
+  clippy, ruff) already enforces deterministically. Duplicating them just rots.
+- ✅ **Own here**: the rules tools CAN'T check and an agent CAN'T infer — *tooling
+  contracts* (error-code taxonomy `ERR-*`, `data-testid` schemes E2E depends on, i18n
+  key rules), security/architecture invariants, and any arbitrary-but-must-be-
+  consistent project decision. These are what actually steer the AI.
+
+The contract must live **where the agent reads it**: keep `CONVENTIONS.md` as the
+source of truth and ensure `CLAUDE.md` points to it, so every session loads it.
 
 ## Usage
 
@@ -243,7 +262,7 @@ These are starting categories. `evolve` can suggest new ones based on project ne
 |----------|--------|----------------|
 | **Naming** | `NAME-` | Variables, functions, files, directories, components |
 | **File Structure** | `FILE-` | Directory layout, file organization, barrel files |
-| **Style** | `STYLE-` | Formatting, imports, comments, line length |
+| **Style** | `STYLE-` | **Delegate formatting/line-length/import-order to the formatter.** Only document style decisions a tool can't enforce (e.g. comment requirements for public APIs) |
 | **Error Handling** | `ERR-` | try/catch, error types, logging |
 | **Security** | `SEC-` | Input validation, secrets, XSS/injection prevention |
 | **Verification** | `VERIFY-` | Verify-before-"done" discipline; scratch-artifact hygiene (detailed runbooks belong in troubleshooting docs, not here) |
@@ -265,7 +284,8 @@ When extracting conventions during `init`, resolve conflicts in this order:
 - `evolve` is non-destructive: it only proposes, never auto-applies
 - Convention documents are version-controlled (not in `.gitignore`)
 - `.code-convention.json` config is local-only (in `.gitignore`)
-- `init` respects existing linter configs — conventions complement, not duplicate them
+- `init` respects existing linter configs — conventions complement, never duplicate them. **Do not author a rule a formatter/linter already enforces** (see "the dividing line" above); the skill owns only what tools can't check and an agent can't infer
+- **The conventions are an AI contract first, a human doc second**: ensure `CLAUDE.md` references `CONVENTIONS.md` so every agent session loads it. Prefer rules that are *tooling contracts* (taxonomies other automation depends on), security/architecture invariants, and arbitrary-but-consistent decisions over restating mechanical style
 - Each rule must have a rationale — "because I said so" is not acceptable
 - All generated documents are written in English
 - When checking, skip files matched by `.gitignore` and common ignores (`node_modules/`, `dist/`, etc.)
