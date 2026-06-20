@@ -59,36 +59,36 @@ inherited instead of re-decided (and left to drift) per repo:
 /code-convention evolve           -- re-scan codebase and suggest new rules
 ```
 
-## Output Path
+## Output Location
 
-Documents are generated in the user's project, not inside the skill directory.
-The output path (`{output-dir}`) is determined during `init`:
+The repo's contract lives at a **fixed, committed path** — no config file, no
+per-repo path choice (uniformity across repos is the point):
 
-- Default: `para/areas/code-convention/`
-- User can specify a custom path (e.g., `docs/conventions/`, `.conventions/`)
-
-Once set, the path is stored in `.code-convention.json` at the project root:
-
-```json
-{
-  "outputDir": "para/areas/code-convention",
-  "language": "typescript",
-  "framework": "next.js",
-  "ruleCount": 24,
-  "lastEvolvedAt": "2026-03-16"
-}
+```
+.code-convention/
+  CONVENTIONS.md   # the repo contract: "inherits <stack> base; deltas below"
+  CHANGELOG.md     # history of convention changes
 ```
 
-All commands read `.code-convention.json` to locate documents.
-If the config file is missing, prompt the user to run `init` first.
+`.code-convention/` is a **dotfolder on purpose**: conventions are an *agent contract*,
+not published docs, so they stay out of doc-site builds, globs, and the engram lint —
+while `CLAUDE.md` surfaces them to every session via `@.code-convention/CONVENTIONS.md`.
+Both files are **committed** (version-controlled with the code). There is **no
+`.code-convention.json`**: the path is fixed, and stack/language is re-detected on
+demand (history lives in `CHANGELOG.md`).
+
+> Migrating an older repo? If conventions sit at a legacy path (`para/areas/code-
+> convention/`, `docs/conventions/`, …), `git mv` them to `.code-convention/`, repoint
+> the `CLAUDE.md` `@import` and any code/README references, and drop the old
+> `.code-convention.json` + its `.gitignore` line.
 
 ## Data Sources
 
-| Source | Purpose |
-|--------|---------|
-| `{output-dir}/CONVENTIONS.md` | Full convention ruleset (skill-managed, user-extendable) |
-| `{output-dir}/CHANGELOG.md` | History of convention changes |
-| `.code-convention.json` | Config and metadata (skill-managed) |
+| Source | Owner | Purpose |
+|--------|-------|---------|
+| `resources/conventions/<stack>.md` (in the assigned **brain**) | engram | shared stack **base** this repo inherits — resolve the brain with engram's `workspace.py resolve --json` (`base` field); if there is no brain/base, operate standalone |
+| `.code-convention/CONVENTIONS.md` | this skill | the repo contract = **base + project deltas** (committed, `@import`ed from `CLAUDE.md`) |
+| `.code-convention/CHANGELOG.md` | this skill | history of convention changes |
 
 ## Commands
 
@@ -97,43 +97,49 @@ If the config file is missing, prompt the user to run `init` first.
 Extract conventions from existing code through automated analysis and guided interview.
 
 1. **Scan the codebase** to detect:
-   - Primary language(s) and framework(s)
+   - Primary language(s) and framework(s) — this also names the **stack** (e.g.
+     `tauri-react-rust`)
    - Existing linter/formatter configs (`.eslintrc`, `.prettierrc`, `pyproject.toml`, `rustfmt.toml`, etc.)
    - Naming patterns in use (camelCase, snake_case, PascalCase, etc.)
    - File/directory structure patterns
    - Import ordering conventions
    - Comment styles
    - Error handling patterns
-2. **Present findings** to the user and ask for confirmation/adjustments:
+2. **Resolve the shared base (inheritance).** Resolve the assigned brain via engram
+   (`workspace.py resolve --json` → `base`) and look for `<base>/resources/conventions/
+   <stack>.md`:
+   - **Base exists** → the repo contract **inherits** it. Author only **deltas** —
+     project-specific rules NOT already in the base. Don't restate inherited rules.
+   - **No base / no brain** → operate standalone (author the full ruleset here); offer
+     to seed a new stack base in the brain so future repos can inherit it (engram owns
+     that doc — propose, don't write it from this skill).
+3. **Present findings** to the user and ask for confirmation/adjustments:
    - "I detected TypeScript with Next.js App Router. Correct?"
    - "Naming appears to be camelCase for functions, PascalCase for components. Keep this?"
    - "No linter config found. Would you like to establish formatting rules?"
    - Ask about any ambiguous or inconsistent patterns found
-3. **Ask additional preferences** not derivable from code:
+4. **Ask additional preferences** not derivable from code:
    - Preferred max line length
    - Import grouping order
    - Comment requirements (e.g., JSDoc for public APIs)
    - Test file conventions
    - Any project-specific rules or prohibited patterns
-4. Save config to `.code-convention.json`
-5. Ensure `.code-convention.json` is in `.gitignore`:
-   - If `.gitignore` exists: check if already listed; if not, append with comment:
-     ```
-     # Added by code-convention skill
-     .code-convention.json
-     ```
-   - If `.gitignore` does not exist: create it with the above
-6. Generate `{output-dir}/CONVENTIONS.md` using [references/convention-template.md](references/convention-template.md)
-   - Populate with detected + confirmed rules
+5. Generate `.code-convention/CONVENTIONS.md` using [references/convention-template.md](references/convention-template.md)
+   - Open with a one-line header declaring inheritance: *"Inherits the `<stack>` base
+     (`resources/conventions/<stack>.md`); project deltas below."* (omit if standalone)
+   - Populate with detected + confirmed **deltas** (or the full ruleset if standalone)
    - Each rule gets a unique ID (e.g., `NAME-01`, `FILE-01`, `STYLE-01`)
-7. Create `{output-dir}/CHANGELOG.md` with initial entry
+6. Create `.code-convention/CHANGELOG.md` with initial entry
+7. **Wire the contract where the agent reads it**: ensure `CLAUDE.md` imports it with
+   `@.code-convention/CONVENTIONS.md` (add the line if missing) so every session loads it
 
 ### `status` (default)
 
 Display convention summary.
 
-1. Read `.code-convention.json` for output path
-2. Read `{output-dir}/CONVENTIONS.md`
+1. Read `.code-convention/CONVENTIONS.md` (fixed path)
+2. Note inheritance: if it declares a `<stack>` base, the effective ruleset is
+   **base + these deltas** — surface both counts
 3. Present summary:
 
 ```
@@ -157,8 +163,9 @@ Categories:
 
 Check code against established conventions.
 
-1. Read `.code-convention.json` for config
-2. Read `{output-dir}/CONVENTIONS.md` for the full ruleset
+1. Read `.code-convention/CONVENTIONS.md` for the repo deltas, and (if it declares a
+   `<stack>` base) resolve the brain via engram and read `resources/conventions/<stack>.md`
+   for the inherited rules — check against **base ∪ deltas**
 3. Scan target files:
    - If `path` given: scan that file or directory
    - If no path: scan all source files in project (respect `.gitignore`)
@@ -191,7 +198,7 @@ Top 3 most violated rules:
 
 Add a new convention rule.
 
-1. Read current `{output-dir}/CONVENTIONS.md`
+1. Read current `.code-convention/CONVENTIONS.md`
 2. Ask the user for:
    - **Category** — Naming, File Structure, Style, Error Handling, Security, or new category
    - **Rule description** — what the rule enforces
@@ -199,19 +206,19 @@ Add a new convention rule.
    - **Examples** — good and bad code examples
    - **Severity** — error (must fix) or warning (should fix)
 3. Assign next available rule ID in the category (e.g., `NAME-07`)
-4. Append to the appropriate section in `{output-dir}/CONVENTIONS.md`
-5. Update rule count in `.code-convention.json`
-6. Add entry to `{output-dir}/CHANGELOG.md`
+4. Append to the appropriate section in `.code-convention/CONVENTIONS.md` (as a repo
+   **delta** — don't duplicate a rule already in the inherited base)
+5. Add entry to `.code-convention/CHANGELOG.md`
 
 ### `update <rule-id>`
 
 Modify an existing rule.
 
-1. Find the rule by ID (e.g., `NAME-02`) in `{output-dir}/CONVENTIONS.md`
+1. Find the rule by ID (e.g., `NAME-02`) in `.code-convention/CONVENTIONS.md`
 2. Show current rule content
 3. Ask what to update: description, rationale, examples, severity, or deprecate
-4. Update `{output-dir}/CONVENTIONS.md`
-5. Add entry to `{output-dir}/CHANGELOG.md`
+4. Update `.code-convention/CONVENTIONS.md`
+5. Add entry to `.code-convention/CHANGELOG.md`
 
 ### `evolve`
 
@@ -219,7 +226,7 @@ Re-scan codebase and suggest new or updated conventions.
 
 This is the key command for keeping conventions alive throughout the project.
 
-1. Read current `{output-dir}/CONVENTIONS.md`
+1. Read current `.code-convention/CONVENTIONS.md`
 2. Scan the codebase for:
    - **New patterns** not yet covered by any rule
    - **Inconsistencies** where code follows multiple conflicting patterns
@@ -246,11 +253,18 @@ This is the key command for keeping conventions alive throughout the project.
    New areas without conventions:
      [GAP] 8 new API route files found since last evolve, no API-specific rules
            → Suggest adding API category?
+
+   Promotion candidates (delta → shared base):
+     [PROMOTE] Delta ERR-04 has proven out here and is stack-general, not project-
+               specific → propose promoting into resources/conventions/<stack>.md so
+               sibling repos can inherit it (engram applies it; adoption stays opt-in)
    ```
 4. For each proposal, ask the user: accept, reject, or modify
-5. Apply accepted changes to `{output-dir}/CONVENTIONS.md`
-6. Update `.code-convention.json` metadata (`lastEvolvedAt`, `ruleCount`)
-7. Add entries to `{output-dir}/CHANGELOG.md`
+5. Apply accepted changes to `.code-convention/CONVENTIONS.md` (deltas only)
+6. For accepted **promotions**, hand the rule + rationale to engram to capture/update
+   on `resources/conventions/<stack>.md` — **promote, don't homogenize** (stack-general
+   + opt-in only; project-specific rules stay deltas)
+7. Add entries to `.code-convention/CHANGELOG.md`
 
 ## Rule Structure
 
@@ -300,11 +314,13 @@ When extracting conventions during `init`, resolve conflicts in this order:
 
 ## Rules
 
-- CONVENTIONS.md is the single source of truth for the project's code style
+- The repo's contract = inherited `<stack>` base (curated in the brain by engram) + the
+  deltas in `.code-convention/CONVENTIONS.md`; the latter is the repo's source of truth
 - Rules are never deleted silently — use `update` to deprecate with rationale
 - `evolve` is non-destructive: it only proposes, never auto-applies
-- Convention documents are version-controlled (not in `.gitignore`)
-- `.code-convention.json` config is local-only (in `.gitignore`)
+- Convention documents live at the fixed path `.code-convention/` and are
+  **version-controlled** (committed, never in `.gitignore`); there is no separate config
+  file — the path is fixed and stack/language is re-detected on demand
 - `init` respects existing linter configs — conventions complement, never duplicate them. **Do not author a rule a formatter/linter already enforces** (see "the dividing line" above); the skill owns only what tools can't check and an agent can't infer
 - **The conventions are an AI contract first, a human doc second**: ensure `CLAUDE.md` references `CONVENTIONS.md` so every agent session loads it. Prefer rules that are *tooling contracts* (taxonomies other automation depends on), security/architecture invariants, and arbitrary-but-consistent decisions over restating mechanical style
 - Each rule must have a rationale — "because I said so" is not acceptable

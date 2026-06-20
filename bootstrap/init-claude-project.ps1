@@ -53,4 +53,5 @@ Write-Host "[DONE] Toolkits installed + .claude/settings.json written." -Foregro
 Write-Host "Next - set the engram brain (just tell Claude Code):"
 Write-Host '  - Register a brain once:  register <path-to-brain-repo> as the "personal" brain'
 Write-Host '  - Link THIS repo to it:    use the "personal" brain for this repo'
-Write-Host "The engram skill handles the rest (shared knowledge + code conventions)."
+Write-Host "From there: engram curates shared knowledge + stack convention bases (resources/conventions/<stack>.md);"
+Write-Host "the code-convention skill compiles this repo's .code-convention/ (inherited base + project deltas, @import'd from CLAUDE.md)."

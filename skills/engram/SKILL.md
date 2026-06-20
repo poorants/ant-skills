@@ -164,6 +164,23 @@ repos by design, and language/domain knowledge stays shallow in `resources/` und
 MOC (not deep folders). Retiring a repo archives only its `projects/<repo>/`; its
 reusable knowledge stays. Detail: [references/workspace.md](references/workspace.md).
 
+**Shared code-convention bases — engram curates, `code-convention` consumes.** A
+shared brain accumulates **stack-level convention bases** at
+`resources/conventions/<stack>.md` (e.g. `tauri-react-rust.md`) — the cross-repo
+"AI-steering contract" for that stack. The split of duties is deliberate:
+
+- **engram owns the base** as durable brain knowledge: it stores/curates these docs,
+  keeps the `resources/conventions/README.md` MOC (which stacks exist, which repos
+  consume each), and **applies promotions** the `code-convention` skill hands up (a
+  proven, *stack-general*, opt-in rule + its rationale).
+- **`code-convention` consumes it**: each repo compiles its own contract = **this base
+  + project deltas** into a repo-local, committed `.code-convention/CONVENTIONS.md`
+  (`@import`ed from `CLAUDE.md`). That repo file is **not** brain content — it's the
+  applied instance; only the shared base lives in the brain.
+- **Promote, don't homogenize.** The base accumulates what's genuinely common per
+  stack; it is never forced onto a repo (adoption is opt-in, project-specifics stay
+  deltas). A new repo of a known stack *inherits the latest base* to start from.
+
 ## Init Workflow
 
 **When**: First PARA interaction OR the category folders are missing.

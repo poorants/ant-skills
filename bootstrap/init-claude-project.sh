@@ -51,5 +51,7 @@ cat <<'NEXT'
 Next - set the engram brain (just tell Claude Code):
   - Register a brain once:  register <path-to-brain-repo> as the "personal" brain
   - Link THIS repo to it:    use the "personal" brain for this repo
-The engram skill handles the rest (shared knowledge + code conventions).
+From there: engram curates shared knowledge + stack convention bases
+(resources/conventions/<stack>.md); the code-convention skill compiles this repo's
+.code-convention/ (inherited base + project deltas, @import'd from CLAUDE.md).
 NEXT
