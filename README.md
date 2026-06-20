@@ -23,10 +23,12 @@ iex (irm https://raw.githubusercontent.com/poorants/ant-skills/main/bootstrap/in
 bash <(curl -sL https://raw.githubusercontent.com/poorants/ant-skills/main/bootstrap/init-claude-project.sh)
 ```
 
-This unified auto-installer registers the marketplaces, installs **both kits** (plus
-Anthropic's `example-skills`), sets permissions, and initializes the PARA document
-structure / code conventions based on the repo type. Re-running refreshes everything
-to the latest. See [bootstrap/README.md](bootstrap/README.md) for the mode-aware details.
+This does exactly two things: installs/updates **both kits** (plus Anthropic's
+`example-skills`) at **user scope**, and writes `.claude/settings.json` (all
+permissions) in the current directory. Re-running refreshes everything. It does **not**
+scaffold docs or conventions — knowledge and code conventions live in a shared
+**engram brain** you link per repo (the script prints how). See
+[bootstrap/README.md](bootstrap/README.md).
 
 ### Manual Setup
 
@@ -39,6 +41,21 @@ claude plugin install ant-dev-kit@ant-agent-skills --scope user
 User scope installs once globally (no per-repo duplication); engram's hooks self-gate
 to brain repos, so a single user-scope install is safe everywhere.
 
+## Shared brain workspace (engram)
+
+Knowledge and code conventions are no longer scaffolded per repo — they live in one
+shared **engram brain** that many repos use in common, so knowledge follows you across
+repos. Usage (just tell Claude Code; the `engram` skill understands plain language):
+
+1. **Register a brain once per machine** — point at a local clone of your brain repo:
+   *register `<path-to-brain-repo>` as the "personal" brain*.
+2. **Link a repo to it** — *use the "personal" brain for this repo*.
+
+From then on that repo shares the brain's PARA knowledge graph and inherits the shared
+code-convention base (`resources/conventions/<stack>.md`) plus its own deltas. The
+[bootstrap](#one-liner-setup-installs-both-kits) only installs the kits and writes
+`.claude/settings.json`; brain linkage is this engram step.
+
 ## Kits
 
 ### ant-common-kit — general / cross-cutting
@@ -48,7 +65,7 @@ Tools usable in any project or context. Carries engram's capture-loop hooks
 
 | Skill | Description |
 |-------|-------------|
-| **engram** | Networked PARA document brain — PARA management (Projects/Areas/Resources/Archives) + knowledge-graph linking, MOC hubs, and integrity lint |
+| **engram** | Networked PARA document brain **+ brain workspace** — PARA management (Projects/Areas/Resources/Archives) with knowledge-graph linking, MOC hubs, and integrity lint; and a shared **workspace brain** so many repos use ONE external brain (register/assign), so knowledge follows you across repos. Also curates the shared code-convention base |
 
 ```bash
 claude plugin install ant-common-kit@ant-agent-skills --scope user
@@ -60,8 +77,10 @@ Dev-focused tooling. Grows as more development skills are added.
 
 | Skill | Description |
 |-------|-------------|
-| **code-convention** | Extract, enforce, and evolve project code conventions |
+| **code-convention** | Manage code conventions as an **AI-steering contract** (the rules a linter can't enforce / an agent can't infer); extract, check, and evolve, inheriting a shared stack base from the engram brain |
 | **component-prototype** | UI variant prototyping tournament — generate many native-looking variants, vote, iterate to a final design |
+| **git-versioning** | Structure-based `MAJOR.MINOR.PATCH` computed from the git commit graph at build time — no tags, CI, or tokens |
+| **repo-map** | Agent-friendly link-map (`MAP.md`) of a repo's organization — modules, responsibilities, who-uses-what + a short overview; derived from code, regenerable |
 
 ```bash
 claude plugin install ant-dev-kit@ant-agent-skills --scope user
