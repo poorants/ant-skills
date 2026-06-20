@@ -35,6 +35,12 @@ import tempfile
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from workspace import resolve_brain
+except Exception:  # degrade to local-only detection if registry unavailable
+    resolve_brain = None
+
 DEFAULT_PHRASES = [
     # Korean wrap-up signals (the user's common forms)
     "고생했", "수고했", "수고하", "오늘은 여기까지", "여기까지 하", "여기까지만",
@@ -47,20 +53,35 @@ DEFAULT_PHRASES = [
 ]
 
 
-def brain_base(cwd: str) -> str | None:
+def brain_info(cwd: str) -> dict | None:
+    """Resolve the brain for this repo. Returns {display, external_autopush} or
+    None when there is no brain to feed. Honors a workspace assignment (a shared
+    external brain) before falling back to a repo-local brain/ · para/."""
+    if resolve_brain is not None:
+        try:
+            r = resolve_brain(cwd)
+            if r.get("source") == "assignment" and r.get("base"):
+                disp = f"{r.get('brain')} ({r['base']})"
+                return {"display": disp, "external_autopush": bool(r.get("autopush"))}
+            if r.get("source") in ("local", "assignment-local") and r.get("base") \
+                    and Path(r["base"]).is_dir():
+                return {"display": r.get("label") or "brain", "external_autopush": False}
+        except Exception:
+            pass
     for name in ("brain", "para"):
         if (Path(cwd) / name).is_dir():
-            return name
+            return {"display": name, "external_autopush": False}
     return None
 
 
-def instruction(base: str, wrapup: bool) -> str:
+def instruction(info: dict, wrapup: bool) -> str:
+    base = info["display"]
     head = "[engram 세션 마무리 감지] " if wrapup else "[engram 뇌 회고] "
     body = (
-        "이 저장소엔 engram 브레인(`" + base + "/`)이 있다. 이번 세션 대화를 돌아보고 "
+        "이 저장소엔 engram 브레인(`" + base + "`)이 연결돼 있다. 이번 세션 대화를 돌아보고 "
         "'브레인에 남길 가치가 있는' 것이 나왔는지 판단하라 — 새로 정립된 개념·설계 결정·"
         "이 프로젝트에 적용할 좋은 아이디어·리서치 결론·중요한 함정/제약 등 나중에 다시 읽고 "
-        "링크할 지식. 있으면 engram 스킬로 알맞은 PARA 폴더(`" + base + "/`)에 기록하고, 본문 "
+        "링크할 지식. 있으면 engram 스킬로 알맞은 PARA 폴더에 기록하고, 본문 "
         "맥락에 링크를 녹이고, 해당 폴더 MOC(README.md)를 갱신하고, engram lint로 무결성을 "
         "확인하라. 선별 원칙: 사소한 잡담·진행확인·코드/이력으로 이미 남는 것·이미 문서화된 "
         "것은 적지 마라(과잉 문서화·억지 링크 금지). 남길 게 없으면 '기록할 만한 것 없음' 한 "
@@ -68,6 +89,9 @@ def instruction(base: str, wrapup: bool) -> str:
     )
     if wrapup:
         body += " 사용자가 세션을 마무리하려 하니, 응답을 마치기 전에 위를 수행하라."
+        if info.get("external_autopush"):
+            body += (" 이 브레인은 공유(autopush) 브레인이므로, 기록을 마친 뒤 "
+                     "`scripts/brain_sync.py push`로 동기화하라(충돌 시 그대로 보고).")
     return head + body
 
 
@@ -90,8 +114,8 @@ def main() -> int:
         return 0
 
     cwd = data.get("cwd") or os.getcwd()
-    base = brain_base(cwd)
-    if base is None:
+    info = brain_info(cwd)
+    if info is None:
         return 0
 
     event = data.get("hook_event_name", "")
@@ -104,7 +128,7 @@ def main() -> int:
             emit({
                 "hookSpecificOutput": {
                     "hookEventName": "UserPromptSubmit",
-                    "additionalContext": instruction(base, wrapup=True),
+                    "additionalContext": instruction(info, wrapup=True),
                 }
             })
         return 0
@@ -128,7 +152,7 @@ def main() -> int:
             os.utime(marker, (now, now))
         except Exception:
             return 0
-        emit({"decision": "block", "reason": instruction(base, wrapup=False)})
+        emit({"decision": "block", "reason": instruction(info, wrapup=False)})
         return 0
 
     return 0
