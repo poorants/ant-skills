@@ -31,7 +31,11 @@ Managed by [scripts/workspace.py](../scripts/workspace.py) (installed plugin pat
 
 - A brain's `path` is a **plain local directory that is already its own git repo**
   (engram never makes it a submodule; it just reads/writes files there and runs git
-  in it). It may be the repo root or a nested `brain/` inside that repo.
+  in it) — the **container**. Its PARA **base** nests under `brain/` by default,
+  resolved from the container exactly like a repo-local base: an existing
+  `brain/`·`para/`·flat base wins, otherwise it defaults to `<path>/brain`. So even
+  a repo dedicated as a brain keeps its PARA under `brain/` (not flat at the root);
+  registering the `brain/` folder directly still resolves to itself.
 - Assignments live in the **user-scope registry, not in the code repo**, so a shared
   code repo is never polluted with your machine-local brain path, and teammates who
   clone it never inherit a path that does not exist on their machine.
@@ -98,7 +102,8 @@ python "<skill_dir>/scripts/workspace.py" resolve --json
 `source` is one of:
 
 - **`assignment`** — this repo is assigned to a shared brain; `base` is that brain's
-  path (may be outside the repo). Wins over local detection.
+  PARA base — `brain/` nested in the registered directory (may be outside the repo),
+  detected like a local base, defaulting to `<path>/brain`. Wins over local detection.
 - **`local`** — no assignment; a repo-local `brain/` · `para/` · flat base exists.
   A repo-local base still wins when there is no assignment (back-compat — existing
   vaults are never nagged).

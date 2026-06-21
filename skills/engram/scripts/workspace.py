@@ -12,7 +12,7 @@ Registry file (user scope, JSON — plain, git-diffable, hand-editable):
     <config_dir>/engram/config.json
     {
       "version": 1,
-      "brains": {
+      "brains": {                        # path = container repo; PARA base = <path>/brain
         "personal": {"path": "D:/devel/github/brain", "autopush": true,
                      "remote": "origin", "branch": "main"},
         "work":     {"path": "D:/work/gitlab/brain", "autopush": false}
@@ -169,6 +169,21 @@ def local_base(repo_root: str | Path) -> tuple[Path, str] | None:
     return None
 
 
+def brain_base(brain_path: str | Path) -> Path:
+    """The PARA base inside a *registered* brain's directory.
+
+    A registered brain points at a container (usually its own git repo); its PARA
+    base nests under brain/ by default — exactly like any repo, so a dedicated
+    brain repo is not a special-cased flat exception. Detect an existing
+    brain/ · para/ · flat base; otherwise default to <path>/brain (materialized on
+    init). Registering the brain/ folder directly still resolves to itself."""
+    root = Path(os.path.expanduser(str(brain_path))).resolve()
+    detected = local_base(root)
+    if detected:
+        return detected[0]
+    return (root / "brain").resolve()
+
+
 # --------------------------------------------------------------------------- #
 # resolution
 # --------------------------------------------------------------------------- #
@@ -208,7 +223,7 @@ def resolve_brain(cwd: str | Path | None = None) -> dict:
         brain = cfg.get("brains", {}).get(assigned)
         if brain and brain.get("path"):
             result.update(
-                base=str(Path(os.path.expanduser(brain["path"])).resolve()),
+                base=str(brain_base(brain["path"])),
                 label=assigned, source="assignment", brain=assigned,
                 autopush=bool(brain.get("autopush", False)),
                 remote=brain.get("remote", "origin"),
@@ -377,6 +392,7 @@ def cmd_register(args) -> int:
 
     verb = "updated" if existed else "registered"
     _print(f"brain '{name}' {verb}: {entry['path']} (autopush={autopush})")
+    _print(f"  PARA base: {brain_base(path)}")
     for w in warnings:
         _print(f"  warning: {w}")
     return 0

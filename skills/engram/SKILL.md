@@ -47,8 +47,12 @@ first — `python "<skill_dir>/scripts/workspace.py" resolve --json` → `{base,
 source, …}` — then route on `source`:
 
 1. `--base` given (linter) → use it.
-2. **`assignment`** → assigned to a shared brain; base = that brain's path (may be
-   **outside** this repo). Wins over local detection.
+2. **`assignment`** → assigned to a shared brain; base = that brain's PARA base —
+   the `brain/` nested inside the registered brain directory (may be **outside**
+   this repo), detected just like a local base (existing `brain/`·`para/`·flat
+   wins; otherwise defaults to `<registered-path>/brain`). Wins over local
+   detection. So a dedicated brain repo is **not** a flat exception — its PARA
+   still lives under `brain/`.
 3. **`local` / `assignment-local`** → use the repo-local base: `brain/` if present
    (**nested**, default); else legacy `para/` (nested); else PARA folders at the
    root → **flat mode** (consider the **Upgrade Workflow** to bring it under
