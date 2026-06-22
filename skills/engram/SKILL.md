@@ -47,12 +47,21 @@ first — `python "<skill_dir>/scripts/workspace.py" resolve --json` → `{base,
 source, …}` — then route on `source`:
 
 1. `--base` given (linter) → use it.
-2. **`assignment`** → assigned to a shared brain; base = that brain's PARA base —
-   the `brain/` nested inside the registered brain directory (may be **outside**
-   this repo), detected just like a local base (existing `brain/`·`para/`·flat
-   wins; otherwise defaults to `<registered-path>/brain`). Wins over local
-   detection. So a dedicated brain repo is **not** a flat exception — its PARA
-   still lives under `brain/`.
+2. **`assignment`** (absorb mode) → assigned to a shared brain; base = that brain's
+   PARA base — the `brain/` nested inside the registered brain directory (may be
+   **outside** this repo), detected just like a local base (existing
+   `brain/`·`para/`·flat wins; otherwise defaults to `<registered-path>/brain`).
+   Wins over local detection. So a dedicated brain repo is **not** a flat
+   exception — its PARA still lives under `brain/`. Use absorb for
+   **knowledge-collection repos** whose docs are mostly cross-cutting.
+2b. **`hybrid`** → the repo keeps its **own local `brain/`** for code-coupled docs
+   AND links a shared brain for cross-cutting knowledge. `resolve` returns **two
+   bases**: `base` = the repo-local brain (primary — the linter lints this), and
+   `shared_base` = the shared workspace brain (cross-cutting/reusable knowledge +
+   shared convention bases + the cross-repo index). When recording: route
+   repo-specific/code-coupled docs → local `base`; cross-cutting/reusable →
+   `shared_base`. This is the default for **product repos** with a large
+   code-coupled dev brain (see **Brain Workspace** for the rationale).
 3. **`local` / `assignment-local`** → use the repo-local base: `brain/` if present
    (**nested**, default); else legacy `para/` (nested); else PARA folders at the
    root → **flat mode** (consider the **Upgrade Workflow** to bring it under
@@ -91,12 +100,46 @@ knowledge follows you across repos. Engram-only. Like SSH host aliases, a
 git root) to one — assignments live in the registry, **not in the code repo**.
 
 Commands (natural language): **register** (`workspace.py register <path>
-[--name N]`), **assign**/**switch** (`workspace.py assign <name>`), **list**,
-**unassign** (`assign local`), **remove** (`workspace.py remove <name>`).
-**Workspace Picker (rule 4)**: on `source: "none"`, **ask before creating
-anything** — offer `local` + each registered brain + "register a new path", persist
-(`assign`), then Init. Never silently default a new repo to a shared brain. Full
-schema/semantics: [references/workspace.md](references/workspace.md).
+[--name N]`), **assign**/**switch** (`workspace.py assign <name>` · add `--hybrid`
+for hybrid mode), **list**, **unassign** (`assign local`), **remove**
+(`workspace.py remove <name>`). **Workspace Picker (rule 4)**: on `source: "none"`,
+**ask before creating anything** — offer `local` + each registered brain + "register
+a new path", persist (`assign`), then Init. Never silently default a new repo to a
+shared brain. Full schema/semantics: [references/workspace.md](references/workspace.md).
+
+### Two ways a repo relates to a shared brain — absorb vs hybrid
+
+The mistake is treating "share a brain" as one thing. There are two, and which one
+fits depends on **what kind of docs the repo holds**:
+
+- **absorb** (`assign <brain>`) — the shared brain *is* the repo's base; the repo's
+  knowledge lives centrally and the repo keeps no local brain. Right for a
+  **knowledge-collection repo** whose docs are mostly cross-cutting product/domain
+  knowledge (e.g. a test/research kit). One base, fully centralized.
+- **hybrid** (`assign <brain> --hybrid`) — the repo **keeps its own local `brain/`**
+  for code-coupled docs (architecture, dev/UX guides, code conventions,
+  troubleshooting, repo project archives) AND links the shared brain for
+  **cross-cutting** knowledge (reusable product/domain knowledge, shared convention
+  bases at `resources/conventions/`, the cross-repo index). `resolve` returns both
+  `base` (local) and `shared_base` (shared). Right for a **product repo** with a
+  large, mostly code-coupled dev brain.
+
+**Why hybrid is the default for product repos (2026 industry pattern).** The
+dominant practice is **"authored colocated, served/indexed centrally"** — code-
+coupled docs stay in their repo (reviewed with the code), and only cross-cutting
+knowledge + an index are centralized. This is what Google's SWE practices (docs as
+code, deleted with the code), the AGENTS.md convention (nearest-file-wins, per-
+package), Backstage TechDocs' recommended architecture, the Backstage `AIContext`
+RFC (centralize the index/metadata, keep content colocated via source annotations),
+and Anthropic's just-in-time context engineering (lightweight references + on-demand
+retrieval, not one giant central dump) all converge on. Physically relocating a
+product repo's entire dev brain into the shared brain runs *against* this pattern and
+degrades in-repo agent ergonomics. So: **absorb a knowledge-collection repo; hybrid a
+product repo.** When unsure, prefer hybrid (it is reversible and keeps code-coupled
+docs where the code is). Separating *which* docs are cross-cutting vs repo-specific
+is a judgment call — make it per the **Routing** table in
+[references/workspace.md](references/workspace.md); never auto-relocate a repo's
+whole brain without the user's say-so.
 
 **Repo-side pointer (auto) — so the repo advertises its brain.** Because the
 assignment lives only in the user-scope registry (machine-specific abs paths must
@@ -110,7 +153,10 @@ marker-delimited and **idempotent** (re-runs replace it in place); `assign local
 `unassign` strip it. Re-apply on demand with `workspace.py link` (or
 `link --remove`); opt out of the auto-write with `assign --no-pointer`. This is the
 **repo-side counterpart to Init** — Init wires the brain side (PARA folders), `link`
-wires the repo side (discovery pointer).
+wires the repo side (discovery pointer). In **hybrid** mode the pointer is the
+hybrid variant: it states the repo has its *own* local `brain/` for code-coupled
+docs and tells the agent to route cross-cutting knowledge to the shared brain
+(resolved via the `shared_base` field).
 
 ## Migration: three operations, one word
 

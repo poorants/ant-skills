@@ -62,15 +62,26 @@ def _git_dir(base: str) -> str | None:
 
 
 def _autopush_brain(cwd: str | None) -> dict | None:
-    """Return the resolve dict only if this repo maps to an external assigned
-    brain with autopush enabled and that brain lives in a git repo; otherwise
-    None (nothing to autosync)."""
+    """Return a normalized sync target {base, remote, branch, brain} only if this
+    repo maps to an external **shared** brain with autopush enabled that lives in a
+    git repo; otherwise None (nothing to autosync).
+
+    Two shapes resolve to a syncable shared brain:
+    - **absorb** (source=="assignment"): the base IS the shared brain → sync base.
+    - **hybrid** (source=="hybrid"): base is the repo-local brain (committed with
+      the code, never touched here); the shared brain rides in shared_* → sync it.
+    A plain repo-local brain is never synced here — it belongs to the code repo."""
     if resolve_brain is None:
         return None
     r = resolve_brain(cwd or os.getcwd())
     if (r.get("source") == "assignment" and r.get("autopush") and r.get("base")
             and _git_dir(r["base"])):
-        return r
+        return {"base": r["base"], "remote": r.get("remote", "origin"),
+                "branch": r.get("branch"), "brain": r.get("brain")}
+    if (r.get("source") == "hybrid" and r.get("shared_autopush")
+            and r.get("shared_base") and _git_dir(r["shared_base"])):
+        return {"base": r["shared_base"], "remote": r.get("shared_remote", "origin"),
+                "branch": r.get("shared_branch"), "brain": r.get("shared_brain")}
     return None
 
 

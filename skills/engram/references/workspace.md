@@ -23,11 +23,17 @@ Managed by [scripts/workspace.py](../scripts/workspace.py) (installed plugin pat
       "work":     {"path": "D:/work/gitlab/brain", "autopush": false}
     },
     "assignments": {                                  # which repo uses what
-      "D:/devel/github/myrepo": "personal",           # repo-root-abs -> brain | "local"
-      "D:/work/gitlab/svc":     "work"
+      "D:/devel/github/myrepo": "personal",           # absorb: repo base = shared brain
+      "D:/work/gitlab/svc":     "work",               # absorb (string form)
+      "D:/work/gitlab/console": {"brain": "work",     # hybrid: local brain +
+                                 "mode": "hybrid"}     #   shared cross-cutting link
     }
   }
 ```
+
+An assignment value is either a **string** (`"<brain>"` = *absorb* mode, or
+`"local"`) or an **object** `{"brain": "<name>", "mode": "hybrid"}` (= *hybrid*
+mode). The string form is unchanged for back-compat.
 
 - A brain's `path` is a **plain local directory that is already its own git repo**
   (engram never makes it a submodule; it just reads/writes files there and runs git
@@ -43,12 +49,57 @@ Managed by [scripts/workspace.py](../scripts/workspace.py) (installed plugin pat
   so any subdirectory of a repo resolves to the same brain. Keys are matched
   case-insensitively (Windows-safe).
 
+## Absorb vs hybrid — pick by what the repo's docs *are*
+
+A repo shares a brain in one of two modes. Choosing wrong is the most common
+workspace mistake.
+
+| | **absorb** (`assign <brain>`) | **hybrid** (`assign <brain> --hybrid`) |
+|---|---|---|
+| Repo's base | the **shared** brain (no local brain) | the repo's **own local `brain/`** |
+| Shared brain holds | *everything* this repo knows | only this repo's **cross-cutting** knowledge + index |
+| `resolve` returns | `base` = shared | `base` = local, **`shared_base`** = shared |
+| Fits | **knowledge-collection repo** (docs mostly cross-cutting product/domain knowledge — a test/research kit) | **product repo** (large code-coupled dev brain) |
+| Autosync target | the shared brain (`base`) | the shared brain (`shared_base`); the local brain commits with the code |
+
+**Why hybrid is the default for product repos (2026 industry pattern).** The
+dominant, current practice is **"authored colocated, served/indexed centrally"** —
+docs that are coupled to code stay in their repo and are reviewed with the code;
+only genuinely cross-cutting knowledge plus an index are centralized. Convergent
+evidence (verified, 2025–2026): Google SWE practices (docs as code, updated/deleted
+in the same change); the **AGENTS.md** convention (nearest-file-wins, a file per
+package — OpenAI's repo ships 88); **Backstage TechDocs**' recommended architecture
+(source colocated per repo, artifacts aggregated centrally); the Backstage
+**`AIContext` RFC** (centralize the *index/metadata/governance*, keep content
+colocated via source annotations — still an open proposal, so emerging not settled);
+**Anthropic context engineering** (just-in-time: store lightweight references, load
+on demand — not one upfront central dump). Physically relocating a product repo's
+whole dev brain into the shared brain runs *against* this pattern and hurts in-repo
+agent ergonomics. Caveat: "single source of truth" does **not** mean zero
+duplication (a common misread), so a hybrid still needs deliberate dedup when it
+promotes cross-cutting docs.
+
+### Routing — what goes where in hybrid
+
+| Knowledge kind | Where | Why |
+|----------------|-------|-----|
+| Architecture, FE/BE dev & UX guides, page/nav maps, repo troubleshooting, repo project archives | **local `brain/`** | code-coupled — changes with the code, reviewed with it |
+| Repo's compiled code-convention contract (`.code-convention/…`) | **local repo** (committed) | the applied instance; not brain content |
+| Reusable product/domain knowledge several repos cite (protocols, error codes, KMS/DBMS ops) | **shared `resources/`** | cross-cutting, reused across repos (dedup on promote) |
+| Stack-general convention **base** | **shared `resources/conventions/<stack>.md`** | engram curates; `code-convention` skill consumes |
+| This repo's cross-repo index / pointers | **shared `projects/<repo>/`** | the repo's slot in the shared brain |
+
+Separating cross-cutting from repo-specific is a **judgment call** — never
+auto-relocate a repo's whole brain. Default to leaving a doc local unless it is
+clearly reused across repos.
+
 ## Commands (natural language, any language)
 
 | Intent | Example utterance | Action |
 |--------|-------------------|--------|
 | **Register** | "이 경로를 personal 브레인으로 등록해" / "register … as a brain" | `workspace.py register <path> [--name N] [--no-autopush] [--remote R] [--branch B]` |
-| **Assign** | "이 레포는 personal 써" / "use the work brain here" | `workspace.py assign <name>` |
+| **Assign** (absorb) | "이 레포는 personal 써" / "use the work brain here" | `workspace.py assign <name>` |
+| **Assign** (hybrid) | "이 레포는 로컬 브레인 두고 work는 공용지식만 공유" | `workspace.py assign <name> --hybrid` |
 | **List** | "브레인 목록 / 워크스페이스 보여줘" | `workspace.py list [--json]` |
 | **Switch** | "이 레포 work로 바꿔" | `workspace.py assign work` |
 | **Unassign** | "이 레포 로컬로 되돌려" | `workspace.py assign local` (or `unassign`) |
@@ -96,14 +147,22 @@ undiscovered until someone explicitly invokes engram. The pointer closes that ga
 
 ```bash
 python "<skill_dir>/scripts/workspace.py" resolve --json
-# -> {base, label, source, brain, autopush, remote, branch, repo_root, warning}
+# -> {base, label, source, brain, mode, autopush, remote, branch,
+#     shared_base, shared_brain, shared_remote, shared_branch, shared_autopush,
+#     repo_root, warning}
 ```
 
 `source` is one of:
 
-- **`assignment`** — this repo is assigned to a shared brain; `base` is that brain's
-  PARA base — `brain/` nested in the registered directory (may be outside the repo),
-  detected like a local base, defaulting to `<path>/brain`. Wins over local detection.
+- **`assignment`** (mode `absorb`) — this repo is assigned to a shared brain; `base`
+  is that brain's PARA base — `brain/` nested in the registered directory (may be
+  outside the repo), detected like a local base, defaulting to `<path>/brain`. Wins
+  over local detection.
+- **`hybrid`** (mode `hybrid`) — assigned with `--hybrid`. `base` is the repo's
+  **local** brain (the linter lints this; it commits with the code), and the shared
+  brain rides in **`shared_base`/`shared_brain`/`shared_remote`/`shared_branch`/
+  `shared_autopush`**. brain_sync syncs the shared brain (never the local one).
+  Route code-coupled docs → `base`, cross-cutting → `shared_base`.
 - **`local`** — no assignment; a repo-local `brain/` · `para/` · flat base exists.
   A repo-local base still wins when there is no assignment (back-compat — existing
   vaults are never nagged).
@@ -112,7 +171,7 @@ python "<skill_dir>/scripts/workspace.py" resolve --json
   skill runs the **Workspace Picker**; the linter/hooks fall back to a silent
   `brain/` default so they never block.
 
-Order overall: `--base` (linter flag) > `assignment` > local detection > picker.
+Order overall: `--base` (linter flag) > `assignment`/`hybrid` > local detection > picker.
 
 ## Workspace Picker (Path Resolution rule 4)
 
@@ -158,9 +217,10 @@ there is no access-frequency log (rarely-read reference material is exactly what
 ## Brain autosync
 
 [scripts/brain_sync.py](../scripts/brain_sync.py) is the muscle for keeping a
-shared brain in sync. It acts **only** on a repo whose resolved brain is an
-external **assigned** brain with `autopush: true`, and **never** touches a
-repo-local `brain/` (a local brain is committed together with the code repo).
+shared brain in sync. It acts **only** on the external **shared** brain a repo maps
+to with `autopush: true` — the `base` in absorb mode, the `shared_base` in hybrid
+mode — and **never** touches a repo-local `brain/` (a local brain, including a
+hybrid repo's own `brain/`, is committed together with the code repo).
 
 - **Commit on save (automatic)**: the `Stop` hook runs `brain_sync.py auto`, which
   commits the assigned brain if it changed (cheap, local, no-op when clean; no

@@ -187,12 +187,34 @@ def brain_base(brain_path: str | Path) -> Path:
 # --------------------------------------------------------------------------- #
 # resolution
 # --------------------------------------------------------------------------- #
-def find_assignment(cfg: dict, repo_root: str) -> str | None:
+def find_assignment(cfg: dict, repo_root: str):
+    """The raw assignment value for this repo: a brain name, the string "local",
+    or a hybrid object {"brain": name, "mode": "hybrid"} — or None."""
     key = _norm(repo_root)
     for stored, brain in cfg.get("assignments", {}).items():
         if _norm(stored) == key:
             return brain
     return None
+
+
+def assignment_parts(val) -> tuple[str | None, str]:
+    """Normalize an assignment value to (brain_name, mode).
+
+    Two modes a repo can relate to a workspace brain:
+    - **absorb** (string `"<name>"`): the shared brain IS this repo's base — the
+      repo's knowledge lives centrally (good for knowledge-collection repos whose
+      docs are mostly cross-cutting). Back-compat: the original string form.
+    - **hybrid** (`{"brain": name, "mode": "hybrid"}`): the repo keeps its own
+      LOCAL brain for code-coupled docs AND links the shared brain for
+      cross-cutting/reusable knowledge. Matches the 2026 "authored colocated,
+      indexed/shared centrally" pattern (Backstage TechDocs/AIContext RFC, Grab,
+      Anthropic just-in-time context) — code-coupled docs stay with the code.
+    `"local"` -> ("local","local")."""
+    if isinstance(val, dict):
+        return val.get("brain"), (val.get("mode") or "absorb")
+    if val == "local":
+        return "local", "local"
+    return val, "absorb"
 
 
 def resolve_brain(cwd: str | Path | None = None) -> dict:
@@ -207,35 +229,58 @@ def resolve_brain(cwd: str | Path | None = None) -> dict:
     cfg = load_config()
 
     result = {"base": None, "label": None, "source": "none", "brain": None,
-              "autopush": False, "remote": "origin", "branch": None,
+              "mode": None, "autopush": False, "remote": "origin", "branch": None,
+              "shared_base": None, "shared_brain": None, "shared_remote": None,
+              "shared_branch": None, "shared_autopush": False,
               "repo_root": repo_root, "warning": None}
 
     assigned = find_assignment(cfg, repo_root)
     if assigned is not None:
-        if assigned == "local":
+        brain_name, mode = assignment_parts(assigned)
+        if brain_name == "local":
             lb = local_base(repo_root)
             if lb:
-                result.update(base=str(lb[0]), label=lb[1], source="assignment-local")
+                result.update(base=str(lb[0]), label=lb[1],
+                              source="assignment-local", mode="local")
             else:
                 result.update(base=str((Path(repo_root) / "brain").resolve()),
-                              label="brain", source="assignment-local")
+                              label="brain", source="assignment-local", mode="local")
             return result
-        brain = cfg.get("brains", {}).get(assigned)
+        brain = cfg.get("brains", {}).get(brain_name)
         if brain and brain.get("path"):
+            sb = brain_base(brain["path"])
+            if mode == "hybrid":
+                # repo keeps its OWN local brain (code-coupled docs) + links the
+                # shared brain (cross-cutting knowledge). base = local; the shared
+                # brain rides in the shared_* fields. The linter lints the local
+                # base; brain_sync syncs the shared brain.
+                lb = local_base(repo_root)
+                lbase, llabel = ((str(lb[0]), lb[1]) if lb else
+                                 (str((Path(repo_root) / "brain").resolve()), "brain"))
+                result.update(
+                    base=lbase, label=llabel, source="hybrid",
+                    brain=brain_name, mode="hybrid",
+                    shared_base=str(sb), shared_brain=brain_name,
+                    shared_remote=brain.get("remote", "origin"),
+                    shared_branch=brain.get("branch"),
+                    shared_autopush=bool(brain.get("autopush", False)),
+                )
+                return result
+            # absorb: the shared brain IS the base
             result.update(
-                base=str(brain_base(brain["path"])),
-                label=assigned, source="assignment", brain=assigned,
+                base=str(sb), label=brain_name, source="assignment",
+                brain=brain_name, mode="absorb",
                 autopush=bool(brain.get("autopush", False)),
                 remote=brain.get("remote", "origin"),
                 branch=brain.get("branch"),
             )
             return result
-        result["warning"] = f"assignment points to unknown brain '{assigned}'"
+        result["warning"] = f"assignment points to unknown brain '{brain_name}'"
 
     # no (valid) assignment -> local base wins (back-compat, don't nag vaults)
     lb = local_base(repo_root)
     if lb:
-        result.update(base=str(lb[0]), label=lb[1], source="local")
+        result.update(base=str(lb[0]), label=lb[1], source="local", mode="local")
         return result
 
     # nothing: skill should prompt; lint/hooks fall back to a silent brain/
@@ -302,10 +347,41 @@ def _pointer_body(brain: str, remote: str | None, subpath: str) -> str:
     )
 
 
+def _pointer_body_hybrid(brain: str, remote: str | None, repo_name: str) -> str:
+    """Pointer for a HYBRID repo: it keeps its own local brain AND shares the
+    cross-cutting layer. Tells the agent where each kind of knowledge belongs."""
+    remote_line = (
+        f"- Shared brain (git remote): `{remote}`" if remote
+        else "- Shared brain: a shared engram workspace brain (see the engram registry)"
+    )
+    return (
+        "## Project knowledge: local brain + shared engram workspace\n\n"
+        "This repo keeps its **own** engram brain at `brain/` — code-coupled docs\n"
+        "(architecture, dev guides, code conventions, troubleshooting) live there,\n"
+        "colocated with the code and reviewed alongside it.\n\n"
+        f"**Cross-cutting / cross-repo** knowledge is shared via the engram **{brain}**\n"
+        "workspace brain — reusable product/domain knowledge, shared convention\n"
+        "bases, and the cross-repo index:\n"
+        f"{remote_line}\n"
+        f"- This repo's slot in the shared brain: `projects/{repo_name}/` (index/\n"
+        "  pointers); reusable knowledge under `resources/`.\n\n"
+        "When recording knowledge, route it: repo-specific / code-coupled → local\n"
+        "`brain/`; cross-cutting / reusable → the shared brain. The shared brain's\n"
+        "local checkout path is machine-specific — resolve it with the engram skill\n"
+        "(`workspace.py resolve` → the `shared_base` field). Manage with `/engram`.\n"
+    )
+
+
 def build_pointer(repo_root: str | Path, r: dict) -> str:
-    subpath = f"projects/{Path(repo_root).name}/"
-    rurl = remote_url(r["base"], r.get("remote") or "origin") if r.get("base") else None
-    body = _pointer_body(r.get("brain") or r.get("label") or "shared", rurl, subpath)
+    repo_name = Path(repo_root).name
+    if r.get("mode") == "hybrid" or r.get("source") == "hybrid":
+        rurl = (remote_url(r.get("shared_base"), r.get("shared_remote") or "origin")
+                if r.get("shared_base") else None)
+        body = _pointer_body_hybrid(r.get("brain") or "shared", rurl, repo_name)
+    else:
+        subpath = f"projects/{repo_name}/"
+        rurl = remote_url(r["base"], r.get("remote") or "origin") if r.get("base") else None
+        body = _pointer_body(r.get("brain") or r.get("label") or "shared", rurl, subpath)
     return f"{POINTER_BEGIN}\n{body}{POINTER_END}"
 
 
@@ -345,9 +421,10 @@ def apply_repo_pointer(repo_root: str, *, emit=lambda _m: None) -> None:
     """Sync the repo's CLAUDE.md pointer to its current assignment: write when
     assigned to a shared brain, strip otherwise."""
     r = resolve_brain(repo_root)
-    if r["source"] == "assignment" and r.get("brain"):
+    if r["source"] in ("assignment", "hybrid") and r.get("brain"):
         state, f = write_repo_pointer(repo_root, r)
-        emit(f"brain pointer {state}: {Path(f).as_posix()} (-> {r['brain']})")
+        tag = " hybrid" if r["source"] == "hybrid" else ""
+        emit(f"brain pointer {state}: {Path(f).as_posix()} (->{tag} {r['brain']})")
     else:
         state, f = remove_repo_pointer(repo_root)
         if state != "absent":
@@ -401,16 +478,26 @@ def cmd_register(args) -> int:
 def cmd_assign(args) -> int:
     repo = git_root(args.repo or os.getcwd())
     cfg = load_config()
+    hybrid = getattr(args, "hybrid", False)
     if args.brain != "local" and args.brain not in cfg["brains"]:
         _print(f"error: unknown brain '{args.brain}'. Registered: "
                f"{', '.join(cfg['brains']) or '(none)'}")
         return 1
+    if hybrid and args.brain == "local":
+        _print("error: --hybrid needs a brain name (it links a shared brain "
+               "alongside this repo's local brain)")
+        return 1
+    # hybrid -> object {brain, mode}; absorb/local -> bare string (back-compat)
+    value = {"brain": args.brain, "mode": "hybrid"} if hybrid else args.brain
     # drop any existing key for this repo (case-insensitive), then set fresh
     key = _norm(repo)
     cfg["assignments"] = {k: v for k, v in cfg["assignments"].items() if _norm(k) != key}
-    cfg["assignments"][_display(repo)] = args.brain
+    cfg["assignments"][_display(repo)] = value
     save_config(cfg)
-    _print(f"assigned {_display(repo)} -> {args.brain}")
+    suffix = " (hybrid: local brain + shared)" if hybrid else ""
+    _print(f"assigned {_display(repo)} -> {args.brain}{suffix}")
+    if hybrid:
+        _print(f"  shared base: {brain_base(cfg['brains'][args.brain]['path'])}")
     if not getattr(args, "no_pointer", False):
         apply_repo_pointer(repo, emit=_print)
     return 0
@@ -437,12 +524,13 @@ def cmd_link(args) -> int:
         _print(f"brain pointer {state}: {Path(f).as_posix()}")
         return 0
     r = resolve_brain(repo)
-    if not (r["source"] == "assignment" and r.get("brain")):
+    if not (r["source"] in ("assignment", "hybrid") and r.get("brain")):
         _print(f"error: {_display(repo)} is not assigned to a shared brain "
                f"(source={r['source']}). Assign one first: workspace.py assign <name>")
         return 1
     state, f = write_repo_pointer(repo, r)
-    _print(f"brain pointer {state}: {Path(f).as_posix()} (-> {r['brain']})")
+    tag = " hybrid" if r["source"] == "hybrid" else ""
+    _print(f"brain pointer {state}: {Path(f).as_posix()} (->{tag} {r['brain']})")
     return 0
 
 
@@ -452,7 +540,8 @@ def cmd_remove(args) -> int:
         _print(f"error: no brain '{args.name}'")
         return 1
     del cfg["brains"][args.name]
-    refs = [k for k, v in cfg["assignments"].items() if v == args.name]
+    refs = [k for k, v in cfg["assignments"].items()
+            if assignment_parts(v)[0] == args.name]
     save_config(cfg)
     _print(f"removed brain '{args.name}' (directory left untouched)")
     if refs:
@@ -464,7 +553,9 @@ def cmd_remove(args) -> int:
 def cmd_list(args) -> int:
     cfg = load_config()
     repo = git_root(args.repo or os.getcwd())
-    current = find_assignment(cfg, repo)
+    raw = find_assignment(cfg, repo)
+    bn, md = assignment_parts(raw) if raw is not None else (None, None)
+    current = None if raw is None else (f"{bn} (hybrid)" if md == "hybrid" else bn)
     if args.json:
         _emit({"brains": cfg["brains"], "assignments": cfg["assignments"],
                "current_repo": _display(repo), "current_assignment": current})
@@ -485,8 +576,13 @@ def cmd_resolve(args) -> int:
     if args.json:
         _emit(r)
         return 0
-    _print(f"base={r['base']} label={r['label']} source={r['source']}"
-           + (f" brain={r['brain']} autopush={r['autopush']}" if r["brain"] else ""))
+    if r["source"] == "hybrid":
+        _print(f"base={r['base']} label={r['label']} source=hybrid "
+               f"shared_base={r['shared_base']} shared_brain={r['shared_brain']} "
+               f"shared_autopush={r['shared_autopush']}")
+    else:
+        _print(f"base={r['base']} label={r['label']} source={r['source']}"
+               + (f" brain={r['brain']} autopush={r['autopush']}" if r["brain"] else ""))
     if r["warning"]:
         _print(f"warning: {r['warning']}")
     return 0
@@ -507,6 +603,9 @@ def main() -> int:
     p = sub.add_parser("assign", help="assign this repo to a brain (or 'local')")
     p.add_argument("brain")
     p.add_argument("--repo")
+    p.add_argument("--hybrid", action="store_true",
+                   help="hybrid: keep this repo's local brain for code-coupled "
+                        "docs AND link the shared brain for cross-cutting knowledge")
     p.add_argument("--no-pointer", action="store_true",
                    help="do not touch the repo's CLAUDE.md brain pointer")
     p.set_defaults(func=cmd_assign)
