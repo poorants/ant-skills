@@ -79,19 +79,55 @@ agent ergonomics. Caveat: "single source of truth" does **not** mean zero
 duplication (a common misread), so a hybrid still needs deliberate dedup when it
 promotes cross-cutting docs.
 
-### Routing — what goes where in hybrid
+### Routing decision procedure (apply per doc — do NOT punt the set to the user)
 
-| Knowledge kind | Where | Why |
-|----------------|-------|-----|
-| Architecture, FE/BE dev & UX guides, page/nav maps, repo troubleshooting, repo project archives | **local `brain/`** | code-coupled — changes with the code, reviewed with it |
-| Repo's compiled code-convention contract (`.code-convention/…`) | **local repo** (committed) | the applied instance; not brain content |
-| Reusable product/domain knowledge several repos cite (protocols, error codes, KMS/DBMS ops) | **shared `resources/`** | cross-cutting, reused across repos (dedup on promote) |
-| Stack-general convention **base** | **shared `resources/conventions/<stack>.md`** | engram curates; `code-convention` skill consumes |
-| This repo's cross-repo index / pointers | **shared `projects/<repo>/`** | the repo's slot in the shared brain |
+"Cross-cutting vs code-coupled" is a **decidable test, not a vibe.** Run these on
+each doc; the first decisive test wins. This routes the large majority
+mechanically — escalate to the user only a genuine tie (see step 4), never the
+whole set.
 
-Separating cross-cutting from repo-specific is a **judgment call** — never
-auto-relocate a repo's whole brain. Default to leaving a doc local unless it is
-clearly reused across repos.
+1. **Subject** — what is the doc *about*?
+   - The repo's **own** code/process: architecture, module/design, build, UX/design
+     system, page-nav, conventions, troubleshooting of *this* codebase, project
+     plans/archives → **local.** Stop.
+   - An **external** product / protocol / wire format / API contract / data schema /
+     error catalog / domain the repo merely *uses, implements, or interoperates
+     with* → go to 2.
+2. **Contract vs implementation** (the decisive test for product-subject docs):
+   - A **stable interface/contract/spec/reference** other repos must match — wire
+     protocol, file format, error-code catalog, SQL surface, table schema *as a
+     contract*, key types/relations → **shared.** Stop.
+   - **How THIS repo implements/wires/operates** that thing — its handlers, its
+     plugin code, its deployment, its endpoint validators → **local** (code-coupled,
+     changes in the same commit as the code), even though the subject is a product.
+     Stop.
+3. **Reuse** — still unsure: does another **already-assigned** repo independently
+   need this exact doc (does another repo's brain/work cite the subject)? Yes →
+   **shared.** No → **local.**
+4. **Default + escalate** — ambiguous after 1–3: **leave it local** (colocation is
+   the safe, reversible default; promote later when a second consumer appears).
+   Escalate to the user *only* a doc that is simultaneously (a) high-value, (b)
+   genuinely cross-repo, and (c) overlapping an existing shared doc that needs a
+   merge call — and even then propose the default, don't open-endedly ask.
+
+**Dedup-on-promote.** When a promoted doc overlaps an existing shared doc, the more
+detailed/authoritative version wins; fold the thinner one's unique bits in and
+cross-link. Never leave two near-duplicates across the two brains.
+
+Worked examples (kept as a sanity check on the procedure above):
+
+| Knowledge kind | Test → Where |
+|----------------|--------------|
+| Architecture, FE/BE dev & UX guides, page/nav, repo troubleshooting, project archives | 1 → **local** |
+| Repo's compiled code-convention contract (`.code-convention/…`) | 1 → **local** (committed; the applied instance, not brain content) |
+| Protocol / file format / error-code catalog / DB schema-as-contract / key types | 2 → **shared `resources/`** |
+| This repo's *implementation* of that protocol (handlers, plugin install, deploy) | 2 → **local** |
+| Stack-general convention **base** | **shared `resources/conventions/<stack>.md>`** (engram curates; `code-convention` consumes) |
+| This repo's cross-repo index / pointers | **shared `projects/<repo>/`** |
+
+The one thing you still never do silently: **wholesale-relocate a repo's entire
+brain** (delete the local brain in hybrid mode). Per-doc routing is autonomous;
+deleting the colocated layer is the user's call.
 
 ## Commands (natural language, any language)
 
@@ -175,11 +211,17 @@ Order overall: `--base` (linter flag) > `assignment`/`hybrid` > local detection 
 
 ## Workspace Picker (Path Resolution rule 4)
 
-When resolution returns `source: "none"`, **ask before creating anything**: list
-`local` + every registered brain + "register a new path", let the user choose, then
-persist (`workspace.py assign <choice>`, or `register` then `assign` for a new
-path). Only then run the Init Workflow against the resolved base. Never silently
-default a brand-new repo to a shared brain.
+When resolution returns `source: "none"`, **confirm before creating anything — but
+lead with a recommended default, don't open-endedly ask.** Decide the recommendation
+mechanically: a **code repo** (has source, would accumulate code-coupled docs) with a
+registered shared brain → recommend `assign <brain> --hybrid`; a **pure doc vault** →
+recommend `local`; a **knowledge-collection repo** whose docs are mostly cross-cutting
+→ recommend `assign <brain>` (absorb). Present that as the default, with the other
+registered brains + "register a new path" as alternatives, and let the user override.
+Then persist (`workspace.py assign <choice> [--hybrid]`, or `register` then `assign`
+for a new path) and run the Init Workflow against the resolved base. Never silently
+default a brand-new repo to a shared brain — and never make the user invent the mode
+from scratch.
 
 ## Organizing a shared brain (two axes — don't fold both into folders)
 
