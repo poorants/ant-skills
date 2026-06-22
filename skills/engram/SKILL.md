@@ -103,9 +103,13 @@ Commands (natural language): **register** (`workspace.py register <path>
 [--name N]`), **assign**/**switch** (`workspace.py assign <name>` · add `--hybrid`
 for hybrid mode), **list**, **unassign** (`assign local`), **remove**
 (`workspace.py remove <name>`). **Workspace Picker (rule 4)**: on `source: "none"`,
-**ask before creating anything** — offer `local` + each registered brain + "register
-a new path", persist (`assign`), then Init. Never silently default a new repo to a
-shared brain. Full schema/semantics: [references/workspace.md](references/workspace.md).
+**confirm before creating anything — but lead with a recommended default, don't
+open-endedly ask**: if the repo has code and a shared brain is registered, recommend
+`assign <brain> --hybrid` (local brain for code-coupled docs + shared for
+cross-cutting); for a pure doc vault recommend `local`; offer the other registered
+brains + "register a new path" as alternatives. Persist (`assign`), then Init. Never
+silently default a new repo to a shared brain — but never make the user invent the
+mode either. Full schema/semantics: [references/workspace.md](references/workspace.md).
 
 ### Two ways a repo relates to a shared brain — absorb vs hybrid
 
@@ -136,10 +140,14 @@ retrieval, not one giant central dump) all converge on. Physically relocating a
 product repo's entire dev brain into the shared brain runs *against* this pattern and
 degrades in-repo agent ergonomics. So: **absorb a knowledge-collection repo; hybrid a
 product repo.** When unsure, prefer hybrid (it is reversible and keeps code-coupled
-docs where the code is). Separating *which* docs are cross-cutting vs repo-specific
-is a judgment call — make it per the **Routing** table in
-[references/workspace.md](references/workspace.md); never auto-relocate a repo's
-whole brain without the user's say-so.
+docs where the code is). Deciding *which* docs are cross-cutting vs repo-specific is
+**not** an ask-the-user-per-doc step: apply the **Routing decision procedure** in
+[references/workspace.md](references/workspace.md) — a 4-step test (subject →
+contract-vs-implementation → reuse → default-local) that routes the large majority
+mechanically. Escalate only a genuine tie (high-value + cross-repo + overlaps an
+existing shared doc), and even then propose the default. The *only* move that always
+needs the user's say-so is **wholesale-relocating a repo's entire brain** (deleting
+the colocated layer); per-doc routing is autonomous.
 
 **Repo-side pointer (auto) — so the repo advertises its brain.** Because the
 assignment lives only in the user-scope registry (machine-specific abs paths must
