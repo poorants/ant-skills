@@ -1,6 +1,6 @@
 # Scope Routing — detail
 
-reflex is hybrid by design: one engine, output routed by each rule's nature. This
+gardener is hybrid by design: one engine, output routed by each rule's nature. This
 mirrors an engram brain workspace (repo-local brain for code-coupled docs + shared
 brain for cross-cutting knowledge) and the 2026 industry pattern **"authored
 colocated, served/indexed centrally"** (AGENTS.md nearest-wins, docs-as-code). The
@@ -60,7 +60,7 @@ bar high:
 ## Nearest-wins, like CLAUDE.md itself
 
 Claude Code already composes `~/.claude/CLAUDE.md` (global) with the project
-`./CLAUDE.md` (and nested per-directory files), nearest-wins. reflex writes into that
+`./CLAUDE.md` (and nested per-directory files), nearest-wins. gardener writes into that
 existing hierarchy rather than inventing a parallel store — a learned rule is just a
-CLAUDE.md line in the right file, inside the `reflex` block. That keeps reflex's
+CLAUDE.md line in the right file, inside the `gardener` block. That keeps gardener's
 output legible, diffable, and removable with no special tooling.

@@ -1,4 +1,4 @@
-# Absorption Rulebook — detail
+# Promotion Gate — detail
 
 The four gates in SKILL.md are the contract. This file is the working detail: how to
 read each gate, worked examples, and the edge cases that trip people up. The gates
@@ -15,7 +15,7 @@ Every correction you make is one of three things. Only the first two are absorba
    lint rule) than a prose rule, but a prose rule is fine when no cheap signal exists.
 2. **Unwritten convention** — "we always name it this way / we don't use that
    pattern / error messages are in Korean". A rule that lives in your head and hasn't
-   been written down. **This is reflex's sweet spot.**
+   been written down. **This is gardener's sweet spot.**
 3. **Taste** — "this paragraph reads better / put it here instead / this feels off".
    Context-bound judgment that won't transfer cleanly to the next case. **Never
    absorb.** It stays the human's call; encoding it makes the agent confidently wrong
@@ -28,7 +28,7 @@ corrections:
 |---|---|---|
 | "empty string passes — fix it" | objective | maybe (better as a test) |
 | "you didn't write a test" | objective/convention | yes → "new logic ships with tests in the same change" |
-| "error message is English; we use Korean" | unwritten convention | **yes** → the textbook reflex rule |
+| "error message is English; we use Korean" | unwritten convention | **yes** → the textbook gardener rule |
 | "move the validation above the form" | taste | **no** |
 
 Three of four were not intuition. The Korean-message one is the clean absorb: a
@@ -58,15 +58,15 @@ A rule you can only phrase by quoting the instance is a fix, not a rule.
 
 ## Gate 3 — Not already covered
 
-Before adding, scan: the existing `reflex` block, the repo's `CLAUDE.md`, and any
+Before adding, scan: the existing `gardener` block, the repo's `CLAUDE.md`, and any
 convention docs (e.g. `.code-convention/`, `AGENTS.md`). 
 - Exact restatement of an existing rule → drop.
 - A sharper/expanded version of an existing rule → **edit that rule in place**, don't
   add a near-duplicate. Two rules saying almost the same thing is how the block rots.
-- reflex and the `code-convention` skill can overlap: if the project already runs
+- gardener and the `code-convention` skill can overlap: if the project already runs
   `code-convention`, durable *code* conventions belong there (its committed
-  contract); reflex is for the lighter, faster-moving operating preferences. Don't
-  duplicate a code-convention rule into the reflex block.
+  contract); gardener is for the lighter, faster-moving operating preferences. Don't
+  duplicate a code-convention rule into the gardener block.
 
 ## Gate 4 — No silent conflict
 
@@ -91,5 +91,16 @@ nondeterministic. A conflict is a signal that context changed; let the human say
 - Anything you can only state by quoting a specific line/value.
 - Restatements of rules already written somewhere the agent reads.
 - Project-specific facts that belong in **engram** (knowledge/decisions to revisit),
-  not as an operating rule. reflex = "how to act"; engram = "what to know". If it's a
+  not as an operating rule. gardener = "how to act"; engram = "what to know". If it's a
   fact to remember rather than a behavior to repeat, route it to engram instead.
+
+## After the gate — which tier does it earn?
+
+Passing the four gates means *grow it* — not *write a prose line*. The gate decides
+**whether**; the tier decides **how strong**. A checkable, load-bearing rule earns a
+**hook (T3)**, not just a CLAUDE.md line; a judgment rule earns **prose (T2)**; a soft
+preference stays **T1**. Over-promoting (every rule a blocking hook) calcifies the
+harness as surely as never absorbing leaves you re-correcting. The checkable→hook
+decision and the pruning that keeps the harness from only-ever-growing live in
+[tiers-and-pruning.md](tiers-and-pruning.md) — read it before writing, so a grown
+rule lands at the right tier and the block doesn't bloat.
