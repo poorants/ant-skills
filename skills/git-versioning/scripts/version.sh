@@ -62,6 +62,13 @@ minor=$(( minor_raw % 1000000 ))
 
 dirty=""
 if [ "$allow_dirty" -eq 1 ]; then
+  # Refresh the index stat cache before the dirty check: a preceding build step
+  # may have recreated tracked files (e.g. rm+touch of an embedded sentinel),
+  # leaving stale stat entries that make a bare `git diff-index` report a false
+  # "-dirty" even when content is identical. `git status` refreshes implicitly; a
+  # standalone diff-index does not. This is the Linux-kernel scripts/setlocalversion
+  # idiom and makes the check order-independent.
+  git update-index -q --refresh >/dev/null 2>&1 || true
   git diff-index --quiet HEAD -- 2>/dev/null || dirty="-dirty"
 fi
 

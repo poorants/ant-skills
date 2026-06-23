@@ -46,7 +46,7 @@ this build sits." For the full rationale and the comparison to the standard, see
    - `git rev-list --merges --count HEAD` → MINOR basis (merge count)
    - `git rev-list --count --first-parent <last-merge>..HEAD` → PATCH basis (commits since last merge)
    - `MAJOR_BASE`/`MR_BASE` from `version.conf`
-   - `git diff-index --quiet HEAD` → dirty state
+   - `git update-index -q --refresh` then `git diff-index --quiet HEAD` → dirty state (the refresh avoids a stale-stat false "-dirty" after a build step recreated tracked files)
 3. If `version.sh` is not installed yet, recommend `init`.
 
 ### `init`
