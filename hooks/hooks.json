@@ -6,10 +6,6 @@
           {
             "type": "command",
             "command": "python \"${CLAUDE_PLUGIN_ROOT}/skills/engram/scripts/brain_reflect.py\""
-          },
-          {
-            "type": "command",
-            "command": "python \"${CLAUDE_PLUGIN_ROOT}/skills/reflex/scripts/reflex_reflect.py\""
           }
         ]
       }
@@ -28,10 +24,6 @@
           {
             "type": "command",
             "command": "python \"${CLAUDE_PLUGIN_ROOT}/skills/engram/scripts/brain_reflect.py\""
-          },
-          {
-            "type": "command",
-            "command": "python \"${CLAUDE_PLUGIN_ROOT}/skills/reflex/scripts/reflex_reflect.py\""
           }
         ]
       }
