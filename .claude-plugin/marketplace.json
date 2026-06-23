@@ -21,17 +21,17 @@
     },
     {
       "name": "ant-dev-kit",
-      "description": "Software-development tooling. Bundles code-convention (extract, enforce, and evolve project code conventions), reflex (self-reinforcing harness — absorbs your repeated corrections into CLAUDE.md operating rules via an absorption rulebook; capture-loop sibling of code-convention), component-prototype (UI variant prototyping tournament), git-versioning (structure-based MAJOR.MINOR.PATCH computed from the git commit graph — no tags/CI/token), and repo-map (agent-friendly link-map + overview of a repo's organization, regenerable, stored in the repo). Carries reflex's capture-loop hook. Grows as more dev-focused skills are added.",
+      "description": "Software-development tooling. Bundles code-convention (extract, enforce, and evolve project code conventions), gardener (harness tier curator — grows repeated corrections UP the enforcement ladder (soft preference → CLAUDE.md rule → mechanical hook) and prunes over-engineered gates / dead rules / redundant skills back down or out; bidirectional, capture-loop sibling of code-convention), component-prototype (UI variant prototyping tournament), git-versioning (structure-based MAJOR.MINOR.PATCH computed from the git commit graph — no tags/CI/token), and repo-map (agent-friendly link-map + overview of a repo's organization, regenerable, stored in the repo). Carries gardener's capture-loop hook. Grows as more dev-focused skills are added.",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/code-convention",
-        "./skills/reflex",
+        "./skills/gardener",
         "./skills/component-prototype",
         "./skills/git-versioning",
         "./skills/repo-map"
       ],
-      "hooks": "./hooks/reflex-hooks.json"
+      "hooks": "./hooks/gardener-hooks.json"
     }
   ]
 }
