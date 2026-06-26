@@ -12,8 +12,9 @@ Triggers: "다음 세션에 이어가게 준비해", "세션 핸드오프", "다
 ## Two artifacts — the second is subordinate to the first
 
 1. **The handoff doc (body, carries the weight)** — a single **rolling** doc at
-   `<base>/projects/<repo>/handoff.md`. Route to the **local** `base` in hybrid
-   mode — session state is code-coupled and never belongs in the shared brain.
+   `.handoff/handoff.md`, a **project scratchpad at the repo root, outside the
+   brain**. Session state is throwaway working state — it does not belong in the
+   brain's link network, and it is git-ignored so it never gets committed.
    **One per work-stream, overwritten every time** — never date-stamped, never
    accumulated. It is the living *state board* of the current work, not a log.
 2. **The continuation prompt (a thin pointer)** — a short, copy-able code block
@@ -23,9 +24,12 @@ Triggers: "다음 세션에 이어가게 준비해", "세션 핸드오프", "다
 
 ## Steps
 
-1. **Resolve base** (Path Resolution). Hybrid → local `base`. Ensure
-   `projects/<repo>/` exists (Init if needed).
-2. **Write/overwrite `handoff.md`** (plain markdown, start with an H1, no
+1. **Ensure the project scratchpad exists.** Create `.handoff/` at the repo root
+   if missing. **Add `.handoff/` to `.gitignore`** if it is not already ignored
+   (create `.gitignore` if the repo has none) — the handoff is throwaway state and
+   must never be committed. No PARA base resolution is needed: the doc lives
+   *outside* the brain.
+2. **Write/overwrite `.handoff/handoff.md`** (plain markdown, start with an H1, no
    frontmatter):
    - `## Goal` — the work-stream's objective, 1–2 lines.
    - `## Done` — what *this* session accomplished (terse bullets).
@@ -36,15 +40,16 @@ Triggers: "다음 세션에 이어가게 준비해", "세션 핸드오프", "다
    - `## Key files & decisions` — files in play + decisions already settled (so
      the next session does not re-litigate them). Weave `[[wikilinks]]` to related
      brain notes here, so the next session pulls connected knowledge for free.
-   - `## Open questions` — unresolved forks.
-3. **Connect** — keep one inbound link from `projects/<repo>/README.md` (MOC) so
-   the doc is not an orphan. Because the doc is rolling, this MOC link is stable
-   across overwrites — wire it once.
+     These wikilinks are *pointers the next session follows*, not lint-tracked
+     links — the doc sits outside the lint base, so they are never flagged.
+3. **No MOC link, no orphan check.** Because the doc lives outside the brain, the
+   orphan rule does not apply — skip the MOC wiring entirely. The brain stays
+   clean of working state.
 4. **Emit the continuation prompt** as a fenced code block — a thin pointer, in
-   the user's language. Substitute the resolved real path:
+   the user's language:
    ```
-   엔그램 brain/projects/<repo>/handoff.md 읽고, "## Next steps" 부터 이어서 작업해.
-   (그 문서 "## Key files & decisions"에 걸린 링크도 따라 읽어.)
+   .handoff/handoff.md 읽고, "## Next steps" 부터 이어서 작업해.
+   (그 문서 "## Key files & decisions"에 걸린 [[링크]]는 엔그램으로 따라 읽어.)
    ```
 5. **Stamp it as a snapshot** — close with one line: *"이 핸드오프는 지금 시점
    스냅샷이야. 더 작업하면 다시 떠."* A prompt emitted, then kept-working-past,
@@ -52,16 +57,17 @@ Triggers: "다음 세션에 이어가게 준비해", "세션 핸드오프", "다
 
 ## Lifecycle
 
-`handoff.md` is *working state*, not durable knowledge — it deliberately bends the
-**Brain boundary** (one rolling doc, the opposite of the accumulation that
-principle guards against). When the work-stream finishes: distill any genuinely
-durable concepts/decisions into proper notes via the **Capture loop**, then
-**empty** `handoff.md` (leave a one-line "no active handoff") or archive the
-project folder. Never let a dead handoff masquerade as live state.
+`.handoff/handoff.md` is *working state*, not durable knowledge — git-ignored and
+deliberately kept **outside** the brain so the accumulation it represents (one
+rolling doc, overwritten) never pollutes the knowledge base. When the work-stream
+finishes: distill any genuinely durable concepts/decisions into proper brain notes
+via the **Capture loop**, then **empty** `.handoff/handoff.md` (leave a one-line
+"no active handoff") or delete `.handoff/`. Never let a dead handoff masquerade as
+live state.
 
 ## Why a pointer, not a dump
 
 Inlining the whole context into the prompt throws away engram's entire value. A
-short prompt that points at a brain doc lets the next session read the doc *and
-follow its `[[wikilinks]]`* into connected knowledge, costs almost nothing to
+short prompt that points at the handoff doc lets the next session read the doc *and
+follow its `[[wikilinks]]`* into connected brain knowledge, costs almost nothing to
 paste, and keeps edits in one place (the doc) instead of a stale copied blob.
