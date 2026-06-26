@@ -235,3 +235,38 @@ Always report conflicts in the migration plan so the user can decide.
 | File without extension | Skip unless `.md` or `.txt` |
 | Nested deep (>5 levels) | Include but flag for user review |
 | File with same name in multiple directories | Treat each independently, resolve conflicts per rules above |
+
+## Upgrade Phase A — Base migration (guarded refactor to `brain/`)
+
+Renaming the base (`para/`→`brain/`, or flat root folders→`brain/`) is a **guarded
+refactor, not a bare `git mv`** — the base folder name can be load-bearing far beyond
+doc links. Skip if the user wants connection-only, or if `CLAUDE.md` pins a different
+base by convention and the user keeps it. Steps:
+
+1. **Grep the whole repo for the old base name** (`para`, or the moved folder names) —
+   not just markdown links. It may appear in **code import paths**
+   (`module/para/resources/...`), build/CI configs, scripts, or code comments. The
+   linter only sees markdown, so these never surface, and a bare `git mv` would break
+   compilation, not just links.
+   - If the base has become a **code import path**, that's an architectural smell: move
+     the embedded/imported package *out* of the doc tree as part of the upgrade, rather
+     than carrying `brain/` into source code.
+2. **Move with `git mv`** to preserve history:
+   - nested rename (`para/`): `git mv para brain`.
+   - flat unify (root folders): `git mv projects brain/projects` (and `areas`,
+     `resources`, `archives`). Only move folders that exist/are tracked; create
+     `brain/archives/.gitkeep` if empty.
+3. **Update every non-doc reference** found in step 1: the `CLAUDE.md` doc-layout note,
+   config/memory, CI/build scripts, and code (import paths, comments).
+4. **Fix doc links**: relative links between docs that move together keep resolving;
+   `[[wikilinks]]` resolve by filename and survive. Run `engram_lint.py --json` (it
+   auto-detects the new `brain/` base) and fix every `broken_md_links` entry — these
+   crossed the moved/not-moved boundary (e.g. into root-level files).
+5. **Scope, approve, execute**: because this touches code and not just docs, show the
+   full reference-update plan and get approval first (Migration safety rule). It is a
+   `git mv`, so it stays reversible.
+
+**Phase B** is the connection-layer upgrade — run the Link & Connect Workflow (per-
+folder README MOCs first, then contextual links, then re-lint). **Verify & report**
+both phases: base before→after and references updated (A); MOCs created and
+orphans/broken links resolved (B).

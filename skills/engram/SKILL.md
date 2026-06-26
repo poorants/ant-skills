@@ -11,8 +11,9 @@ description: >
   session, OR manage a brain WORKSPACE — a shared external brain several repos use in
   common (register/assign/switch brains, share knowledge across repos, autosync).
   Matches intent in any language — e.g. "문서 정리", "회의록 저장", "노트 연결", "링크 점검",
-  "고아 문서", "MOC 업데이트", "브레인 리뷰", "브레인 워크스페이스", "공유 브레인", "organize docs",
-  "connect notes", "find orphans", "para to brain", "shared brain workspace".
+  "고아 문서", "MOC 업데이트", "브레인 리뷰", "세션 핸드오프", "다음 세션 이어가기", "브레인 워크스페이스",
+  "공유 브레인", "organize docs", "connect notes", "find orphans", "session handoff",
+  "para to brain", "shared brain workspace".
 ---
 
 # engram — Networked PARA Document Brain
@@ -47,47 +48,29 @@ first — `python "<skill_dir>/scripts/workspace.py" resolve --json` → `{base,
 source, …}` — then route on `source`:
 
 1. `--base` given (linter) → use it.
-2. **`assignment`** (absorb mode) → assigned to a shared brain; base = that brain's
-   PARA base — the `brain/` nested inside the registered brain directory (may be
-   **outside** this repo), detected just like a local base (existing
-   `brain/`·`para/`·flat wins; otherwise defaults to `<registered-path>/brain`).
-   Wins over local detection. So a dedicated brain repo is **not** a flat
-   exception — its PARA still lives under `brain/`. Use absorb for
+2. **`assignment`** (absorb mode) → base = the registered shared brain's PARA base
+   (the `brain/` nested inside it, may be **outside** this repo; existing
+   `brain/`·`para/`·flat wins, else `<registered-path>/brain`). Wins over local. For
    **knowledge-collection repos** whose docs are mostly cross-cutting.
-2b. **`hybrid`** → the repo keeps its **own local `brain/`** for code-coupled docs
-   AND links a shared brain for cross-cutting knowledge. `resolve` returns **two
-   bases**: `base` = the repo-local brain (primary — the linter lints this), and
-   `shared_base` = the shared workspace brain (cross-cutting/reusable knowledge +
-   shared convention bases + the cross-repo index). When recording: route
-   repo-specific/code-coupled docs → local `base`; cross-cutting/reusable →
-   `shared_base`. This is the default for **product repos** with a large
-   code-coupled dev brain (see **Brain Workspace** for the rationale).
-3. **`local` / `assignment-local`** → use the repo-local base: `brain/` if present
-   (**nested**, default); else legacy `para/` (nested); else PARA folders at the
-   root → **flat mode** (consider the **Upgrade Workflow** to bring it under
-   `brain/`). A repo-local `brain/` always wins when there is no assignment.
-4. **`none`** (no assignment, no local base — typically a fresh code repo) → run the
-   **Workspace Picker** (Brain Workspace below) to point the repo at a shared brain
-   or keep it `local`, then proceed.
-5. If `CLAUDE.md` states a doc-layout convention explicitly, it wins over the above.
-6. Once the base is determined, stay consistent within that project.
+2b. **`hybrid`** → repo keeps its **own local `brain/`** for code-coupled docs AND
+   links a shared brain. `resolve` returns two bases: `base` (repo-local, the linter
+   lints this) and `shared_base` (shared). Route code-coupled docs → `base`,
+   cross-cutting/reusable → `shared_base`. Default for **product repos**.
+3. **`local` / `assignment-local`** → repo-local base: `brain/` if present (nested,
+   default); else legacy `para/`; else PARA folders at root → **flat mode** (consider
+   the **Upgrade Workflow**). A repo-local `brain/` always wins absent an assignment.
+4. **`none`** (fresh repo, no assignment/local base) → run the **Workspace Picker**
+   (Brain Workspace below) to assign a shared brain or keep `local`, then proceed.
+5. An explicit `CLAUDE.md` doc-layout convention wins over the above.
+6. Once determined, stay consistent within that project.
 
-> **Legacy base (`para/`, or flat PARA folders at the root)?** A first-class case:
-> engram *is* the upgrade path from folders-only para-docs to a networked brain. Two
-> things can be "migrated" — the **base layout** (rename to `brain/`) and the
-> **connection layer** (links/MOCs/lint); "complete migration to brain" does both →
-> **Upgrade Workflow** (a guarded refactor, since the base name can be load-bearing
-> in code/CI). See "Migration: three operations, one word" below.
+> **Legacy base (`para/` or flat root folders)?** A first-class case: engram *is* the
+> upgrade path. "Complete migration to brain" migrates both the **base layout**
+> (rename to `brain/`) and the **connection layer** (links/MOCs/lint) → **Upgrade
+> Workflow** (a guarded refactor — the base name can be load-bearing in code/CI).
 
-Throughout, `<base>/` denotes the resolved base — `brain/` in nested mode, an empty
-prefix in legacy flat mode. Every path below is relative to it. The linter
-(`engram_lint.py`) auto-detects the base the same way (nested scans `brain/`/`para/`,
-flat scans the root; force with `--base`), and contextual link/MOC rules apply
-across `<base>/`.
-
-Two usage shapes (both default to `brain/`): a **standalone vault** (doc-only repo,
-root holds meta + exports) or **a code project + docs** (docs under `brain/`
-alongside source). Legacy flat repos are still detected for back-compat.
+Throughout, `<base>/` denotes the resolved base — `brain/` nested, empty prefix in
+flat mode. The linter auto-detects it the same way (force with `--base`).
 
 ## Brain Workspace (shared brains across repos)
 
@@ -113,58 +96,26 @@ mode either. Full schema/semantics: [references/workspace.md](references/workspa
 
 ### Two ways a repo relates to a shared brain — absorb vs hybrid
 
-The mistake is treating "share a brain" as one thing. There are two, and which one
-fits depends on **what kind of docs the repo holds**:
+"Share a brain" is two things; which fits depends on **what docs the repo holds**:
 
-- **absorb** (`assign <brain>`) — the shared brain *is* the repo's base; the repo's
-  knowledge lives centrally and the repo keeps no local brain. Right for a
-  **knowledge-collection repo** whose docs are mostly cross-cutting product/domain
-  knowledge (e.g. a test/research kit). One base, fully centralized.
+- **absorb** (`assign <brain>`) — the shared brain *is* the repo's base; no local
+  brain. Right for a **knowledge-collection repo** whose docs are mostly cross-cutting
+  (e.g. a test/research kit). Fully centralized.
 - **hybrid** (`assign <brain> --hybrid`) — the repo **keeps its own local `brain/`**
-  for code-coupled docs (architecture, dev/UX guides, code conventions,
-  troubleshooting, repo project archives) AND links the shared brain for
-  **cross-cutting** knowledge (reusable product/domain knowledge, shared convention
-  bases at `resources/conventions/`, the cross-repo index). `resolve` returns both
-  `base` (local) and `shared_base` (shared). Right for a **product repo** with a
-  large, mostly code-coupled dev brain.
+  for code-coupled docs AND links the shared brain for **cross-cutting** knowledge
+  (reusable knowledge, shared convention bases at `resources/conventions/`, the
+  cross-repo index). `resolve` returns both `base` (local) and `shared_base`. Right
+  for a **product repo** with a large code-coupled dev brain.
 
-**Why hybrid is the default for product repos (2026 industry pattern).** The
-dominant practice is **"authored colocated, served/indexed centrally"** — code-
-coupled docs stay in their repo (reviewed with the code), and only cross-cutting
-knowledge + an index are centralized. This is what Google's SWE practices (docs as
-code, deleted with the code), the AGENTS.md convention (nearest-file-wins, per-
-package), Backstage TechDocs' recommended architecture, the Backstage `AIContext`
-RFC (centralize the index/metadata, keep content colocated via source annotations),
-and Anthropic's just-in-time context engineering (lightweight references + on-demand
-retrieval, not one giant central dump) all converge on. Physically relocating a
-product repo's entire dev brain into the shared brain runs *against* this pattern and
-degrades in-repo agent ergonomics. So: **absorb a knowledge-collection repo; hybrid a
-product repo.** When unsure, prefer hybrid (it is reversible and keeps code-coupled
-docs where the code is). Deciding *which* docs are cross-cutting vs repo-specific is
-**not** an ask-the-user-per-doc step: apply the **Routing decision procedure** in
-[references/workspace.md](references/workspace.md) — a 4-step test (subject →
-contract-vs-implementation → reuse → default-local) that routes the large majority
-mechanically. Escalate only a genuine tie (high-value + cross-repo + overlaps an
-existing shared doc), and even then propose the default. The *only* move that always
-needs the user's say-so is **wholesale-relocating a repo's entire brain** (deleting
-the colocated layer); per-doc routing is autonomous.
-
-**Repo-side pointer (auto) — so the repo advertises its brain.** Because the
-assignment lives only in the user-scope registry (machine-specific abs paths must
-not be committed), a fresh agent session in an assigned repo otherwise has *no way
-to know a brain exists* — durable knowledge sits in the brain undiscovered until
-someone invokes engram. So `assign <brain>` also writes a small **portable** pointer
-block into the repo's `CLAUDE.md` (loaded every session): brain name + git remote +
-the in-brain subpath (`projects/<repo>/`) + "resolve the local path via engram". The
-machine-specific checkout path is deliberately left out. The block is
-marker-delimited and **idempotent** (re-runs replace it in place); `assign local` /
-`unassign` strip it. Re-apply on demand with `workspace.py link` (or
-`link --remove`); opt out of the auto-write with `assign --no-pointer`. This is the
-**repo-side counterpart to Init** — Init wires the brain side (PARA folders), `link`
-wires the repo side (discovery pointer). In **hybrid** mode the pointer is the
-hybrid variant: it states the repo has its *own* local `brain/` for code-coupled
-docs and tells the agent to route cross-cutting knowledge to the shared brain
-(resolved via the `shared_base` field).
+**Default a product repo to hybrid** (the 2026 "authored colocated, served/indexed
+centrally" pattern — code-coupled docs reviewed with the code, only cross-cutting
+knowledge + index centralized); **absorb a knowledge-collection repo.** When unsure,
+prefer hybrid (reversible). Per-doc routing is autonomous via the **Routing decision
+procedure**; only **wholesale-relocating a repo's entire brain** needs the user's
+say-so. `assign` also writes an idempotent, portable **discovery pointer** into the
+repo's `CLAUDE.md` (the repo-side counterpart to Init — `workspace.py link` re-applies
+it, `--no-pointer` opts out). Full rationale, routing test, and pointer semantics:
+[references/workspace.md](references/workspace.md).
 
 ## Migration: three operations, one word
 
@@ -224,33 +175,22 @@ reusable knowledge stays. Detail: [references/workspace.md](references/workspace
 
 **Shared code-convention bases — engram curates, `code-convention` consumes.** A
 shared brain accumulates **stack-level convention bases** at
-`resources/conventions/<stack>.md` (e.g. `tauri-react-rust.md`) — the cross-repo
-"AI-steering contract" for that stack. The split of duties is deliberate:
-
-- **engram owns the base** as durable brain knowledge: it stores/curates these docs,
-  keeps the `resources/conventions/README.md` MOC (which stacks exist, which repos
-  consume each), and **applies promotions** the `code-convention` skill hands up (a
-  proven, *stack-general*, opt-in rule + its rationale).
-- **`code-convention` consumes it**: each repo compiles its own contract = **this base
-  + project deltas** into a repo-local, committed `.code-convention/CONVENTIONS.md`
-  (`@import`ed from `CLAUDE.md`). That repo file is **not** brain content — it's the
-  applied instance; only the shared base lives in the brain.
-- **Promote, don't homogenize.** The base accumulates what's genuinely common per
-  stack; it is never forced onto a repo (adoption is opt-in, project-specifics stay
-  deltas). A new repo of a known stack *inherits the latest base* to start from.
+`resources/conventions/<stack>.md` — the cross-repo "AI-steering contract" for that
+stack. engram **owns the base** (stores/curates them, keeps the
+`resources/conventions/README.md` MOC, applies promotions `code-convention` hands up);
+`code-convention` **consumes it** — each repo compiles `base + project deltas` into a
+repo-local `.code-convention/CONVENTIONS.md` (the applied instance, *not* brain
+content). Promote what's genuinely common per stack; never homogenize (adoption is
+opt-in, specifics stay deltas). Detail: [references/workspace.md](references/workspace.md).
 
 ## Init Workflow
 
 **When**: First PARA interaction OR the category folders are missing.
 **Auto-execute without confirmation** — this operation is idempotent.
 
-Resolve the base first (see Path Resolution), then run
-[scripts/init.py](scripts/init.py), and report what was created:
-
-```bash
-python scripts/init.py --output . --flat   # flat: categories at the project root
-python scripts/init.py --output .           # nested: under brain/ (or legacy para/)
-```
+Resolve the base first (Path Resolution), run [scripts/init.py](scripts/init.py)
+(`--output . --flat` for categories at the root, `--output .` for nested under
+`brain/`), and report what was created.
 
 ## Create Workflow
 
@@ -280,12 +220,8 @@ Templates (simple doc, directory tree, meeting notes) and full per-step detail:
 Common moves: `projects/`→`archives/` (completed), `areas/`→`archives/` (ended),
 `resources/`→`archives/` (outdated), `archives/`→`projects/` (reactivated).
 
-Steps:
-1. Identify the source file/directory using Glob
-2. Determine the target category (ask user or infer)
-3. Verify the target path does not already exist
-4. Use Bash `mv` to move the item
-5. Report the move: source → destination
+Steps: Glob the source → determine the target category (ask or infer) → verify the
+target path is free → `mv` → report `source → destination`.
 
 **IMPORTANT: Never delete documents. Always move to archives instead.**
 
@@ -332,81 +268,36 @@ runs only Phase B.
 whole point is the `brain/` model — but never auto-execute Phase A (it touches code;
 see Migration safety).
 
-### Phase A — Base migration (rename/move the base to `brain/`)
+- **Phase A — Base migration**: a **guarded refactor, not a bare `git mv`** (the base
+  name can be load-bearing in code import paths / CI). Grep the whole repo for the old
+  base name, `git mv` to preserve history, update every non-doc reference, fix links,
+  then scope→approve→execute.
+- **Phase B — Connection-layer upgrade**: the real value-add — run the **Link &
+  Connect Workflow** (per-folder README MOCs first, then contextual links, then
+  re-lint).
+- **Verify & report** both phases.
 
-Skip if the user wants connection-only, or if `CLAUDE.md` pins a different base by
-convention (Path Resolution rule 5) and the user keeps it.
-
-This is a **guarded refactor, not a bare `git mv`** — the base folder name can be
-load-bearing far beyond doc links.
-
-1. **Grep the whole repo for the old base name** (`para`, or the moved folder
-   names) — not just markdown links. It may appear in **code import paths**
-   (`module/para/resources/...`), build/CI configs, scripts, or code comments. The
-   linter only sees markdown, so these never surface in its output, and a bare
-   `git mv` would break compilation, not just links.
-   - If the base has become a **code import path**, that's an architectural smell:
-     move the embedded/imported package *out* of the doc tree as part of the
-     upgrade, rather than carrying `brain/` into source code.
-2. **Move with `git mv`** to preserve history:
-   - nested rename (`para/`): `git mv para brain`.
-   - flat unify (root folders): `git mv projects brain/projects` (and `areas`,
-     `resources`, `archives`). Only move folders that exist/are tracked; create
-     `brain/archives/.gitkeep` if empty.
-3. **Update every non-doc reference** found in step 1: the `CLAUDE.md` doc-layout
-   note, config/memory, CI/build scripts, and code (import paths, comments).
-4. **Fix doc links**: relative links between docs that move together keep resolving;
-   `[[wikilinks]]` resolve by filename and survive. Run `engram_lint.py --json` (it
-   auto-detects the new `brain/` base) and fix every `broken_md_links` entry — these
-   crossed the moved/not-moved boundary (e.g. into root-level files).
-5. **Scope, approve, execute**: because this touches code and not just docs, show
-   the full reference-update plan and get approval first (Migration safety rule). It
-   is a `git mv`, so it stays reversible.
-
-### Phase B — Connection-layer upgrade (make it an actual brain)
-
-This is the real para-docs → engram value-add — add what folders-only management
-never had. Run the **Link & Connect Workflow**: build a per-folder README MOC for
-each folder first (the highest-leverage orphan fix — one MOC clears a whole
-folder's orphans at once, and MOC entries must be **real `[links](…)`, not backtick
-filenames**), then weave the genuinely cross-cutting contextual links, then re-run
-the Integrity Lint to confirm orphans/broken links dropped.
-
-### Verify & report
-
-Re-run the linter and report both phases: base before→after and references updated
-(Phase A); MOCs created and orphans/broken links resolved (Phase B).
+Full Phase A step detail (grep targets, the code-import-path smell, `git mv` recipes,
+approval gate): [references/migration-patterns.md](references/migration-patterns.md).
 
 ## List & Search Workflow
 
 **When**: User wants to see what documents exist or find specific content.
 
-### List (Dashboard)
-
-Generate a markdown summary table per non-empty PARA category — group rows under
-`### <Category> (N items)` with columns `Name | Type | Last Modified`. Use Glob to
-discover items and Bash `git log` or file stats for dates.
-
-### Search
-
-Use Grep to search document content across the PARA base.
-Use Glob to search by filename patterns.
-Report results with file paths and matching context.
+- **List (Dashboard)**: a markdown summary table per non-empty PARA category — rows
+  grouped under `### <Category> (N items)`, columns `Name | Type | Last Modified`
+  (Glob to discover, `git log`/file stats for dates).
+- **Search**: Grep for content, Glob for filename patterns; report paths + matching
+  context.
 
 ## Review Workflow
 
-**When**: User requests a documentation review or periodic checkup.
+**When**: User requests a documentation review or periodic checkup. Load
+`references/review-checklist.md` for the detailed procedure and report format.
 
-Load `references/review-checklist.md` for the detailed review procedure.
-
-Steps:
-1. Generate the PARA Dashboard (see List workflow)
-2. For each project: check if it should be archived (completed, stale >30 days)
-3. For each area: check if documentation is current
-4. For each resource: check if content is still relevant
-5. Present findings as a review report
-6. **Suggest** archive candidates — **never auto-archive**
-7. Execute moves only after explicit user confirmation
+Generate the PARA Dashboard, then per item flag archival candidates (projects
+completed/stale >30 days, areas/resources outdated), present the findings, and
+**suggest** archives — **never auto-archive**; execute moves only after confirmation.
 
 Use the Review Report Format in `references/review-checklist.md` for the output.
 
@@ -456,19 +347,13 @@ caveat: [references/weave-workflow.md](references/weave-workflow.md).
 Also call it as the closing check of other workflows (Create, Move, Classify &
 Import, Upgrade, Review).
 
-Detects broken links and orphan nodes under the PARA base (root if flat, `brain/`
-if nested). The base is auto-detected. Run
-[scripts/engram_lint.py](scripts/engram_lint.py) from the target repo root.
+Detects broken links and orphan nodes under the PARA base (auto-detected). Run
+[scripts/engram_lint.py](scripts/engram_lint.py) from the target repo root — no args
+for a human report (silent if clean), `--json` for the machine output the skill parses,
+`--base .` to force the base (e.g. root).
 
 ```bash
-# human report (silent if clean) — base auto-detected
-python "<skill_dir>/scripts/engram_lint.py"
-
-# machine JSON — the skill parses it for follow-up actions
 python "<skill_dir>/scripts/engram_lint.py" --json
-
-# force the base (e.g. root)
-python "<skill_dir>/scripts/engram_lint.py" --base . --json
 ```
 
 `<skill_dir>` is the directory holding this SKILL.md. When installed as a plugin,
@@ -500,22 +385,17 @@ The exit code is always 0, so it never blocks work — report and fix together.
 ## Capture loop — keep the brain fed
 
 Durable thinking that stays in the chat and never lands in `<base>/` is lost. Keep
-the brain fed continuously; the bundled hooks are triggers/backstops, **not** the
-engine — judging what is worth keeping is the model's job.
+the brain fed; the bundled hooks are triggers/backstops, **not** the engine — judging
+what's worth keeping is the model's job. Three triggers:
 
-1. **Capture-as-you-go (primary)**: when a durable concept / decision / good idea
-   / research conclusion / important gotcha crystallizes mid-work, record it
-   *then* via the Create Workflow (place, link, update MOC) — don't wait for
-   session end. Stay selective (Brain boundary + no over-structuring).
-2. **Wrap-up trigger** (`UserPromptSubmit` hook): on an end-of-session sign-off
-   ("고생했다", "수고했어", "wrap up", …) the hook injects a reflect-and-save
-   instruction so the final ideas are captured. Act on it before replying.
-3. **Backstop** (`Stop` hook): a throttled nudge (default 30 min) for long
-   sessions with no sign-off; if nothing is worth keeping, say so in one line —
-   never create filler.
+1. **Capture-as-you-go (primary)**: record a durable concept/decision/gotcha *when it
+   crystallizes* via the Create Workflow — don't wait for session end. Stay selective.
+2. **Wrap-up** (`UserPromptSubmit` hook): a sign-off ("수고했어", "wrap up", …) injects
+   a reflect-and-save instruction; act on it before replying.
+3. **Backstop** (`Stop` hook): a throttled nudge (default 30 min) for long sessions
+   with no sign-off; if nothing's worth keeping, say so in one line — no filler.
 
-Hooks ship with the plugin (`hooks/hooks.json` → `brain_reflect.py`, beside the
-integrity-lint Stop hook); brain-only and non-blocking. Tune
+Hooks ship with the plugin (brain-only, non-blocking). Tune
 `ENGRAM_CAPTURE_COOLDOWN_MIN` / `ENGRAM_CAPTURE_PHRASES`, disable with
 `ENGRAM_CAPTURE_DISABLE=1`. Details: [references/capture-loop.md](references/capture-loop.md).
 
@@ -537,6 +417,36 @@ procedure. In short: reconcile your **session memory** (notes/links/MOCs touched
 with a **git cross-check** (`git status --short`/`git diff --stat -- <base>/`), run
 the Integrity Lint as the closing check, then present the report. If nothing landed,
 say so in one line.
+
+## Session Handoff Workflow
+
+**When**: mid-session, the context window is filling up (~half+) and the user wants
+to continue the *same* work in a fresh session without losing state — the **forward**
+counterpart to the Capture loop and Session Update Review (which look *back*).
+Command/natural-language triggered, **never a hook**. ("다음 세션에 이어가게 준비해",
+"세션 핸드오프", "다음 세션 이어가기 준비", "prepare handoff", "continue in next session")
+
+Produce **two artifacts, the second subordinate to the first**:
+
+1. **The handoff doc (carries the weight)** — a single **rolling** doc at
+   `<base>/projects/<repo>/handoff.md` (route to the **local** base in hybrid mode —
+   session state is code-coupled). One per work-stream, **overwritten every time**,
+   never date-stamped or accumulated: a living state board, not a log. Sections:
+   `## Goal` · `## Done` · `## Current state` · `## Next steps` (the resume point —
+   most important) · `## Key files & decisions` (weave `[[wikilinks]]` to related
+   notes here) · `## Open questions`. Keep one inbound MOC link so it's not an orphan.
+2. **The continuation prompt (a thin pointer)** — a short copy-able code block that
+   **points at the handoff doc; it does not inline the context** (a dump throws away
+   engram's wikilink-network value). Emit it in the user's language, real path
+   substituted, then stamp a snapshot warning (a prompt kept-working-past becomes a
+   lie):
+   ```
+   엔그램 brain/projects/<repo>/handoff.md 읽고, "## Next steps" 부터 이어서 작업해.
+   ```
+
+`handoff.md` is *working state* — it deliberately bends the **Brain boundary**. When
+the work-stream finishes, distill durable bits via the **Capture loop**, then empty
+it. Full procedure: [references/session-handoff.md](references/session-handoff.md).
 
 ## Roadmap (planned, not yet implemented)
 
