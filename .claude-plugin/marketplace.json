@@ -17,7 +17,36 @@
       "skills": [
         "./skills/engram"
       ],
-      "hooks": "./hooks/hooks.json"
+      "hooks": {
+        "UserPromptSubmit": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "python \"${CLAUDE_PLUGIN_ROOT}/skills/engram/scripts/brain_reflect.py\""
+              }
+            ]
+          }
+        ],
+        "Stop": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "python \"${CLAUDE_PLUGIN_ROOT}/skills/engram/scripts/engram_lint.py\""
+              },
+              {
+                "type": "command",
+                "command": "python \"${CLAUDE_PLUGIN_ROOT}/skills/engram/scripts/brain_sync.py\" auto"
+              },
+              {
+                "type": "command",
+                "command": "python \"${CLAUDE_PLUGIN_ROOT}/skills/engram/scripts/brain_reflect.py\""
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "ant-dev-kit",
@@ -31,7 +60,28 @@
         "./skills/git-versioning",
         "./skills/repo-map"
       ],
-      "hooks": "./hooks/gardener-hooks.json"
+      "hooks": {
+        "UserPromptSubmit": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "python \"${CLAUDE_PLUGIN_ROOT}/skills/gardener/scripts/gardener_reflect.py\""
+              }
+            ]
+          }
+        ],
+        "Stop": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "python \"${CLAUDE_PLUGIN_ROOT}/skills/gardener/scripts/gardener_reflect.py\""
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }
