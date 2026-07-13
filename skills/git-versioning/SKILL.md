@@ -25,6 +25,44 @@ this build sits." For the full rationale and the comparison to the standard, see
   upgrade safety from the number** → prefer standard SemVer + Conventional Commits +
   semantic-release. Confirm with the user before `init`.
 
+## Enforcement: the forge must create a merge commit per MR/PR
+
+MINOR counts merge commits (`git rev-list --merges`), so the scheme has one hard
+prerequisite: **every MR/PR merge must actually produce a merge commit.** Two common
+merge modes break this silently:
+
+- **Fast-forward merge** — when main has not moved since the branch was cut, git just
+  advances the pointer with **no merge commit**. The branch's commits land as
+  first-parent commits, counting toward PATCH, not MINOR.
+- **Squash merge** — collapses the branch into a single commit on main, also with no
+  merge commit.
+
+Either way the MR does not bump MINOR and the work leaks into PATCH, so the version
+undercounts real merge activity.
+
+**Enforce it at the forge, not with a git hook.** A client-side git hook cannot do this,
+by construction:
+
+1. The MR/PR merge runs **on the forge server**, where the developer's local
+   `.git/hooks` never execute.
+2. A fast-forward produces **no commit**, so there is no `pre-merge-commit` (or any)
+   hook event to hang a check on.
+3. Locally the two cases are indistinguishable — an ff-absorbed MR and an *intentional*
+   direct PATCH commit both look like new first-parent commits on main. "This was an MR"
+   is knowledge only the forge holds.
+
+Set the merge method on the forge (server-side, unbypassable):
+
+- **GitLab** — Settings → Merge requests → **Merge method = "Merge commit"**
+  (`merge_method=merge`). Do **not** use "Fast-forward merge".
+- **GitHub** — repo Settings → Pull Requests → keep **"Allow merge commits"** and
+  **disable** "Allow squash merging" and "Allow rebase merging".
+
+**No forge-admin access?** The fallback is a CI *detective* check on main (recompute the
+version and assert it increased, or flag a push that added first-parent commits with no
+merge commit). It catches an undercount after the fact but **cannot prevent it** —
+prevention lives only at the forge layer.
+
 ## Usage
 
 ```
@@ -76,7 +114,12 @@ Install the scheme into the project. **In order**:
 5. **Wire the build system** — follow [references/build-wiring.md](references/build-wiring.md)
    to add version injection for the detected build system (Make/Go/Node/Python/generic). If
    several are present, ask the user which one to wire.
-6. **Verify** — run `bash scripts/version.sh` and `--dev`, show that the values are sensible,
+6. **Enforce merge commits** — configure the forge so every MR/PR produces a merge commit
+   (GitLab `merge_method=merge`; GitHub disable squash & rebase merging). See
+   [Enforcement](#enforcement-the-forge-must-create-a-merge-commit-per-mrpr). Without this,
+   fast-forward/squash merges silently undercount MINOR. If you lack forge-admin access, note
+   the detective-check fallback for the user.
+7. **Verify** — run `bash scripts/version.sh` and `--dev`, show that the values are sensible,
    and note that a non-shallow clone is required (it counts merges).
 
 > Outputs are created in the **user's project** (not inside the skill directory).
@@ -124,6 +167,7 @@ semantic-release" is §0.
 
 - **Counts merges, so a non-shallow clone is required.** CI/Docker should compute on the host
   and pass it in via build-arg ([build-wiring.md](references/build-wiring.md) Docker/CI section).
-- **GitHub squash-merge** creates no merge commit, so MINOR does not advance — set PR merges to
-  "merge commit" or read PATCH as the primary signal ([policy](references/versioning-policy.md) §1).
+- **Merges must create a merge commit** or MINOR undercounts — fast-forward and squash merges
+  skip it. Enforce at the forge, not with a git hook: see
+  [Enforcement](#enforcement-the-forge-must-create-a-merge-commit-per-mrpr).
 - The build version carries no `v` (`0.21.0`); only release **tags** use `vX.Y.Z`.

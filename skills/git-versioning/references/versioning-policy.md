@@ -51,10 +51,15 @@ PATCH     = git rev-list --count --first-parent <last-merge>..HEAD   # direct ma
 - Deterministic: the version is a **pure function of the commit + `version.conf`**. The same commit always yields the same version
   (aside from `+dev`/`-dirty`).
 
-> **GitHub (squash-merge) caveat**: squash-merging a PR produces no merge commit, so MINOR does not increase.
-> In that case use one of two options — (a) configure PR merges to use **"Create a merge commit"** (recommended, preserving the
-> MR=merge model), or (b) keep squashing but accept MINOR's meaning as something other than "number of merges" and look primarily
-> at PATCH (= first-parent commit count). Under GitLab's default (merge commits created), it works as-is.
+> **Enforcement — the forge must create a merge commit per MR/PR.** MINOR counts merge commits, so the scheme assumes every
+> MR/PR merge produces one. **Fast-forward** merges (when main has not moved since the branch was cut) and **squash** merges both
+> skip the merge commit, so that work counts toward PATCH instead and MINOR undercounts. Enforce this **at the forge, not with a
+> git hook** — the merge runs on the forge server (local hooks never run there), a fast-forward creates no commit (so no hook event
+> fires), and locally an ff-absorbed MR is indistinguishable from an intentional direct PATCH commit ("this was an MR" is knowledge
+> only the forge holds). Set **GitLab** merge method to **"Merge commit"** (`merge_method=merge`, not "Fast-forward merge"), or on
+> **GitHub** keep only "Allow merge commits" (disable squash & rebase merging). Without forge-admin access, the fallback is a CI
+> *detective* check (recompute the version and assert it rose) — it catches an undercount but cannot prevent it. Under GitLab's
+> default (merge commits created) it works as-is.
 
 ## 2. Where the version lives
 
